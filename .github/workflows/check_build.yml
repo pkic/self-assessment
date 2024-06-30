@@ -1,0 +1,22 @@
+name: Build and check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    if: github.event_name != 'push'
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+      - name: Build
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: |
+          npm install
+          npm run build

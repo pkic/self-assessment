@@ -1,0 +1,26 @@
+@import './styles/main.scss';
+
+:root {
+  --pkimm-primary-color: #{$primary-color};
+  --pkimm-secondary-color: #{$secondary-color};
+  --pkimm-tertiary-color: #{$tertiary-color};
+
+  --pkimm-primary-color-hover: #{$primary-color-hover};
+  --pkimm-primary-color-lighter: #{$primary-color-lighter};
+
+  --pkimm-secondary-color-lighter: #{$secondary-color-lighter};
+
+  --pkimm-maturity-level-1: #{$maturity-level-1};
+  --pkimm-maturity-level-2: #{$maturity-level-2};
+  --pkimm-maturity-level-3: #{$maturity-level-3};
+  --pkimm-maturity-level-4: #{$maturity-level-4};
+  --pkimm-maturity-level-5: #{$maturity-level-5};
+
+  --pkimm-background-color: #{$background-color};
+
+  --pkimm-text-color-dark: #{$text-color-dark};
+  --pkimm-text-color-light: #{$text-color-light};
+
+  --pkimm-sticky-top-offset: 0px;
+  --pkimm-scroll-query-selector: window;
+}

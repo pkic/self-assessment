@@ -1,0 +1,19 @@
+$primary-color: rgb(25, 135, 84);
+$secondary-color: rgb(237, 125, 49);
+$tertiary-color: rgb(90, 155, 213);
+
+$primary-color-hover: darken($primary-color, 10%);
+$primary-color-lighter: lighten($primary-color, 40%);
+
+$secondary-color-lighter: lighten($secondary-color, 20%);
+
+$maturity-level-1: #A82FD0;
+$maturity-level-2: #D0572F;
+$maturity-level-3: #57D02F;
+$maturity-level-4: #2FA8D0;
+$maturity-level-5: #FFD700;
+
+$background-color: #ffffff;
+
+$text-color-dark: #000000;
+$text-color-light: #ffffff;
