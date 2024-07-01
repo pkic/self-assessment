@@ -11,8 +11,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "src",
-    "src/styles.d.ts"
-  ]
+  "include": ["src", "src/styles.d.ts"]
 }
