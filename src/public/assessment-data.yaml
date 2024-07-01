@@ -221,7 +221,7 @@ modules:
             name: "5 - Optimized"
             description: |
               Certificate lifecycle is properly documented and maintained. Up-to-date inventory is available and periodically updated according to defined procedures and certificate management controls. Discovery of certificates is often executed to provide assurance of the inventory completeness. Certificate management is integrated with the organizational governance.
-      - id: "8"
+      - id: "7"
         weight: 2
         name: "Infrastructure management"
         description: |
@@ -255,7 +255,7 @@ modules:
             name: "5 - Optimized"
             description: |
               Processes and procedures are formally followed and periodically reviewed. The infrastructure is properly designed, documented, and maintained by responsible personnel and integrated into the overall organizational strategy.
-      - id: "9"
+      - id: "8"
         weight: 3
         name: "Change management and agility"
         description: |
@@ -291,7 +291,7 @@ modules:
     description: |
       Includes day to day business as usual activities that lead to a secure and future-proof PKI in accordance with the organization goals
     categories:
-      - id: "15"
+      - id: "9"
         weight: 4
         name: "Resilience"
         description: |
@@ -319,7 +319,7 @@ modules:
             name: "5 - Optimized"
             description: |
               Analysis and assessment is regularly updated with the latest information and used to improve the resilience strategy. Incident response plans are tested and improved, including disaster recovery plans and procedures. Resilience is fully aligned with the organizational goals and policies.
-      - id: "13"
+      - id: "10"
         weight: 2
         name: "Automation"
         description: |
@@ -349,7 +349,7 @@ modules:
             name: "5 - Optimized"
             description: |
               Automation is analyzed and designed to apply the best practices. Automation is described, followed, monitored, and audited. Procedures are in place to handle exceptions and incidents related to automation.
-      - id: "7"
+      - id: "11"
         weight: 2
         name: "Interoperability"
         description: |
@@ -437,7 +437,7 @@ modules:
     description: |
       Ensures that the activities related to the PKI are performed with a proper knowledge and experience, with enough capacities, and that it provides complete and accurate information to relying parties
     categories:
-      - id: "10"
+      - id: "13"
         weight: 4
         name: "Sourcing"
         description: |
@@ -469,7 +469,7 @@ modules:
             name: "5 - Optimized"
             description: |
               Resources are periodically reviewed and updated to ensure that the required capacity is available and aligned with the PKI scope and organization strategy.
-      - id: "11"
+      - id: "14"
         weight: 3
         name: "Knowledge and training"
         description: |
@@ -498,7 +498,7 @@ modules:
             name: "5 - Optimized"
             description: |
               Training plan is periodically reviewed and updated. Education plan is defined and maintained. PKI personnel are aware of the training plan and their responsibilities that are fully aligned with the PKI policies and procedures.
-      - id: "14"
+      - id: "15"
         weight: 3
         name: "Awareness"
         description: |
