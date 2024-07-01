@@ -6,7 +6,7 @@ import { generateURL } from "../../utils/urlGenerator";
 import { calculateOverallMaturityLevel, calculateModuleMaturityLevels } from '../../utils/maturityCalculations';
 import './Report.module.scss';
 
-interface OverviewProps {
+interface ReportProps {
     modules: ModuleData[];
     progress: Record<string, ProgressData>;
     assessmentName: string;
@@ -21,7 +21,7 @@ interface OverviewProps {
     onUseCaseDescription: (description: string) => void;
 }
 
-export const Report: React.FC<OverviewProps> = ({ modules, progress, assessmentName, assessorName, useCaseDescription,
+export const Report: React.FC<ReportProps> = ({ modules, progress, assessmentName, assessorName, useCaseDescription,
                                                     onShare, onExportYAML, onExportPDF, onReset, onAssessmentName, onAssessorName, onUseCaseDescription}) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [shareURL, setShareURL] = useState('');
@@ -33,6 +33,26 @@ export const Report: React.FC<OverviewProps> = ({ modules, progress, assessmentN
         const url = generateURL(progress, assessmentName, assessorName, useCaseDescription);
         setShareURL(url);
         setIsModalOpen(true);
+    };
+
+    const handleSendEmail = () => {
+        const progressUrl = generateURL(progress, assessmentName, assessorName, useCaseDescription);
+        const subject = "PKI Maturity Model (PKIMM) Self-Assessment";
+        const body = `
+Below you find a link to your PKI Maturity Model (PKIMM) Self-Assessment. This link allows you to continue the assessment at a later stage. You can also export the results to PDF.
+
+If you have any questions about the PKI Maturity Model, please reach out to our community at https://pkic.org/discussions.
+
+Assessment URL:
+${progressUrl}
+
+Kind regards,
+The PKI Maturity Model Working Group of the PKI Consortium
+`;
+
+        const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        window.open(mailtoLink, '_blank', 'noopener,noreferrer');
     };
 
     return (
@@ -112,6 +132,7 @@ export const Report: React.FC<OverviewProps> = ({ modules, progress, assessmentN
 
             <div className="pkimm-actions-container">
                 <button onClick={handleShare}>Share Progress</button>
+                <button onClick={handleSendEmail}>Send Email</button>
                 {/*<button onClick={onExportYAML}>Export to YAML</button>*/}
                 <button onClick={onExportPDF}>Export to PDF</button>
                 <button onClick={onReset}>Reset</button>
