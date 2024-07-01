@@ -4,10 +4,12 @@ import { ProgressData } from '../types/types';
 export const generateURL = (progress: Record<string, ProgressData>, assessmentName: string, assessorName: string, useCaseDescription: string): string => {
     const encodedProgress = btoa(JSON.stringify(progress));
     const url = new URL(window.location.href);
-    url.searchParams.set('progress', encodedProgress);
-    url.searchParams.set('assessmentName', btoa(assessmentName));
-    url.searchParams.set('assessorName', btoa(assessorName));
-    url.searchParams.set('useCaseDescription', btoa(useCaseDescription));
+    const hashParams = new URLSearchParams();
+    hashParams.set('progress', encodedProgress);
+    hashParams.set('assessmentName', btoa(assessmentName));
+    hashParams.set('assessorName', btoa(assessorName));
+    hashParams.set('useCaseDescription', btoa(useCaseDescription));
+    url.hash = hashParams.toString();
     return url.toString();
 };
 

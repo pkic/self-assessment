@@ -34,11 +34,11 @@ export const Assessment: React.FC<AssessmentProps> = ({src}) => {
     const chartRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedProgress = urlParams.get('progress');
-        const assessmentName = urlParams.get('assessmentName');
-        const assessorName = urlParams.get('assessorName');
-        const useCaseDescription = urlParams.get('useCaseDescription');
+        const urlHash = new URLSearchParams(window.location.hash.substring(1));
+        const encodedProgress = urlHash.get('progress');
+        const assessmentName = urlHash.get('assessmentName');
+        const assessorName = urlHash.get('assessorName');
+        const useCaseDescription = urlHash.get('useCaseDescription');
 
         if (src) {
             fetch(src)
