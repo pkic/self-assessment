@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  gh-deploy:
+  build:
     if: github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/')
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
@@ -25,12 +25,22 @@ jobs:
         run: |
           cp ./src/public/index.html ./dist/index.html
           cp ./src/public/assessment-data.yaml ./dist/assessment-data.yaml
-      # Popular action to deploy to GitHub Pages:
-      # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Build output to publish to the `gh-pages` branch:
-          publish_dir: ./dist
-          destination_dir: develop
+          path: ./dist
+ 
+  # Deploy to GitHub pages
+  deploy:
+    needs: build
+    permissions:
+      pages: write 
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
