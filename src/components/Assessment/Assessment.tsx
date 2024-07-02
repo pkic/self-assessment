@@ -4,7 +4,7 @@ import { SpiderChart } from "../SpiderChart/SpiderChart";
 import { Overview } from "../Overview/Overview";
 import { Report } from "../Report/Report";
 import MaturityWidget from "../MaturityWidget/MaturityWidget"; // Import MaturityWidget
-import { parseYAML } from "../../utils/yamlParser";
+import { yamlParser } from "../../utils/yamlParser";
 import { generateURL, exportToYAML } from "../../utils/urlGenerator";
 import { exportToPDF } from "../../utils/pdfGenerator";
 import { AssessmentData, ProgressData } from "../../types/types";
@@ -47,7 +47,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
       fetch(src)
         .then((response) => response.text())
         .then((yamlText) => {
-          const parsedData = parseYAML(yamlText);
+          const parsedData = yamlParser(yamlText);
           setData(parsedData);
           setCurrentTab("overview"); // Set "Overview" as the default tab
           if (encodedProgress) {
