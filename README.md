@@ -13,7 +13,9 @@ To use the component, include the following script in your HTML file. Replace `<
 Then, add the `<self-assessment>` tag to your HTML file.
 
 ```html
-<self-assessment dataurl="https://pkic.github.io/self-assessment/<version>/assessment-data.yaml"></self-assessment>
+<self-assessment
+  dataurl="https://pkic.github.io/self-assessment/<version>/assessment-data.yaml"
+></self-assessment>
 ```
 
 ## Development

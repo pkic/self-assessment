@@ -1,5 +1,5 @@
-import React from 'react';
-import { Assessment } from './components/Assessment/Assessment';
+import React from "react";
+import { Assessment } from "./components/Assessment/Assessment";
 
 interface AppProps {
   dataUrl: string | null;
