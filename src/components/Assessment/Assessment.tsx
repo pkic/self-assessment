@@ -236,12 +236,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
       return null;
     return data.modules[currentIndex + 1].id;
   };
-
-  const nextModuleId = getNextModuleId();
-
-  const overallMaturityLevel = data
-    ? calculateOverallMaturityLevel(data.modules, progress)
-    : 0;
+  getNextModuleId();
+  data ? calculateOverallMaturityLevel(data.modules, progress) : 0;
   const moduleMaturityLevels = data
     ? calculateModuleMaturityLevels(data.modules, progress)
     : [];

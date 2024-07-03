@@ -25,8 +25,13 @@ export default [
       },
     },
     rules: {
+      ...typescriptEslint.configs.recommended.rules,
       semi: "error",
       "prefer-const": "error",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { args: "after-used", argsIgnorePattern: "^_" },
+      ],
     },
   },
 ];

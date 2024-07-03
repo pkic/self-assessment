@@ -453,7 +453,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
             <Text style={[styles.tableCell, styles.boldText]}>Description</Text>
           </View>
         </View>
-        {modules.flatMap((module, moduleIndex) =>
+        {modules.flatMap((module) =>
           module.categories.map((category, categoryIndex) => {
             const isEvenRow = categoryIndex % 2 === 1;
             return (

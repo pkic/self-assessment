@@ -30,8 +30,6 @@ export const Report: React.FC<OverviewProps> = ({
   assessmentName,
   assessorName,
   useCaseDescription,
-  onShare,
-  onExportYAML,
   onExportPDF,
   onReset,
   onAssessmentName,

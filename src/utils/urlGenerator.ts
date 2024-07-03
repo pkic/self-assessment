@@ -24,12 +24,29 @@ export const exportToYAML = (
   assessorName: string,
   useCaseDescription: string,
 ) => {
-  const yamlStr = yaml.dump(progress);
+  // Create a comprehensive object with all the variables
+  const exportData = {
+    progress,
+    assessmentName,
+    assessorName,
+    useCaseDescription,
+  };
+
+  // Convert the object to a YAML string
+  const yamlStr = yaml.dump(exportData);
+
+  // Create a Blob from the YAML string
   const blob = new Blob([yamlStr], { type: "text/yaml" });
+
+  // Create a URL for the Blob
   const url = URL.createObjectURL(blob);
+
+  // Create an anchor element and initiate the download
   const a = document.createElement("a");
   a.href = url;
   a.download = "progress.yaml";
   a.click();
+
+  // Revoke the object URL to free up memory
   URL.revokeObjectURL(url);
 };
