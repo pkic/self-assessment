@@ -173,6 +173,12 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
         data.modules,
         progress,
       );
+      const url = generateURL(
+        progress,
+        assessmentName,
+        assessorName,
+        useCaseDescription,
+      );
       exportToPDF(
         progress,
         chartRef.current,
@@ -182,6 +188,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
         assessmentName,
         assessorName,
         useCaseDescription,
+        url,
       );
     }
   };
