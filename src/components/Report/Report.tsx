@@ -53,10 +53,15 @@ export const Report: React.FC<OverviewProps> = ({
     setIsModalOpen(true);
   };
 
-    const handleSendEmail = () => {
-        const progressUrl = generateURL(progress, assessmentName, assessorName, useCaseDescription);
-        const subject = "PKI Maturity Model (PKIMM) Self-Assessment";
-        const body = `
+  const handleSendEmail = () => {
+    const progressUrl = generateURL(
+      progress,
+      assessmentName,
+      assessorName,
+      useCaseDescription,
+    );
+    const subject = "PKI Maturity Model (PKIMM) Self-Assessment";
+    const body = `
 Below you find a link to your PKI Maturity Model (PKIMM) Self-Assessment. This link allows you to continue the assessment at a later stage. You can also export the results to PDF.
 
 If you have any questions about the PKI Maturity Model, please reach out to our community at https://pkic.org/discussions.
@@ -68,14 +73,14 @@ Kind regards,
 The PKI Maturity Model Working Group of the PKI Consortium
 `;
 
-        const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-        window.open(mailtoLink, '_blank', 'noopener,noreferrer');
-    };
+    window.open(mailtoLink, "_blank", "noopener,noreferrer");
+  };
 
-    return (
-        <div className="pkimm-report">
-            <h1>PKI Maturity Report</h1>
+  return (
+    <div className="pkimm-report">
+      <h1>PKI Maturity Report</h1>
 
       <div className="pkimm-user-inputs">
         <div>
@@ -155,13 +160,13 @@ The PKI Maturity Model Working Group of the PKI Consortium
         </tbody>
       </table>
 
-            <div className="pkimm-actions-container">
-                <button onClick={handleShare}>Share Progress</button>
-                <button onClick={handleSendEmail}>Send Email</button>
-                {/*<button onClick={onExportYAML}>Export to YAML</button>*/}
-                <button onClick={onExportPDF}>Export to PDF</button>
-                <button onClick={onReset}>Reset</button>
-            </div>
+      <div className="pkimm-actions-container">
+        <button onClick={handleShare}>Share Progress</button>
+        <button onClick={handleSendEmail}>Send Email</button>
+        {/*<button onClick={onExportYAML}>Export to YAML</button>*/}
+        <button onClick={onExportPDF}>Export to PDF</button>
+        <button onClick={onReset}>Reset</button>
+      </div>
 
       <ShareModal
         isOpen={isModalOpen}
