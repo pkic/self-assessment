@@ -27,6 +27,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
     applicability: true,
   };
 
+  const version = "0.0.1";
   const [data, setData] = useState<AssessmentData | null>(null);
   const [progress, setProgress] = useState<Record<string, ProgressData>>({});
   const [currentTab, setCurrentTab] = useState<string | null>(null);
@@ -189,6 +190,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
         assessorName,
         useCaseDescription,
         url,
+        version,
       );
     }
   };

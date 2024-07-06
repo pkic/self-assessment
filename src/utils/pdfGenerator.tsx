@@ -1,5 +1,6 @@
 import {
   Document,
+  Font,
   G,
   Image,
   Link,
@@ -24,7 +25,34 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import { format } from "date-fns";
 
-const PkicLogoSvg = ({ fillColor = "grey" }) => (
+// Register Roboto font
+Font.register({
+  family: "Roboto",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Me5Q.ttf" }, // Roboto Regular
+    {
+      src: "https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Me5Q.ttf",
+      fontWeight: 700,
+    }, // Roboto Bold
+  ],
+});
+
+const primaryColor = getComputedStyle(
+  document.documentElement,
+).getPropertyValue("--pkimm-primary-color");
+const secondaryColor = getComputedStyle(
+  document.documentElement,
+).getPropertyValue("--pkimm-secondary-color");
+const tertiaryColor = getComputedStyle(
+  document.documentElement,
+).getPropertyValue("--pkimm-tertiary-color");
+
+const PkicLogoSvg = ({
+  fillColor = "black",
+  fillOne = primaryColor,
+  fillTwo = secondaryColor,
+  fillThree = tertiaryColor,
+}) => (
   <Svg viewBox="0 0 1256 324">
     <Path
       fill={fillColor}
@@ -32,42 +60,15 @@ const PkicLogoSvg = ({ fillColor = "grey" }) => (
     />
     <G>
       <Path
-        fill={fillColor}
+        fill={fillThree}
         d="M185.82 289.34C177.42 303.88 175.78 323.96 157.02 323.96C138.25 323.96 136.6 303.88 128.21 289.34C100.11 283.72 74.92 270.04 55.16 250.81L69.57 237.19C92.26 258.97 123.07 272.36 157.02 272.36C190.96 272.36 221.77 258.97 244.45 237.19L258.86 250.81C239.1 270.04 213.92 283.72 185.82 289.34Z"
       />
       <Path
-        fill={fillColor}
+        fill={fillTwo}
         d="M196.77 5.52C221.12 12.39 242.9 25.42 260.3 42.82C262.47 45 264.58 47.24 266.61 49.55C283.41 49.55 301.66 40.93 311.05 57.18C320.42 73.43 303.86 84.89 295.46 99.43C300.4 114.09 303.08 129.79 303.08 146.11C303.08 158.48 301.54 170.5 298.65 181.97L279.64 176.3C282.01 166.63 283.28 156.52 283.28 146.11C283.28 111.24 269.14 79.67 246.3 56.83C231.44 41.98 212.91 30.81 192.18 24.81L196.77 5.52Z"
       />
       <Path
-        fill={fillColor}
-        d="M18.37 99.91C9.98 85.37 -6.59 73.91 2.79 57.66C12.18 41.41 30.42 50.03 47.22 50.03C49.26 47.72 51.36 45.48 53.54 43.3C70.94 25.9 92.71 12.87 117.07 6L121.66 25.29C100.93 31.29 82.39 42.46 67.54 57.31C44.7 80.15 30.56 111.72 30.56 146.59C30.56 157 31.83 167.11 34.2 176.78L15.19 182.45C12.3 170.98 10.76 158.96 10.76 146.59C10.76 130.27 13.43 114.57 18.37 99.91Z"
-      />
-      <Path
-        fill={fillColor}
-        d="M227.24 75.88C245.22 93.85 256.33 118.68 256.33 146.11C256.33 160.68 253.19 174.53 247.55 186.99L288.45 210.61L278.62 227.71L237.67 204.06C234.53 208.43 231.04 212.54 227.24 216.34C209.26 234.31 184.43 245.43 157.02 245.43C129.59 245.43 104.76 234.31 86.78 216.34C82.99 212.54 79.5 208.43 76.36 204.06L35.41 227.71L25.58 210.61L66.48 186.99C60.84 174.53 57.69 160.68 57.69 146.11C57.69 118.68 68.81 93.85 86.78 75.88C102.57 60.1 123.64 49.6 147.11 47.28L147.11 0.04L166.92 0.04L166.92 47.28C190.39 49.6 211.46 60.1 227.24 75.88ZM213.23 89.89C198.85 75.5 178.97 66.6 157.02 66.6C135.06 66.6 115.18 75.5 100.79 89.89C86.4 104.27 77.5 124.15 77.5 146.11C77.5 168.06 86.4 187.94 100.79 202.33C115.18 216.72 135.06 225.61 157.02 225.61C178.97 225.61 198.85 216.72 213.23 202.33C227.63 187.95 236.53 168.06 236.53 146.11C236.53 124.15 227.63 104.27 213.23 89.89Z"
-      />
-      <Path
-        fill={fillColor}
-        d="M146.04 141.81L132.31 194.95L181.72 194.95L167.99 141.81C175.51 137.86 180.64 129.97 180.64 120.89C180.64 107.85 170.06 97.27 157.02 97.27C143.97 97.27 133.39 107.85 133.39 120.89C133.39 129.97 138.52 137.86 146.04 141.81Z"
-      />
-    </G>
-  </Svg>
-);
-
-const PkicBadgeSvg = ({ fillColor = "grey" }) => (
-  <Svg viewBox="0 0 324 324">
-    <G>
-      <Path
-        fill={fillColor}
-        d="M185.82 289.34C177.42 303.88 175.78 323.96 157.02 323.96C138.25 323.96 136.6 303.88 128.21 289.34C100.11 283.72 74.92 270.04 55.16 250.81L69.57 237.19C92.26 258.97 123.07 272.36 157.02 272.36C190.96 272.36 221.77 258.97 244.45 237.19L258.86 250.81C239.1 270.04 213.92 283.72 185.82 289.34Z"
-      />
-      <Path
-        fill={fillColor}
-        d="M196.77 5.52C221.12 12.39 242.9 25.42 260.3 42.82C262.47 45 264.58 47.24 266.61 49.55C283.41 49.55 301.66 40.93 311.05 57.18C320.42 73.43 303.86 84.89 295.46 99.43C300.4 114.09 303.08 129.79 303.08 146.11C303.08 158.48 301.54 170.5 298.65 181.97L279.64 176.3C282.01 166.63 283.28 156.52 283.28 146.11C283.28 111.24 269.14 79.67 246.3 56.83C231.44 41.98 212.91 30.81 192.18 24.81L196.77 5.52Z"
-      />
-      <Path
-        fill={fillColor}
+        fill={fillOne}
         d="M18.37 99.91C9.98 85.37 -6.59 73.91 2.79 57.66C12.18 41.41 30.42 50.03 47.22 50.03C49.26 47.72 51.36 45.48 53.54 43.3C70.94 25.9 92.71 12.87 117.07 6L121.66 25.29C100.93 31.29 82.39 42.46 67.54 57.31C44.7 80.15 30.56 111.72 30.56 146.59C30.56 157 31.83 167.11 34.2 176.78L15.19 182.45C12.3 170.98 10.76 158.96 10.76 146.59C10.76 130.27 13.43 114.57 18.37 99.91Z"
       />
       <Path
@@ -84,7 +85,11 @@ const PkicBadgeSvg = ({ fillColor = "grey" }) => (
 
 // Define styles for the PDF
 const styles = StyleSheet.create({
+  body: {
+    fontFamily: "Roboto",
+  },
   page: {
+    fontFamily: "Roboto",
     flexDirection: "column",
     paddingTop: 80,
     paddingBottom: 50,
@@ -92,15 +97,21 @@ const styles = StyleSheet.create({
     paddingRight: 40,
   },
   logo_first: {
-    width: 700,
+    width: 300,
     height: "auto",
-    marginTop: -150,
-    marginLeft: -300,
+    marginTop: 150,
+    alignSelf: "center",
   },
   title_first: {
     fontSize: 50,
-    fontStyle: "bold",
-    textAlign: "right",
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingTop: 10,
+  },
+  subtitle_first: {
+    fontSize: 30,
+    fontWeight: "bold",
+    textAlign: "center",
     paddingTop: 10,
   },
   header: {
@@ -123,13 +134,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 25,
-    fontStyle: "bold",
+    fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
   },
   heading: {
     fontSize: 20,
-    fontStyle: "bold",
+    fontWeight: "bold",
     textAlign: "center",
     marginBottom: 10,
   },
@@ -220,7 +231,7 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
-    fontSize: 12,
+    fontSize: 8,
     paddingLeft: 40,
     paddingRight: 40,
     color: "grey",
@@ -253,18 +264,28 @@ const styles = StyleSheet.create({
 
 const Header: React.FC = () => (
   <View style={styles.fixed_logo} fixed>
-    <PkicLogoSvg />
+    <PkicLogoSvg
+      fillColor="black"
+      fillOne="black"
+      fillTwo="black"
+      fillThree="black"
+    />
   </View>
 );
 
-const Footer: React.FC<{ assessmentUrl: string }> = ({ assessmentUrl }) => (
+const Footer: React.FC<{ assessmentUrl: string; version: string }> = ({
+  assessmentUrl,
+  version,
+}) => (
   <View style={styles.fixed_footer} fixed>
     <Text
       render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
     />
+    <Text>{version}</Text>
+    <Text>{format(new Date(), "MMMM do, yyyy h:mm a")}</Text>
     <Link
       src={assessmentUrl}
-      style={{ color: "lightgreen", textDecoration: "underline" }}
+      style={{ color: primaryColor, textDecoration: "underline" }}
     >
       Go To Assessment
     </Link>
@@ -285,6 +306,7 @@ interface PdfDocumentProps {
   assessorName: string;
   useCaseDescription: string;
   assessmentUrl: string;
+  version: string;
 }
 
 // Function to determine color based on the level
@@ -363,34 +385,30 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
   assessorName,
   useCaseDescription,
   assessmentUrl,
+  version,
 }) => (
   <Document>
     {/*first page contains only PKIC logo centered in the middle of the page*/}
     <Page size="A4" style={styles.page}>
       <View style={styles.logo_first}>
-        <PkicBadgeSvg fillColor="black" />
+        <PkicLogoSvg />
       </View>
-      <Text style={[styles.title_first, { marginTop: -50 }]}>PKI Maturity</Text>
-      <Text style={styles.title_first}>Self-Assessment</Text>
-      <Text style={styles.title_first}>Report</Text>
+      <Text style={[styles.title_first, { marginTop: 50 }]}>
+        PKI Maturity Model
+      </Text>
+      <Text style={styles.subtitle_first}>Self-Assessment Report</Text>
+      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
+      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
+        {format(new Date(), "MMMM do, yyyy h:mm a")}
+      </Text>
     </Page>
 
     {/*second page contains summary*/}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
       <Header />
-      <Footer assessmentUrl={assessmentUrl} />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.title}>Summary</Text>
       <View style={styles.overview_table}>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Report Date:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>
-              {format(new Date(), "MMMM do, yyyy h:mm a")}
-            </Text>
-          </View>
-        </View>
         <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.overview_tableCol, { width: "25%" }]}>
             <Text style={styles.overview_tableCell}>Model Version:</Text>
@@ -471,7 +489,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
     {/*third page contains details*/}
     <Page size="A4" style={styles.page} bookmark={{ title: "Report details" }}>
       <Header />
-      <Footer assessmentUrl={assessmentUrl} />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.heading}>Overall PKI Maturity Level</Text>
       <View
         style={[
@@ -607,7 +625,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
       bookmark={{ title: "About PKI Maturity Model" }}
     >
       <Header />
-      <Footer assessmentUrl={assessmentUrl} />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.about_heading}>About PKI Maturity Model</Text>
       <Text style={styles.about_text}>
         The maturity model is based on the Capability Maturity Model Integration
@@ -753,7 +771,9 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://pkic.org">PKI Consortium</Link>
+              <Link style={{ color: primaryColor }} src="https://pkic.org">
+                PKI Consortium
+              </Link>
             </Text>
           </View>
           <View style={[styles.maturity_tableCol, { width: "75%" }]}>
@@ -765,7 +785,10 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://pkic.org/pkimm/model/">
+              <Link
+                style={{ color: primaryColor }}
+                src="https://pkic.org/pkimm/model/"
+              >
                 PKI maturity model
               </Link>
             </Text>
@@ -781,7 +804,10 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://pkic.org/pkimm/categories/">
+              <Link
+                style={{ color: primaryColor }}
+                src="https://pkic.org/pkimm/categories/"
+              >
                 Categories description
               </Link>
             </Text>
@@ -796,7 +822,10 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://pkic.org/pkimm/assessment/">
+              <Link
+                style={{ color: primaryColor }}
+                src="https://pkic.org/pkimm/assessment/"
+              >
                 PKI maturity assessment process
               </Link>
             </Text>
@@ -810,7 +839,10 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://pkic.org/pkimm/tools/">
+              <Link
+                style={{ color: primaryColor }}
+                src="https://pkic.org/pkimm/tools/"
+              >
                 PKI maturity assessment tools
               </Link>
             </Text>
@@ -825,7 +857,10 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://forms.gle/7CgvuNoxaiTYbtK29">
+              <Link
+                style={{ color: primaryColor }}
+                src="https://forms.gle/7CgvuNoxaiTYbtK29"
+              >
                 Feedback form
               </Link>
             </Text>
@@ -839,7 +874,10 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
           <View style={[styles.maturity_tableCol, { width: "25%" }]}>
             <Text style={styles.maturity_tableCell}>
-              <Link src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm">
+              <Link
+                style={{ color: primaryColor }}
+                src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm"
+              >
                 PKI maturity model community discussion
               </Link>
             </Text>
@@ -956,6 +994,7 @@ export const exportToPDF = async (
   assessorName: string,
   useCaseDescription: string,
   assessmentUrl: string,
+  version: string,
 ) => {
   const chartCanvas = chartElement.querySelector("canvas") as HTMLCanvasElement;
   const chartImgData = chartCanvas.toDataURL("image/png");
@@ -971,6 +1010,7 @@ export const exportToPDF = async (
       assessorName={assessorName}
       useCaseDescription={useCaseDescription}
       assessmentUrl={assessmentUrl}
+      version={version}
     />
   );
 
