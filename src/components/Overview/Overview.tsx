@@ -1,10 +1,9 @@
-import React from 'react';
+import React from "react";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from 'remark-gfm'
-import './Overview.module.scss';
+import remarkGfm from "remark-gfm";
+import "./Overview.module.scss";
 
-interface OverviewProps {
-}
+interface OverviewProps {}
 
 const overview = `
 This self-assessment tool is intended for a quick self-assessment of the PKI maturity level and as a starting point for the full assessment.
@@ -14,7 +13,7 @@ You can use the tool:
 - share progress with your team
 - identify areas for improvement
 - generate a report with the results
-`
+`;
 
 const pkimm = `
 The maturity model is based on the Capability Maturity Model Integration (CMMI) developed by Carnegie Mellon University. It should provide the following:
@@ -22,11 +21,11 @@ The maturity model is based on the Capability Maturity Model Integration (CMMI) 
 - Support comparison of PKI maturity with similar organizations based on size or industry (anonymized)
 - Guidance on how to improve the capabilities of the current PKI
 - Improve overall PKI performance
-`
+`;
 
 const maturityLevels = `
 The PKI maturity model defines 5 levels of the PKI maturity based on different indicators and associated risks.
-`
+`;
 
 const markdownTable = `| **Maturity level** | **Short description**                                                                                        |
 |--------------------|--------------------------------------------------------------------------------------------------------------|
@@ -35,7 +34,7 @@ const markdownTable = `| **Maturity level** | **Short description**             
 | **Advanced**       | Process is characterized by organizational standards and controls are proactive                              |
 | **Managed**        | Processes are measured and controlled, proactive approach                                                    |
 | **Optimized**      | Continuous improvement of the processes and procedures, proactive approach for future technology improvement |
-`
+`;
 
 const resources = `
 | Resource                                                                                                                | Description                                                                                                                                                               |
@@ -46,24 +45,25 @@ const resources = `
 | [PKI maturity assessment tools](https://pkic.org/pkimm/tools/)                                                                          | Available tools for the assessment of the PKI implementation and use case.                                                                                                |
 | [Feedback form](https://forms.gle/7CgvuNoxaiTYbtK29)                                                                    | PKI maturity model and assessment feedback form.                                                                                                                          |
 | [PKI maturity model community discussion](https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm) | Ideas, questions, or feedback that you want to share or discuss related to the PKI maturity model.                                                                        |
-`
-
+`;
 
 export const Overview: React.FC<OverviewProps> = () => {
-    return (
-        <div className="pkimm-overview">
-            <div className="pkimm-overview-header">
-                <h1>PKI Maturity Model (PKIMM) Self-Assessment</h1>
-                <ReactMarkdown>{overview}</ReactMarkdown>
+  return (
+    <div className="pkimm-overview">
+      <div className="pkimm-overview-header">
+        <h1>PKI Maturity Model (PKIMM) Self-Assessment</h1>
+        <ReactMarkdown>{overview}</ReactMarkdown>
 
-                <h1>What is PKI Maturity Model?</h1>
-                <ReactMarkdown>{pkimm}</ReactMarkdown>
-                <ReactMarkdown>{maturityLevels}</ReactMarkdown>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownTable}</ReactMarkdown>
+        <h1>What is PKI Maturity Model?</h1>
+        <ReactMarkdown>{pkimm}</ReactMarkdown>
+        <ReactMarkdown>{maturityLevels}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {markdownTable}
+        </ReactMarkdown>
 
-                <h1>Resources</h1>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{resources}</ReactMarkdown>
-            </div>
-        </div>
-    );
+        <h1>Resources</h1>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{resources}</ReactMarkdown>
+      </div>
+    </div>
+  );
 };
