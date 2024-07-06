@@ -27,6 +27,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
     applicability: true,
   };
 
+  const version = "0.0.1";
   const [data, setData] = useState<AssessmentData | null>(null);
   const [progress, setProgress] = useState<Record<string, ProgressData>>({});
   const [currentTab, setCurrentTab] = useState<string | null>(null);
@@ -173,6 +174,12 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
         data.modules,
         progress,
       );
+      const url = generateURL(
+        progress,
+        assessmentName,
+        assessorName,
+        useCaseDescription,
+      );
       exportToPDF(
         progress,
         chartRef.current,
@@ -182,6 +189,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
         assessmentName,
         assessorName,
         useCaseDescription,
+        url,
+        version,
       );
     }
   };
