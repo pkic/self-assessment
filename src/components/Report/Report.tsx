@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ModuleData, ProgressData } from "../../types/types";
+import { ModuleData, ProgressData, EmailData } from "../../types/types";
 import MaturityWidget from "../MaturityWidget/MaturityWidget";
 import ShareModal from "../ShareModal/ShareModal";
 import { generateURL } from "../../utils/urlGenerator";
@@ -11,6 +11,7 @@ import "./Report.module.scss";
 
 interface OverviewProps {
   modules: ModuleData[];
+  email: EmailData | null;
   progress: Record<string, ProgressData>;
   assessmentName: string;
   assessorName: string;
@@ -26,6 +27,7 @@ interface OverviewProps {
 
 export const Report: React.FC<OverviewProps> = ({
   modules,
+  email,
   progress,
   assessmentName,
   assessorName,
@@ -54,24 +56,19 @@ export const Report: React.FC<OverviewProps> = ({
   };
 
   const handleSendEmail = () => {
+    if (!email) {
+      console.error("Email data is not available.");
+      return;
+    }
+
     const progressUrl = generateURL(
       progress,
       assessmentName,
       assessorName,
       useCaseDescription,
     );
-    const subject = "PKI Maturity Model (PKIMM) Self-Assessment";
-    const body = `
-Below you find a link to your PKI Maturity Model (PKIMM) Self-Assessment. This link allows you to continue the assessment at a later stage. You can also export the results to PDF.
-
-If you have any questions about the PKI Maturity Model, please reach out to our community at https://pkic.org/discussions.
-
-Assessment URL:
-${progressUrl}
-
-Kind regards,
-The PKI Maturity Model Working Group of the PKI Consortium
-`;
+    const subject = email.subject;
+    const body = email.body.replace("${progressUrl}", progressUrl);
 
     const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
@@ -162,7 +159,9 @@ The PKI Maturity Model Working Group of the PKI Consortium
 
       <div className="pkimm-actions-container">
         <button onClick={handleShare}>Share Progress</button>
-        <button onClick={handleSendEmail}>Send Email</button>
+        {email?.enabled && (
+          <button onClick={handleSendEmail}>Send Email</button>
+        )}
         {/*<button onClick={onExportYAML}>Export to YAML</button>*/}
         <button onClick={onExportPDF}>Export to PDF</button>
         <button onClick={onReset}>Reset</button>

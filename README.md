@@ -15,6 +15,7 @@ Then, add the `<self-assessment>` tag to your HTML file.
 ```html
 <self-assessment
   dataurl="https://pkic.github.io/self-assessment/<version>/assessment-data.yaml"
+  configurl="https://pkic.github.io/self-assessment/<version>/config.yaml"
 ></self-assessment>
 ```
 
@@ -39,6 +40,45 @@ npm run start
 ```
 
 The development server will be available at `http://localhost:9000`. You can use [`index.html`](src/public/index.html) and [`assessment-data.yaml`](src/public/assessment-data.yaml) in the [`src/public`](src/public) directory to test the component.
+
+## Configuration
+
+The component requires two configuration files: `assessment-data.yaml` and `config.yaml`. Strings supports markdown format.
+
+### `assessment-data.yaml`
+
+The `assessment-data.yaml` file contains the PKI maturity modules with categories and self-assessment maturity levels:
+
+| Key                                           | Description                       |
+| --------------------------------------------- | --------------------------------- |
+| `modules`                                     | List of PKI maturity modules      |
+| `modules[].id`                                | Module ID                         |
+| `modules[].name`                              | Module name                       |
+| `modules[].description`                       | Module description                |
+| `modules[].categories`                        | List of categories for the module |
+| `modules[].categories[].id`                   | Category ID                       |
+| `modules[].categories[].weight`               | Category weight                   |
+| `modules[].categories[].name`                 | Category name                     |
+| `modules[].categories[].description`          | Category description              |
+| `modules[].categories[].levels`               | List of self-assessment levels    |
+| `modules[].categories[].levels[].number`      | Level number                      |
+| `modules[].categories[].levels[].name`        | Level name                        |
+| `modules[].categories[].levels[].description` | Level description                 |
+
+JSON schema for `assessment-data.yaml` can be found [here](src/public/assessment-data.schema.json).
+
+### `config.yaml`
+
+The `config.yaml` file contains the configuration data for the component:
+
+| Key             | Description                             |
+| --------------- | --------------------------------------- |
+| `overview.data` | Overview of the tool in markdown format |
+| `email.enabled` | Enable sharing progress through email   |
+| `email.subject` | Email subject                           |
+| `email.body`    | Email body                              |
+
+JSON schema for `config.yaml` can be found [here](src/public/config.schema.json).
 
 ## Customization
 
