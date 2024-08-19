@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "required": [],
+  "properties": {
+    "overview": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "data": {
+          "type": "string"
+        }
+      }
+    },
+    "email": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

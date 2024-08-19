@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "required": ["modules"],
+  "properties": {
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "categories"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[GMOR]$"
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^(Governance|Management|Operations|Resources)$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "weight", "name", "description", "levels"],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "weight": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "levels": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["number", "name", "description"],
+                    "properties": {
+                      "number": {
+                        "type": "number"
+                      },
+                      "name": {
+                        "type": "string",
+                        "pattern": "^(1 - Initial|2 - Basic|3 - Advanced|4 - Managed|5 - Optimized)$"
+                      },
+                      "description": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -7,7 +7,13 @@ import MaturityWidget from "../MaturityWidget/MaturityWidget"; // Import Maturit
 import { yamlParser } from "../../utils/yamlParser";
 import { generateURL, exportToYAML } from "../../utils/urlGenerator";
 import { exportToPDF } from "../../utils/pdfGenerator";
-import { AssessmentData, ProgressData } from "../../types/types";
+import {
+  AssessmentData,
+  ProgressData,
+  ConfigData,
+  EmailData,
+  OverviewData,
+} from "../../types/types";
 import LevelResult from "../../enums/LevelResult";
 import {
   calculateOverallMaturityLevel,
@@ -17,9 +23,10 @@ import "./Assessment.module.scss";
 
 interface AssessmentProps {
   src: string | null;
+  config: string | null;
 }
 
-export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
+export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
   const defaultProgressData = {
     level: 1,
     result: LevelResult[1],
@@ -29,6 +36,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
 
   const version = "0.0.1";
   const [data, setData] = useState<AssessmentData | null>(null);
+  const [emailData, setEmailData] = useState<EmailData | null>(null);
+  const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
   const [progress, setProgress] = useState<Record<string, ProgressData>>({});
   const [currentTab, setCurrentTab] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,7 +70,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
           setCurrentTab("report");
         } catch (error) {
           console.error("Error decoding progress from URL:", error);
-          if (initialData) setProgress(initProgress(initialData));
+          if (initialData)
+            setProgress(initProgress(initialData as AssessmentData));
         }
       } else {
         const storedData = localStorage.getItem(STORAGE_KEY);
@@ -74,20 +84,35 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
           setUseCaseDescription(useCaseDescription);
           setCurrentTab("report");
         } else {
-          if (initialData) setProgress(initProgress(initialData));
+          if (initialData)
+            setProgress(initProgress(initialData as AssessmentData));
         }
       }
 
-      if (initialData) setData(initialData);
+      if (initialData) setData(initialData as AssessmentData);
 
       if (assessmentName) setAssessmentName(atob(assessmentName));
       if (assessorName) setAssessorName(atob(assessorName));
       if (useCaseDescription) setUseCaseDescription(atob(useCaseDescription));
+
+      if (config) {
+        fetch(config)
+          .then((response) => response.text())
+          .then((yamlText) => {
+            const parsedConfig = yamlParser(yamlText);
+            setEmailData((parsedConfig as ConfigData).email);
+            setOverviewData((parsedConfig as ConfigData).overview);
+            console.log("Parsed Config:", parsedConfig); // Debugging line
+          })
+          .catch((error) =>
+            console.error("Error fetching YAML config:", error),
+          );
+      }
     };
 
     // Handle the promise returned from loadData
     loadData().catch((error) => console.error("Error loading data:", error));
-  }, [src]);
+  }, [src, config]);
 
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -334,7 +359,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
         <div className="pkimm-categories-container">
           {currentTab === "overview" && data && (
             <div>
-              <Overview />
+              <Overview overviewData={overviewData} />
               {data.modules.length > 0 && (
                 <button
                   className="continue-button"
@@ -377,6 +402,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src }) => {
           {currentTab === "report" && data && (
             <Report
               modules={data.modules}
+              email={emailData}
               progress={progress}
               assessmentName={assessmentName}
               assessorName={assessorName}

@@ -11,10 +11,11 @@ class SelfAssessmentComponent extends HTMLElement {
 
   connectedCallback() {
     const dataUrl = this.getAttribute("dataUrl");
+    const configUrl = this.getAttribute("configUrl");
     if (!this.root) {
       this.root = createRoot(this);
     }
-    this.root.render(<App dataUrl={dataUrl} />);
+    this.root.render(<App dataUrl={dataUrl} configUrl={configUrl} />);
   }
 
   disconnectedCallback() {

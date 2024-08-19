@@ -29,3 +29,18 @@ export interface ProgressData {
   description: string;
   applicability: boolean;
 }
+
+export interface EmailData {
+  enabled: boolean;
+  subject: string;
+  body: string;
+}
+
+export interface OverviewData {
+  data: string;
+}
+
+export interface ConfigData {
+  email: EmailData;
+  overview: OverviewData;
+}

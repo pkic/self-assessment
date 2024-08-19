@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ModuleData, ProgressData } from "../../types/types";
+import { ModuleData, ProgressData, EmailData } from "../../types/types";
 import MaturityWidget from "../MaturityWidget/MaturityWidget";
 import ShareModal from "../ShareModal/ShareModal";
 import { generateURL } from "../../utils/urlGenerator";
@@ -11,6 +11,7 @@ import "./Report.module.scss";
 
 interface OverviewProps {
   modules: ModuleData[];
+  email: EmailData | null;
   progress: Record<string, ProgressData>;
   assessmentName: string;
   assessorName: string;
@@ -26,6 +27,7 @@ interface OverviewProps {
 
 export const Report: React.FC<OverviewProps> = ({
   modules,
+  email,
   progress,
   assessmentName,
   assessorName,
@@ -51,6 +53,26 @@ export const Report: React.FC<OverviewProps> = ({
     );
     setShareURL(url);
     setIsModalOpen(true);
+  };
+
+  const handleSendEmail = () => {
+    if (!email) {
+      console.error("Email data is not available.");
+      return;
+    }
+
+    const progressUrl = generateURL(
+      progress,
+      assessmentName,
+      assessorName,
+      useCaseDescription,
+    );
+    const subject = email.subject;
+    const body = email.body.replace("${progressUrl}", progressUrl);
+
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    window.open(mailtoLink, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -137,6 +159,9 @@ export const Report: React.FC<OverviewProps> = ({
 
       <div className="pkimm-actions-container">
         <button onClick={handleShare}>Share Progress</button>
+        {email?.enabled && (
+          <button onClick={handleSendEmail}>Send Email</button>
+        )}
         {/*<button onClick={onExportYAML}>Export to YAML</button>*/}
         <button onClick={onExportPDF}>Export to PDF</button>
         <button onClick={onReset}>Reset</button>
