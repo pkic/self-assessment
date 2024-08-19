@@ -46,6 +46,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
   const [useCaseDescription, setUseCaseDescription] = useState("");
   const chartRef = useRef<HTMLDivElement>(null);
 
+  const STORAGE_KEY = "assessmentData";
+
   useEffect(() => {
     const urlHash = new URLSearchParams(window.location.hash.substring(1));
     const encodedProgress = urlHash.get("progress");
@@ -53,47 +55,90 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
     const assessorName = urlHash.get("assessorName");
     const useCaseDescription = urlHash.get("useCaseDescription");
 
-    if (src) {
-      fetch(src)
-        .then((response) => response.text())
-        .then((yamlText) => {
-          const parsedData = yamlParser(yamlText);
-          setData(parsedData as AssessmentData);
-          setCurrentTab("overview"); // Set "Overview" as the default tab
-          if (encodedProgress) {
-            try {
-              const decodedProgress = JSON.parse(atob(encodedProgress));
-              // console.log('Decoded Progress:', decodedProgress); // Debugging line
-              setProgress(decodedProgress);
-              setCurrentTab("report"); // Set "Report" as the default tab (if progress is present
-            } catch (error) {
-              console.error("Error decoding progress from URL:", error);
-              setProgress(initProgress(parsedData as AssessmentData));
-            }
-          } else {
-            setProgress(initProgress(parsedData as AssessmentData));
-            // console.log('Progress initialized:', progress); // Debugging line
-          }
-          if (assessmentName) setAssessmentName(atob(assessmentName));
-          if (assessorName) setAssessorName(atob(assessorName));
-          if (useCaseDescription)
-            setUseCaseDescription(atob(useCaseDescription));
-        })
-        .catch((error) => console.error("Error fetching YAML data:", error));
-    }
+    const loadData = async () => {
+      let initialData;
+      if (src) {
+        const response = await fetch(src);
+        const yamlText = await response.text();
+        initialData = yamlParser(yamlText);
+      }
+      setCurrentTab("overview");
+      if (encodedProgress) {
+        try {
+          const decodedProgress = JSON.parse(atob(encodedProgress));
+          setProgress(decodedProgress);
+          setCurrentTab("report");
+        } catch (error) {
+          console.error("Error decoding progress from URL:", error);
+          if (initialData) setProgress(initProgress(initialData as AssessmentData));
+        }
+      } else {
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+          const { progress, assessmentName, assessorName, useCaseDescription } =
+            JSON.parse(storedData);
+          setProgress(progress);
+          setAssessmentName(assessmentName);
+          setAssessorName(assessorName);
+          setUseCaseDescription(useCaseDescription);
+          setCurrentTab("report");
+        } else {
+          if (initialData) setProgress(initProgress(initialData as AssessmentData));
+        }
+      }
 
-    if (config) {
-      fetch(config)
-        .then((response) => response.text())
-        .then((yamlText) => {
-          const parsedConfig = yamlParser(yamlText);
-          setEmailData((parsedConfig as ConfigData).email);
-          setOverviewData((parsedConfig as ConfigData).overview);
-          console.log("Parsed Config:", parsedConfig); // Debugging line
-        })
-        .catch((error) => console.error("Error fetching YAML config:", error));
-    }
+      if (initialData) setData(initialData as AssessmentData);
+
+      if (assessmentName) setAssessmentName(atob(assessmentName));
+      if (assessorName) setAssessorName(atob(assessorName));
+      if (useCaseDescription) setUseCaseDescription(atob(useCaseDescription));
+
+      if (config) {
+        fetch(config)
+            .then((response) => response.text())
+            .then((yamlText) => {
+              const parsedConfig = yamlParser(yamlText);
+              setEmailData((parsedConfig as ConfigData).email);
+              setOverviewData((parsedConfig as ConfigData).overview);
+              console.log("Parsed Config:", parsedConfig); // Debugging line
+            })
+            .catch((error) => console.error("Error fetching YAML config:", error));
+      }
+    };
+
+    // Handle the promise returned from loadData
+    loadData().catch((error) => console.error("Error loading data:", error));
   }, [src, config]);
+
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY) {
+        const storedData = JSON.parse(event.newValue || "{}");
+        setProgress(storedData.progress);
+        setAssessmentName(storedData.assessmentName);
+        setAssessorName(storedData.assessorName);
+        setUseCaseDescription(storedData.useCaseDescription);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (data) {
+      const saveData = {
+        progress,
+        assessmentName,
+        assessorName,
+        useCaseDescription,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+    }
+  }, [progress, assessmentName, assessorName, useCaseDescription, data]);
 
   function initProgress(
     parsedData: AssessmentData | null,
@@ -103,7 +148,6 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
         (acc, module) => {
           module.categories.map((category) => {
             const progressData = { ...defaultProgressData };
-            // change the description to the description of the level 1 for the category
             const levelOne = category.levels.find(
               (level) => level.number === 1,
             );
@@ -129,7 +173,6 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
       [`${moduleId}.${categoryId}`]: {
         level,
         result: LevelResult[level] || defaultProgressData.result,
-        // change the description to the description of the selected level
         description:
           data?.modules
             .find((module) => module.id === moduleId)
@@ -141,7 +184,6 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
           defaultProgressData.applicability,
       },
     }));
-    // console.log('Progress:', progress); // Debugging line
   };
 
   const handleApplicabilityChange = (moduleId: string, categoryId: string) => {
@@ -177,8 +219,12 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
       assessorName,
       useCaseDescription,
     );
-    navigator.clipboard.writeText(url);
-    alert("Progress URL copied to clipboard!");
+    navigator.clipboard
+      .writeText(url)
+      .then(() => alert("Progress URL copied to clipboard!"))
+      .catch((error) =>
+        console.error("Error copying URL to clipboard:", error),
+      );
   };
 
   const handleExportYAML = () => {
@@ -212,23 +258,19 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
         useCaseDescription,
         url,
         version,
-      );
+      ).catch((error) => console.error("Error exporting to PDF:", error));
     }
   };
 
   const handleTabClick = (tab: string) => {
     setCurrentTab(tab);
     setIsMenuOpen(false); // Close the menu when a tab is clicked
-    //window.scrollTo(0, 0); // Scroll to the top of the page
     const scrollQuerySelector = getComputedStyle(
       document.documentElement,
     ).getPropertyValue("--pkimm-scroll-query-selector");
-    //console.log('Scroll Query Selector:', scrollQuerySelector);
     if (scrollQuerySelector === "window") {
-      //console.log('Scrolling to the top of the window');
       window.scrollTo(0, 0);
     } else {
-      //console.log('Scrolling to the top of the element');
       const element = document.querySelector(scrollQuerySelector);
       if (element) {
         element.scrollTo(0, 0);
@@ -248,7 +290,6 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
     setUseCaseDescription(description);
   };
 
-  // convert data to array of string with module id and question id
   const chartLabels =
     data?.modules.reduce((acc, module) => {
       module.categories.forEach((category) => {
