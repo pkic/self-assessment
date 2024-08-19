@@ -70,7 +70,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
           setCurrentTab("report");
         } catch (error) {
           console.error("Error decoding progress from URL:", error);
-          if (initialData) setProgress(initProgress(initialData as AssessmentData));
+          if (initialData)
+            setProgress(initProgress(initialData as AssessmentData));
         }
       } else {
         const storedData = localStorage.getItem(STORAGE_KEY);
@@ -83,7 +84,8 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
           setUseCaseDescription(useCaseDescription);
           setCurrentTab("report");
         } else {
-          if (initialData) setProgress(initProgress(initialData as AssessmentData));
+          if (initialData)
+            setProgress(initProgress(initialData as AssessmentData));
         }
       }
 
@@ -95,14 +97,16 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
 
       if (config) {
         fetch(config)
-            .then((response) => response.text())
-            .then((yamlText) => {
-              const parsedConfig = yamlParser(yamlText);
-              setEmailData((parsedConfig as ConfigData).email);
-              setOverviewData((parsedConfig as ConfigData).overview);
-              console.log("Parsed Config:", parsedConfig); // Debugging line
-            })
-            .catch((error) => console.error("Error fetching YAML config:", error));
+          .then((response) => response.text())
+          .then((yamlText) => {
+            const parsedConfig = yamlParser(yamlText);
+            setEmailData((parsedConfig as ConfigData).email);
+            setOverviewData((parsedConfig as ConfigData).overview);
+            console.log("Parsed Config:", parsedConfig); // Debugging line
+          })
+          .catch((error) =>
+            console.error("Error fetching YAML config:", error),
+          );
       }
     };
 
