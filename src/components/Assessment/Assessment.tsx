@@ -20,6 +20,7 @@ import {
   calculateModuleMaturityLevels,
 } from "../../utils/maturityCalculations"; // Import utilities
 import "./Assessment.module.scss";
+import { APP_VERSION } from "../../version";
 
 interface AssessmentProps {
   src: string | null;
@@ -34,7 +35,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
     applicability: true,
   };
 
-  const version = "0.0.1";
+  const version = APP_VERSION;
   const [data, setData] = useState<AssessmentData | null>(null);
   const [emailData, setEmailData] = useState<EmailData | null>(null);
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
@@ -418,6 +419,7 @@ export const Assessment: React.FC<AssessmentProps> = ({ src, config }) => {
           )}
         </div>
         <div className="pkimm-chart-container" ref={chartRef}>
+          Version: {APP_VERSION}
           {data && (
             <SpiderChart
               modules={data.modules}
