@@ -1,6 +1,10 @@
 {
   "name": "self-assessment",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pkic/self-assessment.git"
+  },
   "main": "dist/bundle.js",
   "scripts": {
     "start": "webpack serve --mode development",
