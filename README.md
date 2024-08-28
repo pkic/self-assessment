@@ -50,7 +50,7 @@ The component requires two configuration files: `assessment-data.yaml` and `conf
 The `assessment-data.yaml` file contains the PKI maturity modules with categories and self-assessment maturity levels:
 
 | Key                                           | Description                       |
-|-----------------------------------------------|-----------------------------------|
+| --------------------------------------------- | --------------------------------- |
 | `modules`                                     | List of PKI maturity modules      |
 | `modules[].id`                                | Module ID                         |
 | `modules[].name`                              | Module name                       |
@@ -72,7 +72,7 @@ JSON schema for `assessment-data.yaml` can be found [here](src/public/assessment
 The `config.yaml` file contains the configuration data for the component:
 
 | Key             | Description                             |
-|-----------------|-----------------------------------------|
+| --------------- | --------------------------------------- |
 | `overview.data` | Overview of the tool in markdown format |
 | `email.enabled` | Enable sharing progress through email   |
 | `email.subject` | Email subject                           |
