@@ -7,7 +7,7 @@ This is a web component that allows users to self-assess their organization's PK
 To use the component, include the following script in your HTML file. Replace `<version>` with the version number you want to use.
 
 ```html
-<script src="https://pkic.github.io/self-assessment/<version>/bundle.js"></script>
+<script src="https://pkic.github.io/self-assessment/<version>/self-assessment.js"></script>
 ```
 
 Then, add the `<self-assessment>` tag to your HTML file.
@@ -82,7 +82,7 @@ JSON schema for `config.yaml` can be found [here](src/public/config.schema.json)
 
 ## Customization
 
-You can customize the styles of the component by adding the following CSS to your HTML file. Default values are shown below. See [`index.module.scss`](src/components/index.module.scss) for more details.
+You can customize the styles of the component by adding the following CSS to your HTML file. Default values are shown below. See [`index.module.scss`](src/index.module.scss) for more details.
 
 ```css
 :root {
