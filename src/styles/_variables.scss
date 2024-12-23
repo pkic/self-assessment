@@ -1,11 +1,13 @@
+@use "sass:color";
+
 $primary-color: rgb(25, 135, 84);
 $secondary-color: rgb(237, 125, 49);
 $tertiary-color: rgb(90, 155, 213);
 
-$primary-color-hover: darken($primary-color, 10%);
-$primary-color-lighter: lighten($primary-color, 40%);
+$primary-color-hover: color.adjust($primary-color, $lightness: -10%);
+$primary-color-lighter: color.adjust($primary-color, $lightness: 40%);
 
-$secondary-color-lighter: lighten($secondary-color, 20%);
+$secondary-color-lighter: color.adjust($secondary-color, $lightness: 20%);
 
 $maturity-level-1: #a82fd0;
 $maturity-level-2: #d0572f;
@@ -17,3 +19,5 @@ $background-color: #ffffff;
 
 $text-color-dark: #000000;
 $text-color-light: #ffffff;
+
+@forward "sass:color";
