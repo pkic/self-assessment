@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
     margin: 5,
     textAlign: "center",
     color: "#000000",
-    borderRadius: 0,
   },
   detailsTitle: {
     fontSize: 16,
