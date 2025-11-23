@@ -1,7 +1,7 @@
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import github from "eslint-plugin-github";
 import typescriptParser from "@typescript-eslint/parser";
-import path from "path";
+import path from "node:path";
 
 export default [
   {
