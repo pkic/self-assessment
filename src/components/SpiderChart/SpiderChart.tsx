@@ -14,7 +14,7 @@ import { ModuleData, ProgressData, ExtensionData } from "../../types/types";
 import {
   calculateOverallMaturityLevel,
   calculateExtensionMaturityLevels,
-  calculateExtensionWeightedPKIMMScore,
+  calculateBlendedLevel,
 } from "../../utils/maturityCalculations";
 import LevelResult from "../../enums/LevelResult";
 
@@ -130,15 +130,17 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     if (enabledExtensions.includes(ext.extension.id)) {
       const extData = labels.map((label) => {
         const [moduleId, categoryId] = label.split(".");
-        const extKey = `${ext.extension.id}.${moduleId}.${categoryId}`;
-        const coreKey = `${moduleId}.${categoryId}`;
-        if (progress[extKey]) {
-          if (
-            !progress[extKey].applicability ||
-            progress[coreKey]?.applicability === false
-          )
-            return 0;
-          return progress[extKey].level || 0;
+        const module = modules.find((m) => m.id === moduleId);
+        const category = module?.categories.find((c) => c.id === categoryId);
+
+        if (module && category) {
+          const blendedLevel = calculateBlendedLevel(
+            moduleId,
+            category,
+            ext,
+            progress,
+          );
+          return blendedLevel === -1 ? 0 : Math.floor(blendedLevel);
         }
         return 0;
       });
