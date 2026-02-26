@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAssessmentTarget } from '../../contexts/AssessmentTargetContext';
-import styles from './Assessment.module.scss';
+import "./Assessment.module.scss";
 
 export const AssessmentHeader: React.FC = () => {
   const { target, setTarget, availableExtensions, enabledExtensions, getCurrentTargetName } = useAssessmentTarget();
@@ -30,7 +30,7 @@ export const AssessmentHeader: React.FC = () => {
         title="Quick switch assessment target"
       >
         <span className="target-dot"></span>
-        Assessing: {name}
+        <span className="assessing-label">Assessing: </span>{name}
         <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
       </div>
 

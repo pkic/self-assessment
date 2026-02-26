@@ -5,9 +5,7 @@ import {
   ExtensionCategoryData,
 } from "../../types/types";
 import ReactMarkdown from "react-markdown";
-import styles from "./Category.module.scss";
-
-console.log("Styles:", styles); // Add this line
+import "./Category.module.scss";
 
 interface CategoryProps {
   moduleId: string;
@@ -47,7 +45,7 @@ export const Category: React.FC<CategoryProps> = ({
   const description = category.description;
 
   return (
-    <div className="pkimm-category-card">
+    <div className={`pkimm-category-card ${extCategory ? 'extension' : ''}`}>
       <div className="pkimm-category-header">
         <div className="pkimm-category-text">
           <label className="pkimm-toggle-switch">
@@ -91,8 +89,10 @@ export const Category: React.FC<CategoryProps> = ({
                   onLevelChange(moduleId, category.id, level.number, extensionId)
                 }
               >
-                <strong>{level.name}</strong>:{" "}
-                <ReactMarkdown>{level.description}</ReactMarkdown>
+                <div className="pkimm-level-name">{level.name}</div>
+                <div className="pkimm-level-description">
+                  <ReactMarkdown>{level.description}</ReactMarkdown>
+                </div>
               </div>
             ))}
           </div>

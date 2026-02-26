@@ -131,7 +131,8 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
       </div>
 
       <h3>Assessment Details</h3>
-      <table>
+      <div className="pkimm-report-content">
+        <table>
         <thead>
           <tr>
             <th>#</th>
@@ -142,67 +143,72 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
           </tr>
         </thead>
         <tbody>
-          {modules.map((module) =>
-            module.categories.map((category) => {
-              const coreKey = `${module.id}.${category.id}`;
-              const extKey = isExtensionMode ? `${selectedExtensionId}.${module.id}.${category.id}` : coreKey;
-              const displayKey = isExtensionMode ? extKey : coreKey;
+          {modules.map((module) => {
+            const extModule = activeExtension?.relevance.modules.find((m) => m.id === module.id);
+            return module.categories
+              .map((category) => {
+                const coreKey = `${module.id}.${category.id}`;
+                const extKey = isExtensionMode ? `${selectedExtensionId}.${module.id}.${category.id}` : coreKey;
+                const displayKey = isExtensionMode ? extKey : coreKey;
+                const hasRelevance = !!extModule?.categories.find((c) => c.id === category.id);
 
-              return (
-                <tr key={displayKey}>
-                  <td>{module.id}.{category.id}</td>
-                  <td>{module.name}</td>
-                  <td>{category.name}</td>
-                  <td>
-                    {isExtensionMode && activeExtension ? (
-                      (() => {
-                        const effectiveWeight = getEffectiveWeight(module.id, category, [activeExtension], [activeExtension.extension.id]);
-                        return effectiveWeight !== category.weight ? (
-                          <span>
-                            <strong>{effectiveWeight}</strong>
-                          </span>
-                        ) : (
-                          category.weight
-                        );
-                      })()
-                    ) : (
-                      category.weight
-                    )}
-                  </td>
-                  <td 
-                    style={{ 
-                      color: `var(--pkimm-maturity-level-${
-                        isExtensionMode && activeExtension 
-                          ? Math.floor(calculateBlendedLevel(module.id, category, activeExtension, progress)) 
-                          : (progress[coreKey]?.level || 0)
-                      })`, 
-                      fontWeight: "bold" 
-                    }}
-                  >
-                    {isExtensionMode && activeExtension ? (
-                      (() => {
-                        const blendedLevel = calculateBlendedLevel(module.id, category, activeExtension, progress);
-                        if (blendedLevel === -1) {
-                          return LevelResult[-1];
-                        }
-                        const levelNum = Math.floor(blendedLevel);
-                        return LevelResult[levelNum];
-                      })()
-                    ) : (
-                      progress[coreKey]?.result || "Not Assessed"
-                    )}
-                  </td>
-                </tr>
-              );
-            })
-          )}
+                return (
+                  <tr key={displayKey}>
+                    <td>{module.id}.{category.id}</td>
+                    <td>{module.name}</td>
+                    <td>{category.name}</td>
+                    <td>
+                      {isExtensionMode && activeExtension ? (
+                        (() => {
+                          const effectiveWeight = getEffectiveWeight(module.id, category, [activeExtension], [activeExtension.extension.id]);
+                          return effectiveWeight !== category.weight ? (
+                            <span>
+                              <strong>{effectiveWeight}</strong>
+                            </span>
+                          ) : (
+                            category.weight
+                          );
+                        })()
+                      ) : (
+                        category.weight
+                      )}
+                    </td>
+                    <td 
+                      style={{ 
+                        color: `var(--pkimm-maturity-level-${
+                          isExtensionMode && activeExtension && hasRelevance
+                            ? Math.floor(calculateBlendedLevel(module.id, category, activeExtension, progress)) 
+                            : (progress[coreKey]?.level || 0)
+                        })`, 
+                        fontWeight: "bold" 
+                      }}
+                    >
+                      {isExtensionMode && activeExtension && hasRelevance ? (
+                        (() => {
+                          const blendedLevel = calculateBlendedLevel(module.id, category, activeExtension, progress);
+                          if (blendedLevel === -1) {
+                            return LevelResult[-1];
+                          }
+                          const levelNum = Math.floor(blendedLevel);
+                          return LevelResult[levelNum];
+                        })()
+                      ) : (
+                        progress[coreKey]?.result || "Not Assessed"
+                      )}
+                    </td>
+                  </tr>
+                );
+              });
+          })}
         </tbody>
-      </table>
+        </table>
+      </div>
 
       {isExtensionMode && activeExtension && (
         <>
           <h3>Overlay Details</h3>
-          <table>
+          <div className="pkimm-report-content">
+            <table>
             <thead>
               <tr>
                 <th>#</th>
@@ -272,7 +278,8 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
                 }),
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </>
       )}
 

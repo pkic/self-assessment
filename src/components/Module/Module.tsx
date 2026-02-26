@@ -54,11 +54,23 @@ export const Module: React.FC<ModuleProps> = ({
                           nextSectionId === 'M' ? 'Management' :
                           nextSectionId === 'O' ? 'Operations' : 'Resources';
 
-  if (isExtensionMode && !extModule) {
+  const categoriesToRender = isExtensionMode && activeExtension
+    ? module.categories.filter(category =>
+        activeExtension.relevance.modules
+          .find(m => m.id === module.id)
+          ?.categories.find(c => c.id === category.id)
+      )
+    : module.categories;
+
+  if (isExtensionMode && categoriesToRender.length === 0) {
     return (
       <div className="pkimm-module">
+        <div className="extension-module-header">
+          <h3>Module {module.name}</h3>
+          <span className="extension-badge">{activeExtension?.extension.name} Active</span>
+        </div>
         <div className="pkimm-module-description">
-          <h3>No extension assessment data for this module ({activeExtension?.extension.name}).</h3>
+          <p>No categories in this module are relevant to the <strong>{activeExtension?.extension.name}</strong> extension.</p>
         </div>
         <button className="continue-button" onClick={() => onNextSection(nextSectionId)}>
           Continue to {nextSectionName}
@@ -70,24 +82,30 @@ export const Module: React.FC<ModuleProps> = ({
   return (
     <div className="pkimm-module">
       <div className="pkimm-module-description">
-        {isExtensionMode ? <h3>Module {module.name} ({activeExtension?.extension.name})</h3> : <ReactMarkdown>{module.description}</ReactMarkdown>}
+        {isExtensionMode ? (
+          <div className="extension-module-header">
+            <h3>Module {module.name}</h3>
+            <span className="extension-badge">{activeExtension?.extension.name} Active</span>
+          </div>
+        ) : <ReactMarkdown>{module.description}</ReactMarkdown>}
       </div>
-      {module.categories.map((category) => {
-        const extCategory = extModule?.categories.find(c => c.id === category.id);
-        
-        return (
-          <Category
-            key={category.id}
-            moduleId={module.id}
-            category={category}
-            extCategory={extCategory}
-            extensionId={extensionId}
-            progress={progress}
-            onLevelChange={onLevelChange}
-            onApplicabilityChange={onApplicabilityChange}
-          />
-        );
-      })}
+      {categoriesToRender
+        .map((category) => {
+          const extCategory = extModule?.categories.find((c) => c.id === category.id);
+
+          return (
+            <Category
+              key={category.id}
+              moduleId={module.id}
+              category={category}
+              extCategory={extCategory}
+              extensionId={extensionId}
+              progress={progress}
+              onLevelChange={onLevelChange}
+              onApplicabilityChange={onApplicabilityChange}
+            />
+          );
+        })}
       <button className="continue-button" onClick={() => onNextSection(nextSectionId)}>
         Continue to {nextSectionName}
       </button>

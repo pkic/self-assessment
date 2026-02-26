@@ -1,0 +1,121 @@
+@use "../../styles/main.scss";
+
+.pkimm-extensions-tab {
+  background-color: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--pkimm-shadow-sm);
+  box-sizing: border-box;
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    color: var(--pkimm-text-color-dark);
+  }
+
+  p.description {
+    color: var(--pkimm-text-color-muted);
+    margin-bottom: 2rem;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .extensions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .extension-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background-color: var(--pkimm-surface-color);
+    border: 1px solid var(--pkimm-border-color);
+    border-radius: var(--pkimm-border-radius-md);
+    transition: all 0.2s ease;
+    gap: 1.5rem;
+
+    &:hover {
+      border-color: var(--pkimm-primary-color);
+      box-shadow: var(--pkimm-shadow-sm);
+      transform: translateY(-1px);
+    }
+
+    &.enabled {
+      background-color: rgba(26, 115, 232, 0.02);
+      border-color: rgba(26, 115, 232, 0.3);
+    }
+
+    .extension-info {
+      flex: 1;
+      min-width: 0;
+
+      .extension-name-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.25rem;
+        flex-wrap: wrap;
+
+        h3 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--pkimm-text-color-dark);
+        }
+
+        .extension-version {
+          font-size: 0.8rem;
+          color: var(--pkimm-text-color-muted);
+          background-color: #f1f3f4;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-weight: 500;
+        }
+      }
+
+      .extension-desc {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--pkimm-text-color-muted);
+        line-height: 1.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .extension-actions {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .pkimm-extensions-tab {
+    padding: 1.5rem 1rem;
+
+    .extension-row {
+      padding: 1rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+
+      .extension-desc {
+        white-space: normal;
+        overflow: visible;
+      }
+
+      .extension-actions {
+        align-self: flex-end;
+      }
+    }
+  }
+}

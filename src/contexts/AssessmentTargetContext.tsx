@@ -33,6 +33,7 @@ interface AssessmentTargetProviderProps {
   coreModules: ModuleData[];
   progress: Record<string, ProgressData>;
   enabledExtensions: string[];
+  onTargetChange?: (target: AssessmentTarget) => void;
 }
 
 export const AssessmentTargetProvider: React.FC<AssessmentTargetProviderProps> = ({
@@ -41,8 +42,16 @@ export const AssessmentTargetProvider: React.FC<AssessmentTargetProviderProps> =
   coreModules,
   progress,
   enabledExtensions,
+  onTargetChange,
 }) => {
-  const [target, setTarget] = useState<AssessmentTarget>({ kind: 'original' });
+  const [target, setTargetState] = useState<AssessmentTarget>({ kind: 'original' });
+
+  const setTarget = (newTarget: AssessmentTarget) => {
+    setTargetState(newTarget);
+    if (onTargetChange) {
+      onTargetChange(newTarget);
+    }
+  };
 
   const getModules = () => coreModules;
 

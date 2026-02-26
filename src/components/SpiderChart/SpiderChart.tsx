@@ -93,10 +93,10 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   const labels = chartLabels;
 
   const userData = labels.map((label) => {
-    if (!progress[label].applicability) {
+    if (progress[label] && !progress[label].applicability) {
       return 0;
     }
-    return progress[label].level || 0;
+    return progress[label]?.level || 0;
   });
 
   const maxLevel = 5; // Each question can have a level from 1 to 5

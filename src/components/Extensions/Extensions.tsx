@@ -1,6 +1,7 @@
 import React from "react";
 import { ExtensionData } from "../../types/types";
 import { useAssessmentTarget } from "../../contexts/AssessmentTargetContext";
+import "./Extensions.module.scss";
 
 interface ExtensionsProps {
   extensions: ExtensionData[];
@@ -31,26 +32,43 @@ export const Extensions: React.FC<ExtensionsProps> = ({
   };
 
   return (
-    <div className="pkimm-extensions-tab" style={{ border: '1px solid #ddd', padding: '1rem', marginBottom: '1rem' }}>
+    <div className="pkimm-extensions-tab">
       <h2>Extensions</h2>
-      <p>Select which extensions are enabled. Enabled extensions can be selected in the header context switcher.</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+      <p className="description">
+        Select which extensions are enabled. Enabled extensions can be selected in the header context switcher.
+      </p>
+      <div className="extensions-list">
         {extensions.map((ext) => {
           const id = ext.extension.id;
           const isEnabled = enabledExtensions.includes(id);
           return (
-            <div key={id} style={{ border: '1px solid #e0e0e0', borderRadius: 8, padding: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>{ext.extension.name}</h3>
+            <div 
+              key={id} 
+              className={`extension-row ${isEnabled ? "enabled" : ""}`}
+            >
+              <div className="extension-info">
+                <div className="extension-name-row">
+                  <h3>{ext.extension.name}</h3>
+                  {ext.extension.version && (
+                    <span className="extension-version">
+                      v{ext.extension.version}
+                    </span>
+                  )}
+                </div>
+                <p className="extension-desc">
+                  {ext.extension.description}
+                </p>
+              </div>
+              <div className="extension-actions">
                 <label className="pkimm-toggle-switch">
-                  <input type="checkbox" checked={isEnabled} onChange={() => handleToggle(id)} />
+                  <input 
+                    type="checkbox" 
+                    checked={isEnabled} 
+                    onChange={() => handleToggle(id)} 
+                  />
                   <span className="pkimm-slider"></span>
                 </label>
               </div>
-              {ext.extension.version && (
-                <p style={{ margin: '0.25rem 0', color: '#666' }}>Version: {ext.extension.version}</p>
-              )}
-              <p style={{ marginTop: '0.5rem' }}>{ext.extension.description}</p>
             </div>
           );
         })}
