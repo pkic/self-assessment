@@ -44,6 +44,12 @@
   height: calc(100vh - (70px + var(--pkimm-sticky-top-offset)));
 }
 
+.pkimm-version {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
 .pkimm-tabs {
   display: flex;
   align-items: center; /* Center items vertically */
@@ -74,6 +80,85 @@
     margin-left: auto; /* Push the logo to the right */
     height: 30px; /* Adjust the height as needed */
     margin-right: 1rem; /* Add some right margin */
+  }
+
+  .pkimm-target-badge {
+    padding: 4px 12px;
+    background-color: var(--pkimm-primary-color);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    &.extension {
+      background-color: var(--pkimm-secondary-color);
+    }
+
+    &.interactive {
+      cursor: pointer;
+      &:hover {
+        opacity: 0.9;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      }
+    }
+
+    .target-dot {
+      width: 8px;
+      height: 8px;
+      background-color: white;
+      border-radius: 50%;
+    }
+
+    .dropdown-arrow {
+      font-size: 0.6rem;
+      margin-left: 6px;
+      transition: transform 0.2s ease;
+      &.open {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  .pkimm-target-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .pkimm-target-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 5px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1001;
+    min-width: 220px;
+    overflow: hidden;
+
+    .dropdown-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #333;
+      transition: background 0.2s;
+
+      &:hover {
+        background-color: #f5f5f5;
+      }
+
+      &.active {
+        background-color: rgba(var(--pkimm-primary-color-rgb), 0.1);
+        color: var(--pkimm-primary-color);
+        font-weight: bold;
+      }
+    }
   }
 }
 

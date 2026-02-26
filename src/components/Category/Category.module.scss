@@ -74,4 +74,29 @@
     color: black;
     border-radius: 0px;
   }
+
+  &.extension {
+    background-color: rgba(var(--pkimm-primary-color-rgb), 0.02);
+    
+    &.selected {
+      background-color: rgba(var(--pkimm-primary-color-rgb), 0.15);
+    }
+  }
+}
+
+.pkimm-extension-body {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-left: 4px solid var(--pkimm-primary-color);
+
+  .pkimm-extension-guidance,
+  .pkimm-extension-assessment {
+    margin-bottom: 0.5rem;
+
+    strong {
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+  }
 }

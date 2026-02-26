@@ -48,6 +48,72 @@
     }
   }
 
+  .pkimm-assessment-target-selector {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+
+    h3 {
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    .target-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+
+      .target-option {
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+
+        &:hover {
+          border-color: var(--pkimm-primary-color);
+        }
+
+        &.selected {
+          border-color: var(--pkimm-primary-color);
+          background-color: rgba(var(--pkimm-primary-color-rgb), 0.05);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+
+          h4 {
+            margin: 0;
+            color: var(--pkimm-primary-color);
+          }
+        }
+
+        p {
+          margin: 0;
+          font-size: 0.9rem;
+          color: #333;
+          flex-grow: 1;
+
+          &.warning {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 0.5rem;
+          }
+        }
+      }
+    }
+  }
+
   .pkimm-overview-actions {
     display: flex;
     gap: 15px;

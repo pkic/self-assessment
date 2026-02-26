@@ -1895,7 +1895,7 @@ export const exportExtensionPDF = async (
   const url = URL.createObjectURL(pdfBlob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${extension.extension.id}-report.pdf`;
+  a.download = `${extension.extension.id}-PKIMM-self-assessment-report.pdf`;
   a.click();
   URL.revokeObjectURL(url);
 };

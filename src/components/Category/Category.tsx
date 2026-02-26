@@ -12,6 +12,8 @@ console.log("Styles:", styles); // Add this line
 interface CategoryProps {
   moduleId: string;
   category: CategoryData;
+  extCategory?: ExtensionCategoryData;
+  extensionId?: string;
   progress: Record<string, ProgressData>;
   onLevelChange: (
     moduleId: string,
@@ -29,16 +31,22 @@ interface CategoryProps {
 export const Category: React.FC<CategoryProps> = ({
   moduleId,
   category,
+  extCategory,
+  extensionId,
   progress,
   onLevelChange,
   onApplicabilityChange,
 }) => {
-  const categoryProgress = progress[`${moduleId}.${category.id}`];
+  const key = extensionId ? `${extensionId}.${moduleId}.${category.id}` : `${moduleId}.${category.id}`;
+  const categoryProgress = progress[key];
   const selectedLevel = categoryProgress === undefined ? 0 : categoryProgress.level;
   const isApplicable = categoryProgress === undefined ? true : categoryProgress.applicability;
 
+  const levels = extCategory ? extCategory.levels : category.levels;
+  const name = extCategory ? `${category.name} (Extension)` : category.name;
+  const description = category.description;
+
   return (
-    // keep only the name of the style class
     <div className="pkimm-category-card">
       <div className="pkimm-category-header">
         <div className="pkimm-category-text">
@@ -46,27 +54,41 @@ export const Category: React.FC<CategoryProps> = ({
             <input
               type="checkbox"
               checked={isApplicable}
-              onChange={() => onApplicabilityChange(moduleId, category.id)}
+              onChange={() => onApplicabilityChange(moduleId, category.id, extensionId)}
             />
             <span className="pkimm-slider"></span>
           </label>
           <strong>
-            {moduleId}.{category.id} {category.name}
+            {moduleId}.{category.id} {name}
           </strong>
         </div>
       </div>
       {isApplicable && (
         <>
-          <div className="pkimm-category-description">
-            <ReactMarkdown>{category.description}</ReactMarkdown>
-          </div>
+          {extCategory && (
+            <div className="pkimm-extension-body">
+              <div className="pkimm-extension-guidance">
+                <strong>Guidance:</strong>
+                <ReactMarkdown>{extCategory.guidance}</ReactMarkdown>
+              </div>
+              <div className="pkimm-extension-assessment">
+                <strong>Assessment:</strong>
+                <ReactMarkdown>{extCategory.assessment}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+          {!extCategory && (
+            <div className="pkimm-category-description">
+              <ReactMarkdown>{description}</ReactMarkdown>
+            </div>
+          )}
           <div className="pkimm-levels">
-            {category.levels.map((level, index) => (
+            {levels.map((level, index) => (
               <div
                 key={index}
-                className={`pkimm-level-card ${selectedLevel === level.number ? "selected" : ""}`}
+                className={`pkimm-level-card ${extCategory ? 'extension' : ''} ${selectedLevel === level.number ? "selected" : ""}`}
                 onClick={() =>
-                  onLevelChange(moduleId, category.id, level.number)
+                  onLevelChange(moduleId, category.id, level.number, extensionId)
                 }
               >
                 <strong>{level.name}</strong>:{" "}

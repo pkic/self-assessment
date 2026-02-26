@@ -8,6 +8,8 @@ interface OverviewProps {
   overviewData: OverviewData | null;
   onResetAll: () => void;
   onShare: () => void;
+  enabledExtensions: string[];
+  onToggleExtension: (extensionId: string) => void;
 }
 
 export const Overview: React.FC<OverviewProps> = ({
@@ -15,8 +17,6 @@ export const Overview: React.FC<OverviewProps> = ({
   onResetAll,
   onShare,
 }) => {
-  // console.log(overviewData?.data);
-
   return (
     <div className="pkimm-overview">
       <div className="pkimm-overview-header">
@@ -24,14 +24,6 @@ export const Overview: React.FC<OverviewProps> = ({
           {overviewData?.data || "No overview data available."}
         </ReactMarkdown>
       </div>
-      {/*<div className="pkimm-overview-actions">*/}
-      {/*  <button className="share-button" onClick={onShare}>*/}
-      {/*    Share Progress*/}
-      {/*  </button>*/}
-      {/*  <button className="reset-button" onClick={onResetAll}>*/}
-      {/*    Global Reset*/}
-      {/*  </button>*/}
-      {/*</div>*/}
     </div>
   );
 };
