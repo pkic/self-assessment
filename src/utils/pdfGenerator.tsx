@@ -14,9 +14,23 @@ import {
 } from "@react-pdf/renderer";
 import { Style } from "@react-pdf/types";
 import React from "react";
-import { ProgressData } from "../types/types";
+import {
+  ProgressData,
+  ExtensionData,
+  ModuleData,
+} from "../types/types";
 import "../index.module.scss";
 import LevelResult from "../enums/LevelResult";
+import {
+  calculateExtensionMaturityLevels,
+  calculateExtensionWeightedPKIMMScore,
+  calculateExtensionFloorScore,
+  calculateOverallMaturityLevel,
+  calculateModuleMaturityLevels,
+  getCategoryOverlayInfo,
+  calculateBlendedLevel,
+  getEffectiveWeight,
+} from "./maturityCalculations";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
   faGithub,
@@ -1019,6 +1033,387 @@ export const exportToPDF = async (
   const a = document.createElement("a");
   a.href = url;
   a.download = "PKIMM-self-assessment-report.pdf";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+interface ExtensionPdfDocumentProps {
+  overallWeightedMaturity: number;
+  floorScore: number | null;
+  weightedScore: number | null;
+  moduleWeightedMaturityLevels: { module: string; level: number }[];
+  rows: any[];
+  extension: ExtensionData;
+  assessmentName: string;
+  assessorName: string;
+  useCaseDescription: string;
+  version: string;
+}
+
+const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
+  overallWeightedMaturity,
+  floorScore,
+  weightedScore,
+  moduleWeightedMaturityLevels,
+  rows,
+  extension,
+  assessmentName,
+  assessorName,
+  useCaseDescription,
+  version,
+}) => (
+  <Document>
+    {/* First page: Cover */}
+    <Page size="A4" style={styles.page}>
+      <View style={styles.logo_first}>
+        <PkicLogoSvg />
+      </View>
+      <Text style={[styles.title_first, { marginTop: 50 }]}>
+        {extension.extension.name}
+      </Text>
+      <Text style={styles.subtitle_first}>Extension Assessment Report</Text>
+      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
+      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
+        {format(new Date(), "MMMM do, yyyy h:mm a")}
+      </Text>
+    </Page>
+
+    {/* Second page: Summary */}
+    <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
+      <Header />
+      <Footer assessmentUrl="" version={version} />
+      <Text style={styles.title}>Summary</Text>
+      <View style={styles.overview_table}>
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Extension:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>
+              {extension.extension.name} (v{extension.extension.version})
+            </Text>
+          </View>
+        </View>
+        <View
+          style={[
+            styles.overview_tableRow,
+            { borderBottomWidth: 0, fontWeight: "bold" },
+          ]}
+        >
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>
+              Overall Weighted Maturity:
+            </Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text
+              style={[
+                styles.overview_tableCell,
+                { color: getColorForLevel(overallWeightedMaturity).background },
+              ]}
+            >
+              {LevelResult[overallWeightedMaturity]}
+            </Text>
+          </View>
+        </View>
+        {floorScore !== null && (
+          <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+            <View style={[styles.overview_tableCol, { width: "30%" }]}>
+              <Text style={styles.overview_tableCell}>Achieved Floor Score:</Text>
+            </View>
+            <View style={[styles.overview_tableCol, { width: "70%" }]}>
+              <Text
+                style={[
+                  styles.overview_tableCell,
+                  { color: getColorForLevel(floorScore).background },
+                ]}
+              >
+                {LevelResult[floorScore]}
+              </Text>
+            </View>
+          </View>
+        )}
+        {weightedScore !== null && (
+          <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+            <View style={[styles.overview_tableCol, { width: "30%" }]}>
+              <Text style={styles.overview_tableCell}>
+                Extension-Weighted PKI Maturity:
+              </Text>
+            </View>
+            <View style={[styles.overview_tableCol, { width: "70%" }]}>
+              <Text
+                style={[
+                  styles.overview_tableCell,
+                  { color: getColorForLevel(weightedScore).background },
+                ]}
+              >
+                {LevelResult[weightedScore]}
+              </Text>
+            </View>
+          </View>
+        )}
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Assessment Name:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>{assessmentName}</Text>
+          </View>
+        </View>
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Assessor Name:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>{assessorName}</Text>
+          </View>
+        </View>
+        <View style={styles.overview_tableRow}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Use Case Description:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>{useCaseDescription}</Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={styles.heading}>Module Weighted Maturity Levels</Text>
+      <View style={styles.rectangleRow}>
+        {moduleWeightedMaturityLevels.map(({ module, level }) => (
+          <View
+            style={[
+              styles.rectangle,
+              {
+                backgroundColor: getColorForLevel(level).background,
+                borderColor: getColorForLevel(level).border,
+              },
+            ]}
+            key={module}
+          >
+            <Text
+              style={{
+                color: getColorForLevel(level).text,
+                fontSize: 15,
+                marginBottom: 5,
+              }}
+            >
+              {module}
+            </Text>
+            <Text style={{ color: getColorForLevel(level).text, fontSize: 15 }}>
+              {LevelResult[level]}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </Page>
+
+    {/* Third page: Details */}
+    <Page size="A4" style={styles.page} bookmark={{ title: "Assessment Results" }}>
+      <Header />
+      <Footer assessmentUrl="" version={version} />
+      <Text style={styles.title}>Assessment Results</Text>
+      <View style={styles.table}>
+        <View
+          style={[
+            styles.tableRow,
+            {
+              borderTopWidth: 1,
+              backgroundColor: headerColor,
+              color: "#ffffff",
+            },
+          ]}
+        >
+          <View style={[styles.tableCol, { width: "5%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>#</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "10%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "20%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "8%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Weight</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "20%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Maturity</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "37%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Overlays</Text>
+          </View>
+        </View>
+        {rows.map((r, idx) => {
+          const isEvenRow = idx % 2 === 1;
+          return (
+            <View
+              key={idx}
+              style={[styles.tableRow, isEvenRow ? styles.greyBackground : {}]}
+            >
+              <View style={[styles.tableCol, { width: "5%" }]}>
+                <Text style={styles.tableCell}>{r.id}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "10%" }]}>
+                <Text style={styles.tableCell}>{r.module}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "20%" }]}>
+                <Text style={styles.tableCell}>{r.category}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "8%" }]}>
+                <Text style={styles.tableCell}>{r.weight}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "20%" }]}>
+                <Text style={styles.tableCell}>{r.result}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "37%" }]}>
+                {r.overlays.map((ov: string, oIdx: number) => (
+                  <Text key={oIdx} style={[styles.tableCell, { fontSize: 6, color: "#666" }]}>
+                    • {ov}
+                  </Text>
+                ))}
+                {r.overlays.length === 0 && (
+                  <Text style={[styles.tableCell, { fontSize: 6, color: "#999" }]}>
+                    None
+                  </Text>
+                )}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </Page>
+
+    {/* Final Page: About */}
+    <Page
+      size="A4"
+      style={styles.page}
+      bookmark={{ title: "About PKI Maturity Model" }}
+    >
+      <Header />
+      <Footer assessmentUrl="" version={version} />
+      <Text style={styles.about_heading}>About PKI Maturity Model</Text>
+      <Text style={styles.about_text}>
+        The PKI Maturity Model (PKIMM) provides a framework for organizations to
+        assess and improve their PKI capabilities. Extensions like "
+        {extension.extension.name}" allow for specialized assessments in specific
+        contexts (e.g., Post-Quantum Cryptography readiness).
+      </Text>
+      <Text style={[styles.about_text, { marginTop: 10 }]}>
+        For more information about the PKI Maturity Model and its extensions,
+        please visit the PKI Consortium website.
+      </Text>
+
+      <View style={{ marginTop: 40 }}>
+        <Text style={styles.about_heading}>Follow us on:</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Link src="https://twitter.com/PKIConsortium">
+            <FontAwesomeIcon
+              faIcon={faXTwitter}
+              style={{ color: "#000000", width: "20px", marginRight: "10px" }}
+            />
+          </Link>
+          <Link src="https://www.linkedin.com/groups/4852478/">
+            <FontAwesomeIcon
+              faIcon={faLinkedin}
+              style={{ color: "#0077B5", width: "20px", marginRight: "10px" }}
+            />
+          </Link>
+          <Link src="https://github.com/pkic">
+            <FontAwesomeIcon
+              faIcon={faGithub}
+              style={{ color: "#6e5494", width: "20px" }}
+            />
+          </Link>
+        </View>
+      </View>
+    </Page>
+  </Document>
+);
+
+export const exportExtensionPDF = async (
+  progress: Record<string, ProgressData>,
+  extension: ExtensionData,
+  coreModules: ModuleData[],
+  assessmentName: string,
+  assessorName: string,
+  useCaseDescription: string,
+  version: string,
+) => {
+  const extId = extension.extension.id;
+
+  const overallWeightedMaturity = calculateOverallMaturityLevel(
+    coreModules,
+    progress,
+    [extension],
+    [extId],
+  );
+
+  const moduleWeightedMaturityLevels = calculateModuleMaturityLevels(
+    coreModules,
+    progress,
+    [extension],
+    [extId],
+  );
+
+  const floorScore = calculateExtensionFloorScore(
+    coreModules,
+    extension,
+    progress,
+  );
+
+  const weightedScore = extension.extension.weightedScoreEnabled
+    ? calculateExtensionWeightedPKIMMScore(coreModules, progress, extension)
+    : null;
+
+  // Collect rows for details table - including ALL categories
+  const rows = coreModules.flatMap((m) => {
+    return m.categories.map((c) => {
+      const blendedLevel = calculateBlendedLevel(m.id, c, extension, progress);
+      const effectiveWeight = getEffectiveWeight(m.id, c, [extension], [extension.extension.id]);
+      
+      let result = "Not Assessed";
+      if (blendedLevel === -1) {
+        result = "Not Applicable";
+      } else {
+        result = `Level ${Math.floor(blendedLevel)} (${blendedLevel.toFixed(2)})`;
+      }
+
+      const weightDisplay = effectiveWeight !== c.weight 
+        ? `${effectiveWeight}`
+        : `${c.weight}`;
+
+      return {
+        id: `${m.id}.${c.id}`,
+        module: m.name,
+        category: c.name,
+        weight: weightDisplay,
+        result,
+        overlays: getCategoryOverlayInfo(m.id, c, extension),
+      };
+    });
+  });
+
+  const pdfDoc = (
+    <ExtensionPdfDocument
+      overallWeightedMaturity={overallWeightedMaturity}
+      floorScore={floorScore}
+      weightedScore={weightedScore}
+      moduleWeightedMaturityLevels={moduleWeightedMaturityLevels}
+      rows={rows}
+      extension={extension}
+      assessmentName={assessmentName}
+      assessorName={assessorName}
+      useCaseDescription={useCaseDescription}
+      version={version}
+    />
+  );
+
+  const pdfBlob = await pdf(pdfDoc).toBlob();
+
+  const url = URL.createObjectURL(pdfBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${extension.extension.id}-report.pdf`;
   a.click();
   URL.revokeObjectURL(url);
 };

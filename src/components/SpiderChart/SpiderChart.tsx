@@ -111,8 +111,8 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   const overallMaturityLevel = calculateOverallMaturityLevel(
     modules,
     progress,
-    extensions,
-    enabledExtensions,
+    [],
+    [],
   );
   const { background, border } = getColorForLevel(overallMaturityLevel);
 

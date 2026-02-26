@@ -23,8 +23,6 @@ interface ModuleProps {
     questionId: string,
     extensionId?: string,
   ) => void;
-  extensions?: ExtensionData[];
-  enabledExtensions?: string[];
 }
 
 export const Module: React.FC<ModuleProps> = ({
@@ -32,8 +30,6 @@ export const Module: React.FC<ModuleProps> = ({
   progress,
   onLevelChange,
   onApplicabilityChange,
-  extensions = [],
-  enabledExtensions = [],
 }) => {
   return (
     <div className="pkimm-module">
@@ -41,30 +37,10 @@ export const Module: React.FC<ModuleProps> = ({
         <ReactMarkdown>{module.description}</ReactMarkdown>
       </div>
       {module.categories.map((category) => {
-        const extensionCategories: {
-          extensionId: string;
-          extensionName: string;
-          category: ExtensionCategoryData;
-        }[] = [];
-
-        extensions.forEach((ext) => {
-          if (enabledExtensions.includes(ext.extension.id)) {
-            const extModule = ext.relevance.modules.find(
-              (m) => m.id === module.id,
-            );
-            const extCat = extModule?.categories.find(
-              (c) => c.id === category.id,
-            );
-            if (extCat) {
-              extensionCategories.push({
-                extensionId: ext.extension.id,
-                extensionName: ext.extension.name,
-                category: extCat,
-              });
-            }
-          }
-        });
-
+        const key = `${module.id}.${category.id}`;
+        if (!progress[key]) {
+          console.warn(`Missing progress for category ${key}`);
+        }
         return (
           <Category
             key={category.id}
@@ -73,7 +49,6 @@ export const Module: React.FC<ModuleProps> = ({
             progress={progress}
             onLevelChange={onLevelChange}
             onApplicabilityChange={onApplicabilityChange}
-            extensionCategories={extensionCategories}
           />
         );
       })}

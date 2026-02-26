@@ -4,12 +4,22 @@ export interface LevelData {
   description: string;
 }
 
+export interface RequirementData {
+  id: string;
+  weight: number;
+  description: string;
+  guidance: string;
+  assessment: string;
+  references: string;
+}
+
 export interface CategoryData {
   id: string;
   weight: number;
   name: string;
   description: string;
   levels: LevelData[];
+  requirements: RequirementData[];
 }
 
 export interface ModuleData {
@@ -50,6 +60,8 @@ export interface ExtensionInfo {
   name: string;
   version: string;
   description: string;
+  floorScore?: number;
+  weightedScoreEnabled?: boolean;
 }
 
 export interface ExtensionLevelData {

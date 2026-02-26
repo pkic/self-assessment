@@ -47,4 +47,37 @@
       //}
     }
   }
+
+  .pkimm-overview-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 2rem;
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+
+      &.share-button {
+        background-color: var(--pkimm-primary-color);
+        color: white;
+
+        &:hover {
+          background-color: var(--pkimm-primary-color-hover);
+        }
+      }
+
+      &.reset-button {
+        background-color: #dc3545;
+        color: white;
+
+        &:hover {
+          background-color: #c82333;
+        }
+      }
+    }
+  }
 }

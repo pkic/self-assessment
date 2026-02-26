@@ -49,17 +49,18 @@ export const Report: React.FC<OverviewProps> = ({
   const overallMaturityLevel = calculateOverallMaturityLevel(
     modules,
     progress,
-    extensions,
-    enabledExtensions,
+    [],
+    [],
   );
   const moduleMaturityLevels = calculateModuleMaturityLevels(
     modules,
     progress,
-    extensions,
-    enabledExtensions,
+    [],
+    [],
   );
 
   const extensionMaturityLevels = calculateExtensionMaturityLevels(
+    modules,
     extensions,
     enabledExtensions,
     progress,
@@ -177,24 +178,26 @@ export const Report: React.FC<OverviewProps> = ({
             <th>#</th>
             <th>Module</th>
             <th>Category</th>
+            <th>Weight</th>
             <th>Maturity Level</th>
           </tr>
-        </thead>
-        <tbody>
-          {modules.map((module) =>
-            module.categories.map((category) => (
-              <tr key={`${module.id}-${category.id}`}>
-                <td>
-                  {module.id}.{category.id}
-                </td>
-                <td>{module.name}</td>
-                <td>{category.name}</td>
-                <td>{progress[`${module.id}.${category.id}`].result}</td>
-              </tr>
-            )),
-          )}
-        </tbody>
-      </table>
+</thead>
+<tbody>
+  {modules.map((module) =>
+    module.categories.map((category) => (
+      <tr key={`${module.id}-${category.id}`}>
+        <td>
+          {module.id}.{category.id}
+        </td>
+        <td>{module.name}</td>
+        <td>{category.name}</td>
+        <td>{category.weight}</td>
+        <td>{progress[`${module.id}.${category.id}`]?.result || "Not Assessed"}</td>
+      </tr>
+    )),
+  )}
+</tbody>
+</table>
 
       <div className="pkimm-actions-container">
         <button onClick={handleShare}>Share Progress</button>

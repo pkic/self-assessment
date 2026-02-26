@@ -28,4 +28,22 @@
     background-color: var(--pkimm-maturity-level-5);
     color: var(--pkimm-text-color-dark);
   }
+
+  &.below-target {
+    border: 3px solid #dc3545;
+    position: relative;
+
+    &::after {
+      content: "⚠️ Below Target";
+      position: absolute;
+      top: -10px;
+      right: 10px;
+      background: #dc3545;
+      color: white;
+      font-size: 0.6em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+  }
 }
