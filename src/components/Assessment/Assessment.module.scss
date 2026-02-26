@@ -6,12 +6,12 @@
   background-color: var(--pkimm-background-color);
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden; // Prevent horizontal scroll on body
 }
 
 .pkimm-content-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: flex-start;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
@@ -58,9 +58,9 @@
   flex-direction: column;
   align-items: center;
   position: sticky;
-  top: calc(70px + var(--pkimm-sticky-top-offset));
+  top: calc(110px + var(--pkimm-sticky-top-offset));
   height: fit-content;
-  max-height: calc(100vh - (70px + var(--pkimm-sticky-top-offset) + 2rem));
+  max-height: calc(100vh - (110px + var(--pkimm-sticky-top-offset) + 2rem));
   overflow-y: auto;
   background-color: var(--pkimm-surface-color);
   margin-left: 2rem;
@@ -70,6 +70,8 @@
   margin-bottom: 1rem;
   box-sizing: border-box;
   min-width: 0;
+  z-index: 10;
+  align-self: flex-start;
 }
 
 .pkimm-version {
