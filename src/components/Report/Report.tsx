@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { ModuleData, ProgressData, EmailData } from "../../types/types";
+import { ModuleData, ProgressData, EmailData, ExtensionData } from "../../types/types";
 import MaturityWidget from "../MaturityWidget/MaturityWidget";
 import ShareModal from "../ShareModal/ShareModal";
 import { generateURL } from "../../utils/urlGenerator";
 import {
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
+  calculateExtensionMaturityLevels,
 } from "../../utils/maturityCalculations";
 import "./Report.module.scss";
 
@@ -23,6 +24,8 @@ interface OverviewProps {
   onAssessmentName: (name: string) => void;
   onAssessorName: (name: string) => void;
   onUseCaseDescription: (description: string) => void;
+  extensions: ExtensionData[];
+  enabledExtensions: string[];
 }
 
 export const Report: React.FC<OverviewProps> = ({
@@ -37,12 +40,30 @@ export const Report: React.FC<OverviewProps> = ({
   onAssessmentName,
   onAssessorName,
   onUseCaseDescription,
+  extensions,
+  enabledExtensions,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [shareURL, setShareURL] = useState("");
 
-  const overallMaturityLevel = calculateOverallMaturityLevel(modules, progress);
-  const moduleMaturityLevels = calculateModuleMaturityLevels(modules, progress);
+  const overallMaturityLevel = calculateOverallMaturityLevel(
+    modules,
+    progress,
+    extensions,
+    enabledExtensions,
+  );
+  const moduleMaturityLevels = calculateModuleMaturityLevels(
+    modules,
+    progress,
+    extensions,
+    enabledExtensions,
+  );
+
+  const extensionMaturityLevels = calculateExtensionMaturityLevels(
+    extensions,
+    enabledExtensions,
+    progress,
+  );
 
   const handleShare = () => {
     const url = generateURL(
@@ -50,6 +71,7 @@ export const Report: React.FC<OverviewProps> = ({
       assessmentName,
       assessorName,
       useCaseDescription,
+      enabledExtensions,
     );
     setShareURL(url);
     setIsModalOpen(true);
@@ -66,6 +88,7 @@ export const Report: React.FC<OverviewProps> = ({
       assessmentName,
       assessorName,
       useCaseDescription,
+      enabledExtensions,
     );
     const subject = email.subject;
     const body = email.body.replace("${progressUrl}", progressUrl);
@@ -130,6 +153,22 @@ export const Report: React.FC<OverviewProps> = ({
           />
         ))}
       </div>
+
+      {extensionMaturityLevels.length > 0 && (
+        <>
+          <h3>Extension Maturity Levels</h3>
+          <div className="pkimm-module-widgets">
+            {extensionMaturityLevels.map(({ id, name, level }) => (
+              <MaturityWidget
+                key={id}
+                level={level}
+                label={`${name}`}
+                className="pkimm-module-maturity-widget extension"
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       <h3>Details</h3>
       <table>

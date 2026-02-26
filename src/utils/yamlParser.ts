@@ -1,7 +1,13 @@
 import yaml from "js-yaml";
-import { AssessmentData, ConfigData } from "../types/types";
+import {
+  AssessmentData,
+  ConfigData,
+  ExtensionData,
+} from "../types/types";
 
-export const yamlParser = (yamlText: string): AssessmentData | ConfigData => {
+export const yamlParser = (
+  yamlText: string,
+): AssessmentData | ConfigData | ExtensionData => {
   const data = yaml.load(yamlText);
   if (typeof data === "object" && data !== null && "modules" in data) {
     return data as AssessmentData;
@@ -9,6 +15,8 @@ export const yamlParser = (yamlText: string): AssessmentData | ConfigData => {
     return data as ConfigData;
   } else if (typeof data === "object" && data !== null && "overview" in data) {
     return data as ConfigData;
+  } else if (typeof data === "object" && data !== null && "extension" in data) {
+    return data as ExtensionData;
   } else {
     throw new Error("Invalid YAML format");
   }

@@ -10,7 +10,7 @@ import {
   Legend,
   Title,
 } from "chart.js";
-import { ModuleData, ProgressData } from "../../types/types";
+import { ModuleData, ProgressData, ExtensionData } from "../../types/types";
 import { calculateOverallMaturityLevel } from "../../utils/maturityCalculations";
 import LevelResult from "../../enums/LevelResult";
 
@@ -28,6 +28,8 @@ interface SpiderChartProps {
   modules: ModuleData[];
   progress: Record<string, ProgressData>;
   chartLabels: string[];
+  extensions?: ExtensionData[];
+  enabledExtensions?: string[];
 }
 
 // Function to determine color based on the level
@@ -92,6 +94,8 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   modules,
   progress,
   chartLabels,
+  extensions = [],
+  enabledExtensions = [],
 }) => {
   const labels = chartLabels;
 
@@ -104,20 +108,56 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
 
   const maxLevel = 5; // Each question can have a level from 1 to 5
 
-  const overallMaturityLevel = calculateOverallMaturityLevel(modules, progress);
+  const overallMaturityLevel = calculateOverallMaturityLevel(
+    modules,
+    progress,
+    extensions,
+    enabledExtensions,
+  );
   const { background, border } = getColorForLevel(overallMaturityLevel);
+
+  const datasets = [
+    {
+      label: "Achieved PKI Maturity Level",
+      data: userData,
+      backgroundColor: background,
+      borderColor: border,
+      borderWidth: 1,
+    },
+  ];
+
+  extensions.forEach((ext, index) => {
+    if (enabledExtensions.includes(ext.extension.id)) {
+      const extData = labels.map((label) => {
+        const [moduleId, categoryId] = label.split(".");
+        const extKey = `${ext.extension.id}.${moduleId}.${categoryId}`;
+        const coreKey = `${moduleId}.${categoryId}`;
+        if (progress[extKey]) {
+          if (
+            !progress[extKey].applicability ||
+            progress[coreKey]?.applicability === false
+          )
+            return 0;
+          return progress[extKey].level || 0;
+        }
+        return 0;
+      });
+
+      // Simple color variation for extensions
+      const hue = (index * 137.5) % 360;
+      datasets.push({
+        label: `${ext.extension.name}`,
+        data: extData,
+        backgroundColor: `hsla(${hue}, 70%, 50%, 0.3)`,
+        borderColor: `hsla(${hue}, 70%, 50%, 1)`,
+        borderWidth: 1,
+      });
+    }
+  });
 
   const chartData = {
     labels,
-    datasets: [
-      {
-        label: "Achieved PKI Maturity Level",
-        data: userData,
-        backgroundColor: background,
-        borderColor: border,
-        borderWidth: 1,
-      },
-    ],
+    datasets,
   };
 
   const chartOptions = {

@@ -6,11 +6,16 @@ export const generateURL = (
   assessmentName: string,
   assessorName: string,
   useCaseDescription: string,
+  enabledExtensions: string[] = [],
 ): string => {
-  const encodedProgress = btoa(JSON.stringify(progress));
+  const dataToEncode = {
+    progress,
+    enabledExtensions,
+  };
+  const encodedData = btoa(JSON.stringify(dataToEncode));
   const url = new URL(window.location.href);
   const hashParams = new URLSearchParams();
-  hashParams.set("progress", encodedProgress);
+  hashParams.set("progress", encodedData);
   hashParams.set("assessmentName", btoa(assessmentName));
   hashParams.set("assessorName", btoa(assessorName));
   hashParams.set("useCaseDescription", btoa(useCaseDescription));
@@ -23,6 +28,7 @@ export const exportToYAML = (
   assessmentName: string,
   assessorName: string,
   useCaseDescription: string,
+  enabledExtensions: string[] = [],
 ) => {
   // Create a comprehensive object with all the variables
   const exportData = {
@@ -30,6 +36,7 @@ export const exportToYAML = (
     assessmentName,
     assessorName,
     useCaseDescription,
+    enabledExtensions,
   };
 
   // Convert the object to a YAML string

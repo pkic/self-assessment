@@ -1,0 +1,67 @@
+@use "../../styles/variables" as *;
+
+.pkimm-extensions {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  h3 {
+    margin-top: 0;
+    color: #333;
+  }
+
+  .pkimm-extensions-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .pkimm-extension-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+
+    .pkimm-extension-info {
+      flex: 1;
+      h4 {
+        margin: 0 0 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .version {
+          font-size: 0.8rem;
+          color: #666;
+          background: #eee;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+      }
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+      }
+    }
+
+    .pkimm-extension-toggle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-width: 100px;
+
+      span {
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #333;
+      }
+    }
+  }
+}
