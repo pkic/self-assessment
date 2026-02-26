@@ -24,14 +24,14 @@ export const Overview: React.FC<OverviewProps> = ({
           {overviewData?.data || "No overview data available."}
         </ReactMarkdown>
       </div>
-      <div className="pkimm-overview-actions">
-        <button className="share-button" onClick={onShare}>
-          Share Progress
-        </button>
-        <button className="reset-button" onClick={onResetAll}>
-          Global Reset
-        </button>
-      </div>
+      {/*<div className="pkimm-overview-actions">*/}
+      {/*  <button className="share-button" onClick={onShare}>*/}
+      {/*    Share Progress*/}
+      {/*  </button>*/}
+      {/*  <button className="reset-button" onClick={onResetAll}>*/}
+      {/*    Global Reset*/}
+      {/*  </button>*/}
+      {/*</div>*/}
     </div>
   );
 };

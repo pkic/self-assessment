@@ -11,7 +11,11 @@ import {
   Title,
 } from "chart.js";
 import { ModuleData, ProgressData, ExtensionData } from "../../types/types";
-import { calculateOverallMaturityLevel } from "../../utils/maturityCalculations";
+import {
+  calculateOverallMaturityLevel,
+  calculateExtensionMaturityLevels,
+  calculateExtensionWeightedPKIMMScore,
+} from "../../utils/maturityCalculations";
 import LevelResult from "../../enums/LevelResult";
 
 ChartJS.register(
@@ -34,56 +38,32 @@ interface SpiderChartProps {
 
 // Function to determine color based on the level
 const getColorForLevel = (level: number) => {
+  const rootStyle = getComputedStyle(document.documentElement);
   switch (level) {
     case 1:
       return {
-        background:
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--pkimm-maturity-level-1",
-          ) + "80",
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-1",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-1") + "80",
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-1"),
       };
     case 2:
       return {
-        background:
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--pkimm-maturity-level-2",
-          ) + "80",
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-2",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-2") + "80",
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-2"),
       };
     case 3:
       return {
-        background:
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--pkimm-maturity-level-3",
-          ) + "80",
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-3",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-3") + "80",
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-3"),
       };
     case 4:
       return {
-        background:
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--pkimm-maturity-level-4",
-          ) + "80",
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-4",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-4") + "80",
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-4"),
       };
     case 5:
       return {
-        background:
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--pkimm-maturity-level-5",
-          ) + "80",
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-5",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-5") + "80",
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-5"),
       };
     default:
       return { background: "rgba(0, 0, 0, 0.1)", border: "rgba(0, 0, 0, 1)" };
@@ -116,6 +96,13 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   );
   const { background, border } = getColorForLevel(overallMaturityLevel);
 
+  const extensionMaturityLevels = calculateExtensionMaturityLevels(
+    modules,
+    extensions,
+    enabledExtensions,
+    progress,
+  );
+
   const datasets = [
     {
       label: "Achieved PKI Maturity Level",
@@ -126,7 +113,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     },
   ];
 
-  extensions.forEach((ext, index) => {
+      extensions.forEach((ext, index) => {
     if (enabledExtensions.includes(ext.extension.id)) {
       const extData = labels.map((label) => {
         const [moduleId, categoryId] = label.split(".");
@@ -143,13 +130,14 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
         return 0;
       });
 
-      // Simple color variation for extensions
-      const hue = (index * 137.5) % 360;
+      const extMaturity = extensionMaturityLevels.find(em => em.id === ext.extension.id)?.level || 0;
+      const { background: extBg, border: extBorder } = getColorForLevel(extMaturity);
+
       datasets.push({
         label: `${ext.extension.name}`,
         data: extData,
-        backgroundColor: `hsla(${hue}, 70%, 50%, 0.3)`,
-        borderColor: `hsla(${hue}, 70%, 50%, 1)`,
+        backgroundColor: extBg,
+        borderColor: extBorder,
         borderWidth: 1,
       });
     }
@@ -182,10 +170,25 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
             color: getComputedStyle(document.documentElement).getPropertyValue(
               `--pkimm-maturity-level-${overallMaturityLevel}`,
             ),
+            margin: "0",
           }}
         >
           {LevelResult[overallMaturityLevel]}
         </p>
+        {extensionMaturityLevels.map(({ id, name, level }) => (
+          <p
+            key={id}
+            style={{
+              fontSize: "0.9em",
+              color: getComputedStyle(document.documentElement).getPropertyValue(
+                `--pkimm-maturity-level-${level}`,
+              ),
+              margin: "5px 0 0 0",
+            }}
+          >
+            {name}: <strong>{LevelResult[level]}</strong>
+          </p>
+        ))}
       </div>
       <Radar data={chartData} options={chartOptions} />
       <div style={{ textAlign: "center", marginTop: "20px" }}>

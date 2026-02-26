@@ -21,6 +21,7 @@ import {
 } from "../types/types";
 import "../index.module.scss";
 import LevelResult from "../enums/LevelResult";
+import { generateURL } from "./urlGenerator";
 import {
   calculateExtensionMaturityLevels,
   calculateExtensionWeightedPKIMMScore,
@@ -324,55 +325,36 @@ interface PdfDocumentProps {
 
 // Function to determine color based on the level
 const getColorForLevel = (level: number) => {
+  const rootStyle = getComputedStyle(document.documentElement);
   switch (level) {
     case 1:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-1",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-1",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-1"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-1"),
         text: "#ffffff",
       };
     case 2:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-2",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-2",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-2"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-2"),
         text: "#ffffff",
       };
     case 3:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-3",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-3",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-3"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-3"),
         text: "#000000",
       };
     case 4:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-4",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-4",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-4"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-4"),
         text: "#000000",
       };
     case 5:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-5",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-5",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-5"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-5"),
         text: "#000000",
       };
     default:
@@ -1043,10 +1025,12 @@ interface ExtensionPdfDocumentProps {
   weightedScore: number | null;
   moduleWeightedMaturityLevels: { module: string; level: number }[];
   rows: any[];
+  relevanceRows: any[];
   extension: ExtensionData;
   assessmentName: string;
   assessorName: string;
   useCaseDescription: string;
+  assessmentUrl: string;
   version: string;
 }
 
@@ -1056,10 +1040,12 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
   weightedScore,
   moduleWeightedMaturityLevels,
   rows,
+  relevanceRows,
   extension,
   assessmentName,
   assessorName,
   useCaseDescription,
+  assessmentUrl,
   version,
 }) => (
   <Document>
@@ -1081,7 +1067,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
     {/* Second page: Summary */}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
       <Header />
-      <Footer assessmentUrl="" version={version} />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.title}>Summary</Text>
       <View style={styles.overview_table}>
         <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
@@ -1168,12 +1154,27 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
             <Text style={styles.overview_tableCell}>{assessorName}</Text>
           </View>
         </View>
-        <View style={styles.overview_tableRow}>
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.overview_tableCol, { width: "30%" }]}>
             <Text style={styles.overview_tableCell}>Use Case Description:</Text>
           </View>
           <View style={[styles.overview_tableCol, { width: "70%" }]}>
             <Text style={styles.overview_tableCell}>{useCaseDescription}</Text>
+          </View>
+        </View>
+        <View style={styles.overview_tableRow}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Assessment Link:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>
+              <Link
+                src={assessmentUrl}
+                style={{ color: primaryColor, textDecoration: "underline" }}
+              >
+                Go To Assessment
+              </Link>
+            </Text>
           </View>
         </View>
       </View>
@@ -1211,7 +1212,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
     {/* Third page: Details */}
     <Page size="A4" style={styles.page} bookmark={{ title: "Assessment Results" }}>
       <Header />
-      <Footer assessmentUrl="" version={version} />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.title}>Assessment Results</Text>
       <View style={styles.table}>
         <View
@@ -1237,7 +1238,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
             <Text style={[styles.tableCell, styles.boldText]}>Weight</Text>
           </View>
           <View style={[styles.tableCol, { width: "20%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Maturity</Text>
+            <Text style={[styles.tableCell, styles.boldText]}>Maturity Level</Text>
           </View>
           <View style={[styles.tableCol, { width: "37%" }]}>
             <Text style={[styles.tableCell, styles.boldText]}>Overlays</Text>
@@ -1245,6 +1246,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         </View>
         {rows.map((r, idx) => {
           const isEvenRow = idx % 2 === 1;
+          const levelColor = getColorForLevel(r.levelNum).background;
           return (
             <View
               key={idx}
@@ -1263,7 +1265,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
                 <Text style={styles.tableCell}>{r.weight}</Text>
               </View>
               <View style={[styles.tableCol, { width: "20%" }]}>
-                <Text style={styles.tableCell}>{r.result}</Text>
+                <Text style={[styles.tableCell, { color: levelColor }]}>{r.result}</Text>
               </View>
               <View style={[styles.tableCol, { width: "37%" }]}>
                 {r.overlays.map((ov: string, oIdx: number) => (
@@ -1283,6 +1285,63 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
       </View>
     </Page>
 
+    {/* Fourth page: Relevance Details */}
+    <Page size="A4" style={styles.page} bookmark={{ title: "Extension Relevance Details" }}>
+      <Header />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
+      <Text style={styles.title}>Extension Relevance Details</Text>
+      <View style={styles.table}>
+        <View
+          style={[
+            styles.tableRow,
+            {
+              borderTopWidth: 1,
+              backgroundColor: headerColor,
+              color: "#ffffff",
+            },
+          ]}
+        >
+          <View style={[styles.tableCol, { width: "5%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>#</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "15%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
+          </View>
+          <View style={[styles.tableCol, { width: "80%" }]}>
+            <Text style={[styles.tableCell, styles.boldText]}>Details</Text>
+          </View>
+        </View>
+        {relevanceRows.map((r, idx) => {
+          const isEvenRow = idx % 2 === 1;
+          return (
+            <View
+              key={idx}
+              style={[styles.tableRow, isEvenRow ? styles.greyBackground : {}]}
+            >
+              <View style={[styles.tableCol, { width: "5%" }]}>
+                <Text style={styles.tableCell}>{r.id}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "15%" }]}>
+                <Text style={styles.tableCell}>{r.name}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "80%" }]}>
+                <Text style={[styles.tableCell, styles.boldText, { marginTop: 2 }]}>Guidance:</Text>
+                <Text style={[styles.tableCell, { fontSize: 7, marginBottom: 3 }]}>{r.guidance}</Text>
+                <Text style={[styles.tableCell, styles.boldText]}>Assessment:</Text>
+                <Text style={[styles.tableCell, { fontSize: 7, marginBottom: 3 }]}>{r.assessment}</Text>
+                <Text style={[styles.tableCell, styles.boldText]}>Maturity Levels:</Text>
+                {r.levels.map((l: any, lIdx: number) => (
+                  <Text key={lIdx} style={[styles.tableCell, { fontSize: 7, marginLeft: 5 }]}>
+                    {l.number}. {l.name}: {l.description}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </Page>
+
     {/* Final Page: About */}
     <Page
       size="A4"
@@ -1290,7 +1349,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
       bookmark={{ title: "About PKI Maturity Model" }}
     >
       <Header />
-      <Footer assessmentUrl="" version={version} />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.about_heading}>About PKI Maturity Model</Text>
       <Text style={styles.about_text}>
         The PKI Maturity Model (PKIMM) provides a framework for organizations to
@@ -1365,6 +1424,14 @@ export const exportExtensionPDF = async (
     ? calculateExtensionWeightedPKIMMScore(coreModules, progress, extension)
     : null;
 
+  const assessmentUrl = generateURL(
+    progress,
+    assessmentName,
+    assessorName,
+    useCaseDescription,
+    [extId],
+  );
+
   // Collect rows for details table - including ALL categories
   const rows = coreModules.flatMap((m) => {
     return m.categories.map((c) => {
@@ -1372,10 +1439,13 @@ export const exportExtensionPDF = async (
       const effectiveWeight = getEffectiveWeight(m.id, c, [extension], [extension.extension.id]);
       
       let result = "Not Assessed";
+      let levelNum = 0;
       if (blendedLevel === -1) {
         result = "Not Applicable";
+        levelNum = -1;
       } else {
-        result = `Level ${Math.floor(blendedLevel)} (${blendedLevel.toFixed(2)})`;
+        levelNum = Math.floor(blendedLevel);
+        result = `Level ${levelNum} (${blendedLevel.toFixed(2)})`;
       }
 
       const weightDisplay = effectiveWeight !== c.weight 
@@ -1388,7 +1458,23 @@ export const exportExtensionPDF = async (
         category: c.name,
         weight: weightDisplay,
         result,
+        levelNum,
         overlays: getCategoryOverlayInfo(m.id, c, extension),
+      };
+    });
+  });
+
+  // Collect relevance rows for the separate page
+  const relevanceRows = extension.relevance.modules.flatMap((m) => {
+    return m.categories.map((c) => {
+      const coreModule = coreModules.find((cm) => cm.id === m.id);
+      const coreCategory = coreModule?.categories.find((cc) => cc.id === c.id);
+      return {
+        id: `${m.id}.${c.id}`,
+        name: coreCategory?.name || c.id,
+        guidance: c.guidance,
+        assessment: c.assessment,
+        levels: c.levels,
       };
     });
   });
@@ -1400,10 +1486,12 @@ export const exportExtensionPDF = async (
       weightedScore={weightedScore}
       moduleWeightedMaturityLevels={moduleWeightedMaturityLevels}
       rows={rows}
+      relevanceRows={relevanceRows}
       extension={extension}
       assessmentName={assessmentName}
       assessorName={assessorName}
       useCaseDescription={useCaseDescription}
+      assessmentUrl={assessmentUrl}
       version={version}
     />
   );

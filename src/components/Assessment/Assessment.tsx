@@ -20,8 +20,6 @@ import LevelResult from "../../enums/LevelResult";
 import {
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
-  calculateExtensionMaturityLevels,
-  calculateExtensionWeightedPKIMMScore,
 } from "../../utils/maturityCalculations"; // Import utilities
 import "./Assessment.module.scss";
 import { APP_VERSION } from "../../version";
@@ -57,6 +55,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
   const [assessorName, setAssessorName] = useState("");
   const [useCaseDescription, setUseCaseDescription] = useState("");
   const chartRef = useRef<HTMLDivElement>(null);
+  // Optional override to control which extensions are visualized in the chart (used for PDF export)
+  const [chartExtensionsOverride, setChartExtensionsOverride] = useState<string[] | null>(null);
 
   const STORAGE_KEY = "assessmentData";
 
@@ -395,8 +395,13 @@ export const Assessment: React.FC<AssessmentProps> = ({
     );
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (chartRef.current && data) {
+      // Force the chart to render baseline-only (no extensions) for the export image
+      setChartExtensionsOverride([]);
+      // Wait for next paint so the chart re-renders with the override
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       const overallMaturityLevel = calculateOverallMaturityLevel(
         data.modules,
         progress,
@@ -415,18 +420,26 @@ export const Assessment: React.FC<AssessmentProps> = ({
         assessorName,
         useCaseDescription,
       );
-      exportToPDF(
-        progress,
-        chartRef.current,
-        overallMaturityLevel,
-        moduleMaturityLevels,
-        data.modules,
-        assessmentName,
-        assessorName,
-        useCaseDescription,
-        url,
-        version,
-      ).catch((error) => console.error("Error exporting to PDF:", error));
+
+      try {
+        await exportToPDF(
+          progress,
+          chartRef.current,
+          overallMaturityLevel,
+          moduleMaturityLevels,
+          data.modules,
+          assessmentName,
+          assessorName,
+          useCaseDescription,
+          url,
+          version,
+        );
+      } catch (error) {
+        console.error("Error exporting to PDF:", error);
+      } finally {
+        // Restore normal chart behavior (show enabled extensions again)
+        setChartExtensionsOverride(null);
+      }
     }
   };
 
@@ -497,23 +510,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
   const moduleMaturityLevels = data
     ? calculateModuleMaturityLevels(data.modules, progress, [], [])
     : [];
-
-  const extensionMaturityLevels = data
-    ? calculateExtensionMaturityLevels(
-        data.modules,
-        extensionsData,
-        enabledExtensions,
-        progress,
-      )
-    : [];
-
-  const weightedExtensionScores = extensionsData
-    .filter((ext) => enabledExtensions.includes(ext.extension.id) && ext.extension.weightedScoreEnabled)
-    .map((ext) => ({
-      id: ext.extension.id,
-      name: `${ext.extension.name} (Weighted)`,
-      level: calculateExtensionWeightedPKIMMScore(data?.modules || [], progress, ext),
-    }));
 
   return (
     <div className="pkimm-assessment-container">
@@ -650,7 +646,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
               progress={progress}
               chartLabels={chartLabels}
               extensions={extensionsData}
-              enabledExtensions={enabledExtensions}
+              enabledExtensions={chartExtensionsOverride ?? enabledExtensions}
             />
           )}
           {data && (
@@ -661,22 +657,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
                   level={level}
                   label={`${module}`}
                   className="pkimm-assessment-maturity-widget"
-                />
-              ))}
-              {extensionMaturityLevels.map(({ id, name, level }) => (
-                <MaturityWidget
-                  key={id}
-                  level={level}
-                  label={`${name}`}
-                  className="pkimm-assessment-maturity-widget extension"
-                />
-              ))}
-              {weightedExtensionScores.map(({ id, name, level }) => (
-                <MaturityWidget
-                  key={`${id}-weighted`}
-                  level={level}
-                  label={`${name}`}
-                  className="pkimm-assessment-maturity-widget extension weighted"
                 />
               ))}
             </>
