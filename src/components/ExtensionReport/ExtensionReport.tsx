@@ -15,6 +15,7 @@ import {
   calculateBlendedLevel,
   getEffectiveWeight,
 } from "../../utils/maturityCalculations";
+import LevelResult from "../../enums/LevelResult";
 import "../Report/Report.module.scss";
 
 interface ExtensionReportProps {
@@ -55,9 +56,7 @@ export const ExtensionReport: React.FC<ExtensionReportProps> = ({
 
   const floorScore = calculateExtensionFloorScore(coreModules, extension, progress);
 
-  const weightedScore = extension.extension.weightedScoreEnabled
-    ? calculateExtensionWeightedPKIMMScore(coreModules, progress, extension)
-    : null;
+  const weightedScore = calculateExtensionWeightedPKIMMScore(coreModules, progress, extension);
 
   return (
     <div className="pkimm-report">
@@ -74,12 +73,10 @@ export const ExtensionReport: React.FC<ExtensionReportProps> = ({
             label="Floor Score"
           />
         )}
-        {weightedScore !== null && (
-          <MaturityWidget
-            level={weightedScore}
-            label="Extension-Weighted PKI Maturity Level"
-          />
-        )}
+        <MaturityWidget
+          level={weightedScore}
+          label="Extension-Weighted PKI Maturity Level"
+        />
       </div>
 
       <h3>Module Weighted Maturity Levels</h3>
@@ -103,14 +100,12 @@ export const ExtensionReport: React.FC<ExtensionReportProps> = ({
             <th>Category</th>
             <th>Weight</th>
             <th>Maturity Level</th>
-            <th>Overlays Applied</th>
           </tr>
         </thead>
         <tbody>
           {coreModules.map((module) =>
             module.categories.map((category) => {
               const key = `${extension.extension.id}.${module.id}.${category.id}`;
-              const overlayInfo = getCategoryOverlayInfo(module.id, category, extension);
               return (
                 <tr key={key}>
                   <td>
@@ -130,25 +125,22 @@ export const ExtensionReport: React.FC<ExtensionReportProps> = ({
                       );
                     })()}
                   </td>
-                  <td>
+                  <td
+                    style={{
+                      color: getComputedStyle(document.documentElement).getPropertyValue(
+                        `--pkimm-maturity-level-${Math.floor(calculateBlendedLevel(module.id, category, extension, progress))}`,
+                      ),
+                      fontWeight: "bold",
+                    }}
+                  >
                     {(() => {
                       const blendedLevel = calculateBlendedLevel(module.id, category, extension, progress);
                       if (blendedLevel === -1) {
-                        return "Not Applicable";
+                        return LevelResult[-1];
                       }
-                      return `Level ${Math.floor(blendedLevel)} (${blendedLevel.toFixed(2)})`;
+                      const levelNum = Math.floor(blendedLevel);
+                      return LevelResult[levelNum];
                     })()}
-                  </td>
-                  <td>
-                    {overlayInfo.length > 0 ? (
-                      <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85em" }}>
-                        {overlayInfo.map((info, i) => (
-                          <li key={i}>{info}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span style={{ color: "#999", fontSize: "0.85em" }}>None</span>
-                    )}
                   </td>
                 </tr>
               );
@@ -156,6 +148,83 @@ export const ExtensionReport: React.FC<ExtensionReportProps> = ({
           )}
         </tbody>
       </table>
+
+      <h3>Extension Relevance Details</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Category</th>
+            <th>Relevance Weight</th>
+            <th>Relevance Level</th>
+          </tr>
+        </thead>
+        <tbody>
+          {extension.relevance.modules.map((module) =>
+            module.categories.map((category) => {
+              const coreModule = coreModules.find((m) => m.id === module.id);
+              const coreCategory = coreModule?.categories.find((c) => c.id === category.id);
+              const extKey = `${extension.extension.id}.${module.id}.${category.id}`;
+              const relLevel = progress[extKey]?.level || 1;
+              return (
+                <tr key={`rel-${extKey}`}>
+                  <td>{module.id}.{category.id}</td>
+                  <td>{coreCategory?.name || category.id}</td>
+                  <td>{category.weight}</td>
+                  <td
+                    style={{
+                      color: getComputedStyle(document.documentElement).getPropertyValue(
+                        `--pkimm-maturity-level-${relLevel}`,
+                      ),
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {LevelResult[relLevel]}
+                  </td>
+                </tr>
+              );
+            }),
+          )}
+        </tbody>
+      </table>
+
+      {extension.overlays && (
+        <>
+          <h3>Overlay Details</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Module</th>
+                <th>Category</th>
+                <th>Overlays Applied</th>
+              </tr>
+            </thead>
+            <tbody>
+              {coreModules.map((module) =>
+                module.categories.map((category) => {
+                  const overlayInfo = getCategoryOverlayInfo(module.id, category, extension);
+                  if (overlayInfo.length === 0) return null;
+                  return (
+                    <tr key={`overlay-${module.id}-${category.id}`}>
+                      <td>{module.id}.{category.id}</td>
+                      <td>{module.name}</td>
+                      <td>{category.name}</td>
+                      <td>
+                        <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85em" }}>
+                          {overlayInfo.map((info, i) => (
+                            <li key={i}>{info}</li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </>
+      )}
 
       <div className="pkimm-actions-container">
         <button onClick={() => onExportPDF(extension.extension.id)}>

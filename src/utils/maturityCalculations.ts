@@ -253,7 +253,7 @@ export const calculateExtensionFloorScore = (
   extension: ExtensionData,
   progress: Record<string, ProgressData>,
 ): number | null => {
-  if (extension.extension.floorScore === undefined) return null;
+  if (extension.extension.floorScore !== true) return null;
 
   let minLevel = 5;
   let hasApplicableCategory = false;

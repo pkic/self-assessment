@@ -34,6 +34,7 @@ interface SpiderChartProps {
   chartLabels: string[];
   extensions?: ExtensionData[];
   enabledExtensions?: string[];
+  animate?: boolean;
 }
 
 // Function to determine color based on the level
@@ -70,12 +71,24 @@ const getColorForLevel = (level: number) => {
   }
 };
 
+const EXTENSION_COLORS = [
+  { background: "#007bff80", border: "#007bff" }, // Blue
+  { background: "#dc354580", border: "#dc3545" }, // Red
+  { background: "#ffc10780", border: "#ffc107" }, // Amber
+  { background: "#17a2b880", border: "#17a2b8" }, // Cyan
+  { background: "#6610f280", border: "#6610f2" }, // Indigo
+  { background: "#e83e8c80", border: "#e83e8c" }, // Pink
+  { background: "#fd7e1480", border: "#fd7e14" }, // Orange
+  { background: "#20c99780", border: "#20c997" }, // Teal
+];
+
 export const SpiderChart: React.FC<SpiderChartProps> = ({
   modules,
   progress,
   chartLabels,
   extensions = [],
   enabledExtensions = [],
+  animate = true,
 }) => {
   const labels = chartLabels;
 
@@ -131,7 +144,8 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
       });
 
       const extMaturity = extensionMaturityLevels.find(em => em.id === ext.extension.id)?.level || 0;
-      const { background: extBg, border: extBorder } = getColorForLevel(extMaturity);
+      const colorIndex = index % EXTENSION_COLORS.length;
+      const { background: extBg, border: extBorder } = EXTENSION_COLORS[colorIndex];
 
       datasets.push({
         label: `${ext.extension.name}`,
@@ -149,6 +163,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   };
 
   const chartOptions = {
+    animation: animate ? ({} as const) : (false as const),
     scales: {
       r: {
         beginAtZero: true,
@@ -175,20 +190,22 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
         >
           {LevelResult[overallMaturityLevel]}
         </p>
-        {extensionMaturityLevels.map(({ id, name, level }) => (
-          <p
-            key={id}
-            style={{
-              fontSize: "0.9em",
-              color: getComputedStyle(document.documentElement).getPropertyValue(
-                `--pkimm-maturity-level-${level}`,
-              ),
-              margin: "5px 0 0 0",
-            }}
-          >
-            {name}: <strong>{LevelResult[level]}</strong>
-          </p>
-        ))}
+        {extensionMaturityLevels.map(({ id, name, level }, index) => {
+          const colorIndex = index % EXTENSION_COLORS.length;
+          const { border: extColor } = EXTENSION_COLORS[colorIndex];
+          return (
+            <p
+              key={id}
+              style={{
+                fontSize: "0.9em",
+                color: extColor,
+                margin: "5px 0 0 0",
+              }}
+            >
+              {name}: <strong>{LevelResult[level]}</strong>
+            </p>
+          );
+        })}
       </div>
       <Radar data={chartData} options={chartOptions} />
       <div style={{ textAlign: "center", marginTop: "20px" }}>

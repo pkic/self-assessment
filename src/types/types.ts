@@ -60,8 +60,7 @@ export interface ExtensionInfo {
   name: string;
   version: string;
   description: string;
-  floorScore?: number;
-  weightedScoreEnabled?: boolean;
+  floorScore?: boolean;
 }
 
 export interface ExtensionLevelData {

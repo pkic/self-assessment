@@ -57,6 +57,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
   const chartRef = useRef<HTMLDivElement>(null);
   // Optional override to control which extensions are visualized in the chart (used for PDF export)
   const [chartExtensionsOverride, setChartExtensionsOverride] = useState<string[] | null>(null);
+  const [chartAnimate, setChartAnimate] = useState(true);
 
   const STORAGE_KEY = "assessmentData";
 
@@ -399,8 +400,10 @@ export const Assessment: React.FC<AssessmentProps> = ({
     if (chartRef.current && data) {
       // Force the chart to render baseline-only (no extensions) for the export image
       setChartExtensionsOverride([]);
+      // Disable animation for capture
+      setChartAnimate(false);
       // Wait for next paint so the chart re-renders with the override
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const overallMaturityLevel = calculateOverallMaturityLevel(
         data.modules,
@@ -439,22 +442,43 @@ export const Assessment: React.FC<AssessmentProps> = ({
       } finally {
         // Restore normal chart behavior (show enabled extensions again)
         setChartExtensionsOverride(null);
+        setChartAnimate(true);
       }
     }
   };
 
-  const handleExportExtensionPDF = (extensionId: string) => {
+  const handleExportExtensionPDF = async (extensionId: string) => {
     const ext = extensionsData.find((e) => e.extension.id === extensionId);
-    if (!ext || !data) return;
-    exportExtensionPDF(
-      progress,
-      ext,
-      data.modules,
-      assessmentName,
-      assessorName,
-      useCaseDescription,
-      version,
-    ).catch((error) => console.error("Error exporting extension PDF:", error));
+    if (!ext || !data || !chartRef.current) return;
+
+    // Force the chart to render ONLY this extension for the export image
+    setChartExtensionsOverride([extensionId]);
+    // Disable animation for capture
+    setChartAnimate(false);
+    // Wait for next paint so the chart re-renders with the override
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const chartCanvas = chartRef.current.querySelector("canvas") as HTMLCanvasElement;
+    const chartImgData = chartCanvas.toDataURL("image/png");
+
+    try {
+      await exportExtensionPDF(
+        progress,
+        ext,
+        data.modules,
+        assessmentName,
+        assessorName,
+        useCaseDescription,
+        version,
+        chartImgData,
+      );
+    } catch (error) {
+      console.error("Error exporting extension PDF:", error);
+    } finally {
+      // Restore normal chart behavior (show all enabled extensions again)
+      setChartExtensionsOverride(null);
+      setChartAnimate(true);
+    }
   };
 
   const handleTabClick = (tab: string) => {
@@ -647,6 +671,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
               chartLabels={chartLabels}
               extensions={extensionsData}
               enabledExtensions={chartExtensionsOverride ?? enabledExtensions}
+              animate={chartAnimate}
             />
           )}
           {data && (

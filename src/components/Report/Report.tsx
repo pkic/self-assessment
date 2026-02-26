@@ -192,7 +192,16 @@ export const Report: React.FC<OverviewProps> = ({
         <td>{module.name}</td>
         <td>{category.name}</td>
         <td>{category.weight}</td>
-        <td>{progress[`${module.id}.${category.id}`]?.result || "Not Assessed"}</td>
+        <td
+          style={{
+            color: getComputedStyle(document.documentElement).getPropertyValue(
+              `--pkimm-maturity-level-${progress[`${module.id}.${category.id}`]?.level || 0}`,
+            ),
+            fontWeight: "bold",
+          }}
+        >
+          {progress[`${module.id}.${category.id}`]?.result || "Not Assessed"}
+        </td>
       </tr>
     )),
   )}
