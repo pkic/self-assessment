@@ -84,9 +84,9 @@
         font-size: 0.95rem;
         color: var(--pkimm-text-color-muted);
         line-height: 1.5;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
       }
 
       .extension-documentation {
@@ -132,11 +132,6 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 1rem;
-
-      .extension-desc {
-        white-space: normal;
-        overflow: visible;
-      }
 
       .extension-actions {
         align-self: flex-end;
