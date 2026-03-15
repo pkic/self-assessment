@@ -63,4 +63,20 @@ describe("parseYAML", () => {
 
     expect(() => yamlParser(nullYAML)).toThrow("Invalid YAML format");
   });
+
+  it("should parse valid extension YAML with documentation", () => {
+    const extensionYAML = `
+extension:
+  id: "test"
+  name: "Test Extension"
+  version: "1.0.0"
+  description: "Test description"
+  documentation: "https://example.com/docs"
+relevance:
+  modules: []
+`;
+    const result = yamlParser(extensionYAML) as any;
+    expect(result.extension.id).toBe("test");
+    expect(result.extension.documentation).toBe("https://example.com/docs");
+  });
 });

@@ -58,6 +58,18 @@ export const Extensions: React.FC<ExtensionsProps> = ({
                 <p className="extension-desc">
                   {ext.extension.description}
                 </p>
+                {ext.extension.documentation && (
+                  <div className="extension-documentation">
+                    <a 
+                      href={ext.extension.documentation} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="documentation-link"
+                    >
+                      Documentation
+                    </a>
+                  </div>
+                )}
               </div>
               <div className="extension-actions">
                 <label className="pkimm-toggle-switch">

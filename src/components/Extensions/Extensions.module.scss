@@ -88,6 +88,31 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+
+      .extension-documentation {
+        margin-top: 0.5rem;
+
+        .documentation-link {
+          font-size: 0.85rem;
+          color: var(--pkimm-primary-color);
+          text-decoration: none;
+          font-weight: 500;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.25rem;
+          transition: all 0.2s ease;
+
+          &:hover {
+            text-decoration: underline;
+            opacity: 0.8;
+          }
+
+          &::after {
+            content: "↗";
+            font-size: 0.75rem;
+          }
+        }
+      }
     }
 
     .extension-actions {

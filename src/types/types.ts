@@ -60,6 +60,7 @@ export interface ExtensionInfo {
   name: string;
   version: string;
   description: string;
+  documentation?: string;
   floorScore?: boolean;
 }
 
