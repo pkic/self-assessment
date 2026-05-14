@@ -1,5 +1,5 @@
 import { yamlParser } from "./yamlParser";
-import { AssessmentData } from "../types/types";
+import { AssessmentData, ExtensionData } from "../types/types";
 
 describe("parseYAML", () => {
   it("should parse valid YAML into an AssessmentData object", () => {
@@ -75,7 +75,7 @@ extension:
 relevance:
   modules: []
 `;
-    const result = yamlParser(extensionYAML) as any;
+    const result = yamlParser(extensionYAML) as ExtensionData;
     expect(result.extension.id).toBe("test");
     expect(result.extension.documentation).toBe("https://example.com/docs");
   });

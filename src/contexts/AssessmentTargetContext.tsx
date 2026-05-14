@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { ExtensionData, ModuleData, ProgressData } from '../types/types';
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { ExtensionData, ModuleData, ProgressData } from "../types/types";
 
-export type AssessmentTarget = 
-  | { kind: 'original' }
-  | { kind: 'extension'; id: string };
+export type AssessmentTarget =
+  | { kind: "original" }
+  | { kind: "extension"; id: string };
 
 interface AssessmentTargetContextType {
   target: AssessmentTarget;
@@ -17,12 +17,16 @@ interface AssessmentTargetContextType {
   getCurrentTargetName: () => string;
 }
 
-const AssessmentTargetContext = createContext<AssessmentTargetContextType | undefined>(undefined);
+const AssessmentTargetContext = createContext<
+  AssessmentTargetContextType | undefined
+>(undefined);
 
 export const useAssessmentTarget = () => {
   const context = useContext(AssessmentTargetContext);
   if (!context) {
-    throw new Error('useAssessmentTarget must be used within an AssessmentTargetProvider');
+    throw new Error(
+      "useAssessmentTarget must be used within an AssessmentTargetProvider",
+    );
   }
   return context;
 };
@@ -36,7 +40,9 @@ interface AssessmentTargetProviderProps {
   onTargetChange?: (target: AssessmentTarget) => void;
 }
 
-export const AssessmentTargetProvider: React.FC<AssessmentTargetProviderProps> = ({
+export const AssessmentTargetProvider: React.FC<
+  AssessmentTargetProviderProps
+> = ({
   children,
   availableExtensions,
   coreModules,
@@ -44,7 +50,9 @@ export const AssessmentTargetProvider: React.FC<AssessmentTargetProviderProps> =
   enabledExtensions,
   onTargetChange,
 }) => {
-  const [target, setTargetState] = useState<AssessmentTarget>({ kind: 'original' });
+  const [target, setTargetState] = useState<AssessmentTarget>({
+    kind: "original",
+  });
 
   const setTarget = (newTarget: AssessmentTarget) => {
     setTargetState(newTarget);
@@ -58,8 +66,10 @@ export const AssessmentTargetProvider: React.FC<AssessmentTargetProviderProps> =
   const getProgress = () => progress;
 
   const getActiveExtension = () => {
-    if (target.kind === 'extension') {
-      const ext = availableExtensions.find(ext => ext.extension.id === target.id) || null;
+    if (target.kind === "extension") {
+      const ext =
+        availableExtensions.find((ext) => ext.extension.id === target.id) ||
+        null;
       // Guard: if currently selected extension is disabled, fall back to Original
       if (ext && !enabledExtensions.includes(ext.extension.id)) {
         return null;
@@ -70,9 +80,9 @@ export const AssessmentTargetProvider: React.FC<AssessmentTargetProviderProps> =
   };
 
   const getCurrentTargetName = () => {
-    if (target.kind === 'original') return 'Original';
-    const ext = availableExtensions.find(e => e.extension.id === target.id);
-    return ext?.extension.name || 'Extension';
+    if (target.kind === "original") return "Original";
+    const ext = availableExtensions.find((e) => e.extension.id === target.id);
+    return ext?.extension.name || "Extension";
   };
 
   const isExtensionEnabled = (id: string) => enabledExtensions.includes(id);

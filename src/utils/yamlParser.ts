@@ -1,9 +1,5 @@
 import yaml from "js-yaml";
-import {
-  AssessmentData,
-  ConfigData,
-  ExtensionData,
-} from "../types/types";
+import { AssessmentData, ConfigData, ExtensionData } from "../types/types";
 
 export const yamlParser = (
   yamlText: string,

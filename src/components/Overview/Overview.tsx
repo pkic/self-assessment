@@ -6,17 +6,9 @@ import { OverviewData } from "../../types/types";
 
 interface OverviewProps {
   overviewData: OverviewData | null;
-  onResetAll: () => void;
-  onShare: () => void;
-  enabledExtensions: string[];
-  onToggleExtension: (extensionId: string) => void;
 }
 
-export const Overview: React.FC<OverviewProps> = ({
-  overviewData,
-  onResetAll,
-  onShare,
-}) => {
+export const Overview: React.FC<OverviewProps> = ({ overviewData }) => {
   return (
     <div className="pkimm-overview">
       <div className="pkimm-overview-header">

@@ -35,24 +35,30 @@ export const Category: React.FC<CategoryProps> = ({
   onLevelChange,
   onApplicabilityChange,
 }) => {
-  const key = extensionId ? `${extensionId}.${moduleId}.${category.id}` : `${moduleId}.${category.id}`;
+  const key = extensionId
+    ? `${extensionId}.${moduleId}.${category.id}`
+    : `${moduleId}.${category.id}`;
   const categoryProgress = progress[key];
-  const selectedLevel = categoryProgress === undefined ? 0 : categoryProgress.level;
-  const isApplicable = categoryProgress === undefined ? true : categoryProgress.applicability;
+  const selectedLevel =
+    categoryProgress === undefined ? 0 : categoryProgress.level;
+  const isApplicable =
+    categoryProgress === undefined ? true : categoryProgress.applicability;
 
   const levels = extCategory ? extCategory.levels : category.levels;
   const name = extCategory ? `${category.name} (Extension)` : category.name;
   const description = category.description;
 
   return (
-    <div className={`pkimm-category-card ${extCategory ? 'extension' : ''}`}>
+    <div className={`pkimm-category-card ${extCategory ? "extension" : ""}`}>
       <div className="pkimm-category-header">
         <div className="pkimm-category-text">
           <label className="pkimm-toggle-switch">
             <input
               type="checkbox"
               checked={isApplicable}
-              onChange={() => onApplicabilityChange(moduleId, category.id, extensionId)}
+              onChange={() =>
+                onApplicabilityChange(moduleId, category.id, extensionId)
+              }
             />
             <span className="pkimm-slider"></span>
           </label>
@@ -84,9 +90,14 @@ export const Category: React.FC<CategoryProps> = ({
             {levels.map((level, index) => (
               <div
                 key={index}
-                className={`pkimm-level-card ${extCategory ? 'extension' : ''} ${selectedLevel === level.number ? "selected" : ""}`}
+                className={`pkimm-level-card ${extCategory ? "extension" : ""} ${selectedLevel === level.number ? "selected" : ""}`}
                 onClick={() =>
-                  onLevelChange(moduleId, category.id, level.number, extensionId)
+                  onLevelChange(
+                    moduleId,
+                    category.id,
+                    level.number,
+                    extensionId,
+                  )
                 }
               >
                 <div className="pkimm-level-name">{level.name}</div>

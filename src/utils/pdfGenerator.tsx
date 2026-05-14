@@ -14,16 +14,11 @@ import {
 } from "@react-pdf/renderer";
 import { Style } from "@react-pdf/types";
 import React from "react";
-import {
-  ProgressData,
-  ExtensionData,
-  ModuleData,
-} from "../types/types";
+import { ProgressData, ExtensionData, ModuleData } from "../types/types";
 import "../index.module.scss";
 import LevelResult from "../enums/LevelResult";
 import { generateURL } from "./urlGenerator";
 import {
-  calculateExtensionMaturityLevels,
   calculateExtensionWeightedPKIMMScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
@@ -597,7 +592,8 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
                         },
                       ]}
                     >
-                      {progress[`${module.id}.${category.id}`]?.result || "Not Assessed"}
+                      {progress[`${module.id}.${category.id}`]?.result ||
+                        "Not Assessed"}
                     </Text>
                   </View>
                   <View style={[styles.tableCol, { width: "47%" }]}>
@@ -1020,6 +1016,26 @@ export const exportToPDF = async (
   URL.revokeObjectURL(url);
 };
 
+interface ExtensionPdfRow {
+  id: string;
+  module: string;
+  category: string;
+  weight: string;
+  result: string;
+  levelNum: number;
+  description: string | undefined;
+  overlays: string[];
+}
+
+interface ExtensionPdfRelevanceRow {
+  id: string;
+  module: string;
+  category: string;
+  weight: string;
+  weightNum: number;
+  level: number;
+}
+
 interface ExtensionPdfDocumentProps {
   chartImgData: string;
   overallMaturityLevel: number;
@@ -1027,8 +1043,8 @@ interface ExtensionPdfDocumentProps {
   floorScore: number | null;
   weightedScore: number;
   moduleWeightedMaturityLevels: { module: string; level: number }[];
-  rows: any[];
-  relevanceRows: any[];
+  rows: ExtensionPdfRow[];
+  relevanceRows: ExtensionPdfRelevanceRow[];
   extension: ExtensionData;
   assessmentName: string;
   assessorName: string;
@@ -1147,7 +1163,9 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         </View>
       </View>
 
-      <Text style={[styles.heading, { marginTop: 20, textAlign: "left" }]}>Extension Information</Text>
+      <Text style={[styles.heading, { marginTop: 20, textAlign: "left" }]}>
+        Extension Information
+      </Text>
       <View style={styles.overview_table}>
         <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.overview_tableCol, { width: "30%" }]}>
@@ -1164,7 +1182,9 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
             <Text style={styles.overview_tableCell}>Version:</Text>
           </View>
           <View style={[styles.overview_tableCol, { width: "70%" }]}>
-            <Text style={styles.overview_tableCell}>{extension.extension.version}</Text>
+            <Text style={styles.overview_tableCell}>
+              {extension.extension.version}
+            </Text>
           </View>
         </View>
         <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
@@ -1172,18 +1192,25 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
             <Text style={styles.overview_tableCell}>Description:</Text>
           </View>
           <View style={[styles.overview_tableCol, { width: "70%" }]}>
-            <Text style={styles.overview_tableCell}>{extension.extension.description}</Text>
+            <Text style={styles.overview_tableCell}>
+              {extension.extension.description}
+            </Text>
           </View>
         </View>
         <View style={styles.overview_tableRow}>
           <View style={[styles.overview_tableCol, { width: "30%" }]}>
-            <Text style={styles.overview_tableCell}>Achieved PKI Maturity (Blended):</Text>
+            <Text style={styles.overview_tableCell}>
+              Achieved PKI Maturity (Blended):
+            </Text>
           </View>
           <View style={[styles.overview_tableCol, { width: "70%" }]}>
             <Text
               style={[
                 styles.overview_tableCell,
-                { color: getColorForLevel(overallWeightedMaturity).background, fontWeight: "bold" },
+                {
+                  color: getColorForLevel(overallWeightedMaturity).background,
+                  fontWeight: "bold",
+                },
               ]}
             >
               {LevelResult[overallWeightedMaturity]}
@@ -1209,21 +1236,32 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
             marginTop: 5,
           }}
         >
-          {extension.extension.name}: <strong>{LevelResult[overallWeightedMaturity]}</strong>
+          {extension.extension.name}:{" "}
+          <strong>{LevelResult[overallWeightedMaturity]}</strong>
         </Text>
       </View>
       <Image style={[styles.chart, { width: 250 }]} src={chartImgData} />
     </Page>
 
     {/* Third page: Detailed Metrics and Results */}
-    <Page size="A4" style={styles.page} bookmark={{ title: "Assessment Details" }}>
+    <Page
+      size="A4"
+      style={styles.page}
+      bookmark={{ title: "Assessment Details" }}
+    >
       <Header />
       <Footer assessmentUrl={assessmentUrl} version={version} />
-      
+
       <Text style={styles.heading}>Maturity Results</Text>
-      
+
       <View style={styles.maturity_table}>
-        <View style={[styles.maturity_tableRow, styles.greyBackground, { borderBottomWidth: 0, fontWeight: "bold" }]}>
+        <View
+          style={[
+            styles.maturity_tableRow,
+            styles.greyBackground,
+            { borderBottomWidth: 0, fontWeight: "bold" },
+          ]}
+        >
           <View style={[styles.maturity_tableCol, { width: "50%" }]}>
             <Text style={styles.maturity_tableCell}>Metric</Text>
           </View>
@@ -1233,10 +1271,20 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         </View>
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
           <View style={[styles.maturity_tableCol, { width: "50%" }]}>
-            <Text style={styles.maturity_tableCell}>Overall Maturity Level</Text>
+            <Text style={styles.maturity_tableCell}>
+              Overall Maturity Level
+            </Text>
           </View>
           <View style={[styles.maturity_tableCol, { width: "50%" }]}>
-            <Text style={[styles.maturity_tableCell, { color: getColorForLevel(overallWeightedMaturity).background, fontWeight: "bold" }]}>
+            <Text
+              style={[
+                styles.maturity_tableCell,
+                {
+                  color: getColorForLevel(overallWeightedMaturity).background,
+                  fontWeight: "bold",
+                },
+              ]}
+            >
               {LevelResult[overallWeightedMaturity]}
             </Text>
           </View>
@@ -1247,7 +1295,15 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
               <Text style={styles.maturity_tableCell}>Floor Score</Text>
             </View>
             <View style={[styles.maturity_tableCol, { width: "50%" }]}>
-              <Text style={[styles.maturity_tableCell, { color: getColorForLevel(floorScore).background, fontWeight: "bold" }]}>
+              <Text
+                style={[
+                  styles.maturity_tableCell,
+                  {
+                    color: getColorForLevel(floorScore).background,
+                    fontWeight: "bold",
+                  },
+                ]}
+              >
                 {LevelResult[floorScore]}
               </Text>
             </View>
@@ -1255,10 +1311,20 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         )}
         <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
           <View style={[styles.maturity_tableCol, { width: "50%" }]}>
-            <Text style={styles.maturity_tableCell}>Extension Weighted Level</Text>
+            <Text style={styles.maturity_tableCell}>
+              Extension Weighted Level
+            </Text>
           </View>
           <View style={[styles.maturity_tableCol, { width: "50%" }]}>
-            <Text style={[styles.maturity_tableCell, { color: getColorForLevel(weightedScore).background, fontWeight: "bold" }]}>
+            <Text
+              style={[
+                styles.maturity_tableCell,
+                {
+                  color: getColorForLevel(weightedScore).background,
+                  fontWeight: "bold",
+                },
+              ]}
+            >
               {LevelResult[weightedScore]}
             </Text>
           </View>
@@ -1267,7 +1333,13 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
 
       {/*<Text style={[styles.heading, { marginTop: 20 }]}>Module Maturity Levels</Text>*/}
       <View style={styles.maturity_table}>
-        <View style={[styles.maturity_tableRow, styles.greyBackground, { borderBottomWidth: 0, fontWeight: "bold" }]}>
+        <View
+          style={[
+            styles.maturity_tableRow,
+            styles.greyBackground,
+            { borderBottomWidth: 0, fontWeight: "bold" },
+          ]}
+        >
           <View style={[styles.maturity_tableCol, { width: "50%" }]}>
             <Text style={styles.maturity_tableCell}>Module</Text>
           </View>
@@ -1276,15 +1348,29 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
           </View>
         </View>
         {moduleWeightedMaturityLevels.map(({ module, level }, idx) => (
-          <View 
-            key={module} 
-            style={[styles.maturity_tableRow, { borderBottomWidth: idx === moduleWeightedMaturityLevels.length - 1 ? 1 : 0 }]}
+          <View
+            key={module}
+            style={[
+              styles.maturity_tableRow,
+              {
+                borderBottomWidth:
+                  idx === moduleWeightedMaturityLevels.length - 1 ? 1 : 0,
+              },
+            ]}
           >
             <View style={[styles.maturity_tableCol, { width: "50%" }]}>
               <Text style={styles.maturity_tableCell}>{module}</Text>
             </View>
             <View style={[styles.maturity_tableCol, { width: "50%" }]}>
-              <Text style={[styles.maturity_tableCell, { color: getColorForLevel(level).background, fontWeight: "bold" }]}>
+              <Text
+                style={[
+                  styles.maturity_tableCell,
+                  {
+                    color: getColorForLevel(level).background,
+                    fontWeight: "bold",
+                  },
+                ]}
+              >
                 {LevelResult[level]}
               </Text>
             </View>
@@ -1341,7 +1427,14 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
                 <Text style={styles.tableCell}>{r.category}</Text>
               </View>
               <View style={[styles.tableCol, { width: "12%" }]}>
-                <Text style={[styles.tableCell, { color: levelColor, fontWeight: "bold" }]}>{r.result}</Text>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    { color: levelColor, fontWeight: "bold" },
+                  ]}
+                >
+                  {r.result}
+                </Text>
               </View>
               <View style={[styles.tableCol, { width: "47%" }]}>
                 <Text style={[styles.tableCell, { fontSize: 6 }]}>
@@ -1355,8 +1448,12 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
     </Page>
 
     {/* Overlay Details Page */}
-    {rows.some(r => r.overlays.length > 0) && (
-      <Page size="A4" style={styles.page} bookmark={{ title: "Overlay Details" }}>
+    {rows.some((r) => r.overlays.length > 0) && (
+      <Page
+        size="A4"
+        style={styles.page}
+        bookmark={{ title: "Overlay Details" }}
+      >
         <Header />
         <Footer assessmentUrl={assessmentUrl} version={version} />
         <Text style={styles.title}>Overlay Details</Text>
@@ -1381,98 +1478,127 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
               <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
             </View>
             <View style={[styles.tableCol, { width: "55%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>Overlays Applied</Text>
+              <Text style={[styles.tableCell, styles.boldText]}>
+                Overlays Applied
+              </Text>
             </View>
           </View>
-          {rows.filter(r => r.overlays.length > 0).map((r, idx) => {
-            const isEvenRow = idx % 2 === 1;
-            return (
-              <View
-                key={idx}
-                style={[styles.tableRow, isEvenRow ? styles.greyBackground : {}]}
-                wrap={false}
-              >
-                <View style={[styles.tableCol, { width: "5%" }]}>
-                  <Text style={styles.tableCell}>{r.id}</Text>
+          {rows
+            .filter((r) => r.overlays.length > 0)
+            .map((r, idx) => {
+              const isEvenRow = idx % 2 === 1;
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.tableRow,
+                    isEvenRow ? styles.greyBackground : {},
+                  ]}
+                  wrap={false}
+                >
+                  <View style={[styles.tableCol, { width: "5%" }]}>
+                    <Text style={styles.tableCell}>{r.id}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "15%" }]}>
+                    <Text style={styles.tableCell}>{r.module}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "25%" }]}>
+                    <Text style={styles.tableCell}>{r.category}</Text>
+                  </View>
+                  <View style={[styles.tableCol, { width: "55%" }]}>
+                    {r.overlays.map((ov: string, oIdx: number) => (
+                      <Text
+                        key={oIdx}
+                        style={[
+                          styles.tableCell,
+                          { fontSize: 8, color: "#333" },
+                        ]}
+                      >
+                        • {ov}
+                      </Text>
+                    ))}
+                  </View>
                 </View>
-                <View style={[styles.tableCol, { width: "15%" }]}>
-                  <Text style={styles.tableCell}>{r.module}</Text>
-                </View>
-                <View style={[styles.tableCol, { width: "25%" }]}>
-                  <Text style={styles.tableCell}>{r.category}</Text>
-                </View>
-                <View style={[styles.tableCol, { width: "55%" }]}>
-                  {r.overlays.map((ov: string, oIdx: number) => (
-                    <Text key={oIdx} style={[styles.tableCell, { fontSize: 8, color: "#333" }]}>
-                      • {ov}
-                    </Text>
-                  ))}
-                </View>
-              </View>
-            );
-          })}
+              );
+            })}
         </View>
       </Page>
     )}
 
     {/* Relevance Summary and Details Pages */}
     {relevanceRows.length > 0 && (
-        <Page size="A4" style={styles.page} bookmark={{title: "Extension Relevance Details"}}>
-          <Header/>
-          <Footer assessmentUrl={assessmentUrl} version={version}/>
-          <Text style={styles.title}>Extension Relevance Details</Text>
-          <View style={styles.table}>
-            <View
+      <Page
+        size="A4"
+        style={styles.page}
+        bookmark={{ title: "Extension Relevance Details" }}
+      >
+        <Header />
+        <Footer assessmentUrl={assessmentUrl} version={version} />
+        <Text style={styles.title}>Extension Relevance Details</Text>
+        <View style={styles.table}>
+          <View
+            style={[
+              styles.tableRow,
+              {
+                borderTopWidth: 1,
+                backgroundColor: headerColor,
+                color: "#ffffff",
+              },
+            ]}
+          >
+            <View style={[styles.tableCol, { width: "10%" }]}>
+              <Text style={[styles.tableCell, styles.boldText]}>#</Text>
+            </View>
+            <View style={[styles.tableCol, { width: "40%" }]}>
+              <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
+            </View>
+            <View style={[styles.tableCol, { width: "20%" }]}>
+              <Text style={[styles.tableCell, styles.boldText]}>Weight</Text>
+            </View>
+            <View style={[styles.tableCol, { width: "30%" }]}>
+              <Text style={[styles.tableCell, styles.boldText]}>
+                Relevance Level
+              </Text>
+            </View>
+          </View>
+          {relevanceRows.map((r, idx) => {
+            const isEvenRow = idx % 2 === 1;
+            return (
+              <View
+                key={idx}
                 style={[
                   styles.tableRow,
-                  {
-                    borderTopWidth: 1,
-                    backgroundColor: headerColor,
-                    color: "#ffffff",
-                  },
+                  isEvenRow ? styles.greyBackground : {},
                 ]}
-            >
-              <View style={[styles.tableCol, {width: "10%"}]}>
-                <Text style={[styles.tableCell, styles.boldText]}>#</Text>
-              </View>
-              <View style={[styles.tableCol, {width: "40%"}]}>
-                <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-              </View>
-              <View style={[styles.tableCol, {width: "20%"}]}>
-                <Text style={[styles.tableCell, styles.boldText]}>Weight</Text>
-              </View>
-              <View style={[styles.tableCol, {width: "30%"}]}>
-                <Text style={[styles.tableCell, styles.boldText]}>Relevance Level</Text>
-              </View>
-            </View>
-            {relevanceRows.map((r, idx) => {
-              const isEvenRow = idx % 2 === 1;
-              return (
-                  <View
-                      key={idx}
-                      style={[styles.tableRow, isEvenRow ? styles.greyBackground : {}]}
-                      wrap={false}
+                wrap={false}
+              >
+                <View style={[styles.tableCol, { width: "10%" }]}>
+                  <Text style={styles.tableCell}>{r.id}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "40%" }]}>
+                  <Text style={styles.tableCell}>{r.category}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "20%" }]}>
+                  <Text style={styles.tableCell}>{r.weight}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "30%" }]}>
+                  <Text
+                    style={[
+                      styles.tableCell,
+                      {
+                        color: getColorForLevel(r.level).background,
+                        fontWeight: "bold",
+                      },
+                    ]}
                   >
-                    <View style={[styles.tableCol, {width: "10%"}]}>
-                      <Text style={styles.tableCell}>{r.id}</Text>
-                    </View>
-                    <View style={[styles.tableCol, {width: "40%"}]}>
-                      <Text style={styles.tableCell}>{r.category}</Text>
-                    </View>
-                    <View style={[styles.tableCol, {width: "20%"}]}>
-                      <Text style={styles.tableCell}>{r.weight}</Text>
-                    </View>
-                    <View style={[styles.tableCol, {width: "30%"}]}>
-                      <Text
-                          style={[styles.tableCell, {color: getColorForLevel(r.level).background, fontWeight: "bold"}]}>
-                        {LevelResult[r.level]}
-                      </Text>
-                    </View>
-                  </View>
-              );
-            })}
-          </View>
-        </Page>
+                    {LevelResult[r.level]}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </Page>
     )}
 
     {/* Final Page: About (matches core + extension info) */}
@@ -1582,16 +1708,20 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         </View>
       </View>
 
-      <Text style={[styles.about_heading, { marginTop: 20 }]}>About PKI MM Extension Framework</Text>
+      <Text style={[styles.about_heading, { marginTop: 20 }]}>
+        About PKI MM Extension Framework
+      </Text>
       <Text style={styles.about_text}>
         The PKI MM Extension Framework allows to build specific contexts on top
-        of the PKI Maturity Model and use it for specialized assessments. Extensions
-        can introduce new guidance, probes, and maturity definitions for existing
-        categories, as well as weight overlays (multipliers, additions, overrides)
-        to calculate context-aware maturity scores.
+        of the PKI Maturity Model and use it for specialized assessments.
+        Extensions can introduce new guidance, probes, and maturity definitions
+        for existing categories, as well as weight overlays (multipliers,
+        additions, overrides) to calculate context-aware maturity scores.
       </Text>
 
-      <Text style={[styles.about_heading, { marginTop: 20 }]}>About PKI Consortium</Text>
+      <Text style={[styles.about_heading, { marginTop: 20 }]}>
+        About PKI Consortium
+      </Text>
       <Text style={styles.about_text}>
         The PKI Consortium is comprised of leading organizations that are
         committed to improve, create, and collaborate on generic, industry or
@@ -1603,7 +1733,9 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         consortium can address actual issues.
       </Text>
 
-      <Text style={[styles.about_heading, { marginTop: 20 }]}>Useful Resources</Text>
+      <Text style={[styles.about_heading, { marginTop: 20 }]}>
+        Useful Resources
+      </Text>
       <View style={styles.maturity_table}>
         <View
           style={[
@@ -1811,7 +1943,11 @@ export const exportExtensionPDF = async (
     progress,
   );
 
-  const weightedScore = calculateExtensionWeightedPKIMMScore(coreModules, progress, extension);
+  const weightedScore = calculateExtensionWeightedPKIMMScore(
+    coreModules,
+    progress,
+    extension,
+  );
 
   const assessmentUrl = generateURL(
     progress,
@@ -1825,8 +1961,13 @@ export const exportExtensionPDF = async (
   const rows = coreModules.flatMap((m) => {
     return m.categories.map((c) => {
       const blendedLevel = calculateBlendedLevel(m.id, c, extension, progress);
-      const effectiveWeight = getEffectiveWeight(m.id, c, [extension], [extension.extension.id]);
-      
+      const effectiveWeight = getEffectiveWeight(
+        m.id,
+        c,
+        [extension],
+        [extension.extension.id],
+      );
+
       let result = LevelResult[0];
       let levelNum = 0;
       if (blendedLevel === -1) {
@@ -1837,9 +1978,8 @@ export const exportExtensionPDF = async (
         result = LevelResult[levelNum];
       }
 
-      const weightDisplay = effectiveWeight !== c.weight 
-        ? `${effectiveWeight}`
-        : `${c.weight}`;
+      const weightDisplay =
+        effectiveWeight !== c.weight ? `${effectiveWeight}` : `${c.weight}`;
 
       return {
         id: `${m.id}.${c.id}`,

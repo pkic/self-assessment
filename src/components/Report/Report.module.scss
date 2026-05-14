@@ -173,13 +173,14 @@
 @media (max-width: 768px) {
   .pkimm-report {
     padding: 1.5rem 1rem;
-    
+
     h1 {
       font-size: 1.75rem;
       margin-bottom: 1.5rem;
     }
-    
-    h2, h3 {
+
+    h2,
+    h3 {
       font-size: 1.25rem;
     }
   }
@@ -192,7 +193,7 @@
   .pkimm-actions-container {
     justify-content: center;
     flex-direction: column;
-    
+
     button {
       width: 100%;
     }

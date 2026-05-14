@@ -1,9 +1,9 @@
 @use "sass:color";
 
 // Modern Color Palette
-$primary-color: #1a73e8;        // A clean, modern blue
-$secondary-color: #fbbc04;      // Google-like yellow/gold
-$tertiary-color: #34a853;       // Google-like green
+$primary-color: #1a73e8; // A clean, modern blue
+$secondary-color: #fbbc04; // Google-like yellow/gold
+$tertiary-color: #34a853; // Google-like green
 
 $primary-color-hover: color.adjust($primary-color, $lightness: -10%);
 $primary-color-lighter: color.adjust($primary-color, $lightness: 45%);
@@ -30,7 +30,11 @@ $border-radius-sm: 4px;
 $border-radius-md: 8px;
 $border-radius-lg: 12px;
 
-$shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-sm:
+  0 1px 2px 0 rgba(60, 64, 67, 0.3),
+  0 1px 3px 1px rgba(60, 64, 67, 0.15);
+$shadow-md:
+  0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
 @forward "sass:color";

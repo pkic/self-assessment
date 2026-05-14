@@ -136,9 +136,9 @@
             font-size: 0.85rem;
             display: flex;
             align-items: center;
-            
+
             &:before {
-              content: '⚠';
+              content: "⚠";
               margin-right: 6px;
             }
           }
@@ -200,7 +200,7 @@
 @media (max-width: 600px) {
   .pkimm-overview {
     padding: 1.25rem;
-    
+
     &-header {
       margin: 1rem 0;
       table {
@@ -211,7 +211,7 @@
     .pkimm-assessment-target-selector {
       margin-top: 2rem;
       padding-top: 1.5rem;
-      
+
       h3 {
         font-size: 1.25rem;
       }

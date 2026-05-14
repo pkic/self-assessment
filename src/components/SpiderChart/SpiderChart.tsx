@@ -43,27 +43,32 @@ const getColorForLevel = (level: number) => {
   switch (level) {
     case 1:
       return {
-        background: rootStyle.getPropertyValue("--pkimm-maturity-level-1") + "80",
+        background:
+          rootStyle.getPropertyValue("--pkimm-maturity-level-1") + "80",
         border: rootStyle.getPropertyValue("--pkimm-maturity-level-1"),
       };
     case 2:
       return {
-        background: rootStyle.getPropertyValue("--pkimm-maturity-level-2") + "80",
+        background:
+          rootStyle.getPropertyValue("--pkimm-maturity-level-2") + "80",
         border: rootStyle.getPropertyValue("--pkimm-maturity-level-2"),
       };
     case 3:
       return {
-        background: rootStyle.getPropertyValue("--pkimm-maturity-level-3") + "80",
+        background:
+          rootStyle.getPropertyValue("--pkimm-maturity-level-3") + "80",
         border: rootStyle.getPropertyValue("--pkimm-maturity-level-3"),
       };
     case 4:
       return {
-        background: rootStyle.getPropertyValue("--pkimm-maturity-level-4") + "80",
+        background:
+          rootStyle.getPropertyValue("--pkimm-maturity-level-4") + "80",
         border: rootStyle.getPropertyValue("--pkimm-maturity-level-4"),
       };
     case 5:
       return {
-        background: rootStyle.getPropertyValue("--pkimm-maturity-level-5") + "80",
+        background:
+          rootStyle.getPropertyValue("--pkimm-maturity-level-5") + "80",
         border: rootStyle.getPropertyValue("--pkimm-maturity-level-5"),
       };
     default:
@@ -126,7 +131,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     },
   ];
 
-      extensions.forEach((ext, index) => {
+  extensions.forEach((ext, index) => {
     if (enabledExtensions.includes(ext.extension.id)) {
       const extData = labels.map((label) => {
         const [moduleId, categoryId] = label.split(".");
@@ -145,9 +150,9 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
         return 0;
       });
 
-      const extMaturity = extensionMaturityLevels.find(em => em.id === ext.extension.id)?.level || 0;
       const colorIndex = index % EXTENSION_COLORS.length;
-      const { background: extBg, border: extBorder } = EXTENSION_COLORS[colorIndex];
+      const { background: extBg, border: extBorder } =
+        EXTENSION_COLORS[colorIndex];
 
       datasets.push({
         label: `${ext.extension.name}`,

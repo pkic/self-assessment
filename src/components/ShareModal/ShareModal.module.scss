@@ -19,7 +19,10 @@
   text-align: left;
   max-width: 560px;
   width: 90%;
-  box-shadow: 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12), 0 11px 15px -7px rgba(0,0,0,0.2);
+  box-shadow:
+    0 24px 38px 3px rgba(0, 0, 0, 0.14),
+    0 9px 46px 8px rgba(0, 0, 0, 0.12),
+    0 11px 15px -7px rgba(0, 0, 0, 0.2);
   position: relative;
 
   h2 {
@@ -50,7 +53,7 @@
       font-size: 0.95rem;
       color: var(--pkimm-text-color-dark);
       background-color: #f8f9fa;
-      
+
       &:focus {
         outline: none;
         border-color: var(--pkimm-primary-color);
@@ -145,12 +148,12 @@
     .pkimm-url-container {
       flex-direction: column;
       align-items: stretch;
-      
+
       input {
         width: 100%;
         box-sizing: border-box;
       }
-      
+
       .pkimm-copy-button {
         width: 100%;
       }
@@ -158,7 +161,7 @@
 
     .pkimm-modal-actions {
       flex-direction: column;
-      
+
       button {
         width: 100%;
       }

@@ -20,14 +20,14 @@ export const Extensions: React.FC<ExtensionsProps> = ({
     const isEnabled = enabledExtensions.includes(extId);
     if (isEnabled) {
       // Disabling extension: ensure it's not selected as context
-      if (target.kind === 'extension' && target.id === extId) {
-        setTarget({ kind: 'original' });
+      if (target.kind === "extension" && target.id === extId) {
+        setTarget({ kind: "original" });
       }
       onToggleExtension(extId);
     } else {
       // Enabling extension: enable and immediately put into context
       onToggleExtension(extId);
-      setTarget({ kind: 'extension', id: extId });
+      setTarget({ kind: "extension", id: extId });
     }
   };
 
@@ -35,15 +35,16 @@ export const Extensions: React.FC<ExtensionsProps> = ({
     <div className="pkimm-extensions-tab">
       <h2>Extensions</h2>
       <p className="description">
-        Select which extensions are enabled. Enabled extensions can be selected in the header context switcher.
+        Select which extensions are enabled. Enabled extensions can be selected
+        in the header context switcher.
       </p>
       <div className="extensions-list">
         {extensions.map((ext) => {
           const id = ext.extension.id;
           const isEnabled = enabledExtensions.includes(id);
           return (
-            <div 
-              key={id} 
+            <div
+              key={id}
               className={`extension-row ${isEnabled ? "enabled" : ""}`}
             >
               <div className="extension-info">
@@ -55,14 +56,12 @@ export const Extensions: React.FC<ExtensionsProps> = ({
                     </span>
                   )}
                 </div>
-                <p className="extension-desc">
-                  {ext.extension.description}
-                </p>
+                <p className="extension-desc">{ext.extension.description}</p>
                 {ext.extension.documentation && (
                   <div className="extension-documentation">
-                    <a 
-                      href={ext.extension.documentation} 
-                      target="_blank" 
+                    <a
+                      href={ext.extension.documentation}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="documentation-link"
                     >
@@ -73,10 +72,10 @@ export const Extensions: React.FC<ExtensionsProps> = ({
               </div>
               <div className="extension-actions">
                 <label className="pkimm-toggle-switch">
-                  <input 
-                    type="checkbox" 
-                    checked={isEnabled} 
-                    onChange={() => handleToggle(id)} 
+                  <input
+                    type="checkbox"
+                    checked={isEnabled}
+                    onChange={() => handleToggle(id)}
                   />
                   <span className="pkimm-slider"></span>
                 </label>

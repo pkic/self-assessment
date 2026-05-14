@@ -13,7 +13,10 @@ const getWeightSum = (
   extensions: ExtensionData[],
   enabledExtensions: string[],
 ) => {
-  let weightSum = category.requirements.reduce((acc, req) => acc + req.weight, 0);
+  let weightSum = category.requirements.reduce(
+    (acc, req) => acc + req.weight,
+    0,
+  );
 
   extensions.forEach((ext) => {
     if (enabledExtensions.includes(ext.extension.id) && ext.overlays) {
@@ -33,7 +36,7 @@ const getWeightSum = (
               reqWeight += extReq.addition;
             }
             // Add the difference to the weight sum
-            weightSum += (reqWeight - coreReq.weight);
+            weightSum += reqWeight - coreReq.weight;
           }
         });
       }
@@ -93,13 +96,25 @@ const calculateWeightedScores = (
         );
 
         // If there is exactly one enabled extension, use blended level and correct weight
-        const activeExtensions = extensions.filter(ext => enabledExtensions.includes(ext.extension.id));
+        const activeExtensions = extensions.filter((ext) =>
+          enabledExtensions.includes(ext.extension.id),
+        );
         if (activeExtensions.length === 1) {
           const ext = activeExtensions[0];
-          const blendedLevel = calculateBlendedLevel(moduleId, category, ext, progress);
+          const blendedLevel = calculateBlendedLevel(
+            moduleId,
+            category,
+            ext,
+            progress,
+          );
           if (blendedLevel !== -1) {
             level = blendedLevel;
-            const weightSum_C = getWeightSum(moduleId, category, [ext], [ext.extension.id]);
+            const weightSum_C = getWeightSum(
+              moduleId,
+              category,
+              [ext],
+              [ext.extension.id],
+            );
             const extCat = ext.relevance.modules
               .find((m) => m.id === moduleId)
               ?.categories.find((c) => c.id === category.id);
@@ -138,7 +153,9 @@ export const calculateOverallMaturityLevel = (
     totalWeightedScoreSum += totalWeightedScore;
   });
 
-  return totalWeightSum ? Math.floor(totalWeightedScoreSum / totalWeightSum) : 0;
+  return totalWeightSum
+    ? Math.floor(totalWeightedScoreSum / totalWeightSum)
+    : 0;
 };
 
 export const calculateModuleMaturityLevels = (
@@ -166,7 +183,7 @@ export const calculateBlendedLevel = (
   moduleId: string,
   category: CategoryData,
   extension: ExtensionData,
-  progress: Record<string, ProgressData>
+  progress: Record<string, ProgressData>,
 ): number => {
   const coreKey = `${moduleId}.${category.id}`;
   const coreProgressData = progress[coreKey];
@@ -175,7 +192,12 @@ export const calculateBlendedLevel = (
     return -1; // Not Applicable
   }
 
-  const weightSum_C = getWeightSum(moduleId, category, [extension], [extension.extension.id]);
+  const weightSum_C = getWeightSum(
+    moduleId,
+    category,
+    [extension],
+    [extension.extension.id],
+  );
   const level_C = coreProgressData.level;
 
   const extCat = extension.relevance.modules
@@ -185,12 +207,16 @@ export const calculateBlendedLevel = (
   if (extCat) {
     const extKey = `${extension.extension.id}.${moduleId}.${category.id}`;
     const extProgressData = progress[extKey];
-    const relLevel_C = (extProgressData && extProgressData.applicability !== false) 
-      ? extProgressData.level 
-      : 1;
+    const relLevel_C =
+      extProgressData && extProgressData.applicability !== false
+        ? extProgressData.level
+        : 1;
     const relWeight_C = extCat.weight;
 
-    return (level_C * weightSum_C + relLevel_C * relWeight_C) / (weightSum_C + relWeight_C);
+    return (
+      (level_C * weightSum_C + relLevel_C * relWeight_C) /
+      (weightSum_C + relWeight_C)
+    );
   } else {
     return level_C;
   }
@@ -218,13 +244,23 @@ export const calculateExtensionMaturityLevels = (
             return;
           }
 
-          const blendedLevel = calculateBlendedLevel(module.id, category, ext, progress);
-          
+          const blendedLevel = calculateBlendedLevel(
+            module.id,
+            category,
+            ext,
+            progress,
+          );
+
           if (blendedLevel === -1) {
             return;
           }
 
-          const weightSum_C = getWeightSum(module.id, category, [ext], [ext.extension.id]);
+          const weightSum_C = getWeightSum(
+            module.id,
+            category,
+            [ext],
+            [ext.extension.id],
+          );
           const extCat = ext.relevance.modules
             .find((m) => m.id === module.id)
             ?.categories.find((c) => c.id === category.id);
@@ -243,7 +279,9 @@ export const calculateExtensionMaturityLevels = (
         });
       });
 
-      const level = totalWeight ? Math.floor(totalWeightedScore / totalWeight) : 0;
+      const level = totalWeight
+        ? Math.floor(totalWeightedScore / totalWeight)
+        : 0;
       return { id: ext.extension.id, name: ext.extension.name, level };
     });
 };
@@ -268,7 +306,12 @@ export const calculateExtensionFloorScore = (
         return;
       }
 
-      const extensionCategoryLevel_C = calculateBlendedLevel(module.id, category, extension, progress);
+      const extensionCategoryLevel_C = calculateBlendedLevel(
+        module.id,
+        category,
+        extension,
+        progress,
+      );
 
       if (extensionCategoryLevel_C === -1) {
         return;
@@ -325,9 +368,13 @@ export const getCategoryOverlayInfo = (
     if (extCat.override !== undefined) {
       info.push(`Category weight overridden to ${extCat.override}`);
     } else if (extCat.multiplier !== undefined) {
-      info.push(`Category weight multiplied by ${extCat.multiplier} (Base: ${category.weight})`);
+      info.push(
+        `Category weight multiplied by ${extCat.multiplier} (Base: ${category.weight})`,
+      );
     } else if (extCat.addition !== undefined) {
-      info.push(`Category weight increased by ${extCat.addition} (Base: ${category.weight})`);
+      info.push(
+        `Category weight increased by ${extCat.addition} (Base: ${category.weight})`,
+      );
     }
 
     if (extCat.requirements && category.requirements) {
@@ -335,11 +382,17 @@ export const getCategoryOverlayInfo = (
         const coreReq = category.requirements.find((r) => r.id === extReq.id);
         if (coreReq) {
           if (extReq.override !== undefined) {
-            info.push(`Requirement ${coreReq.id} weight overridden to ${extReq.override} (Base: ${coreReq.weight})`);
+            info.push(
+              `Requirement ${coreReq.id} weight overridden to ${extReq.override} (Base: ${coreReq.weight})`,
+            );
           } else if (extReq.multiplier !== undefined) {
-            info.push(`Requirement ${coreReq.id} weight multiplied by ${extReq.multiplier} (Base: ${coreReq.weight})`);
+            info.push(
+              `Requirement ${coreReq.id} weight multiplied by ${extReq.multiplier} (Base: ${coreReq.weight})`,
+            );
           } else if (extReq.addition !== undefined) {
-            info.push(`Requirement ${coreReq.id} weight increased by ${extReq.addition} (Base: ${coreReq.weight})`);
+            info.push(
+              `Requirement ${coreReq.id} weight increased by ${extReq.addition} (Base: ${coreReq.weight})`,
+            );
           }
         }
       });
