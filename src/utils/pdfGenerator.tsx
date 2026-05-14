@@ -301,6 +301,275 @@ const Footer: React.FC<{ assessmentUrl: string; version: string }> = ({
   </View>
 );
 
+const CoverPage: React.FC<{ version: string; subtitle?: string }> = ({
+  version,
+  subtitle,
+}) => (
+  <Page size="A4" style={styles.page}>
+    <View style={styles.logo_first}>
+      <PkicLogoSvg />
+    </View>
+    <Text style={[styles.title_first, { marginTop: 50 }]}>
+      PKI Maturity Model
+    </Text>
+    <Text style={styles.subtitle_first}>Self-Assessment Report</Text>
+    {subtitle && (
+      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{subtitle}</Text>
+    )}
+    <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
+    <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
+      {format(new Date(), "MMMM do, yyyy h:mm a")}
+    </Text>
+  </Page>
+);
+
+const DetailsTableHeader: React.FC = () => (
+  <View
+    style={[
+      styles.tableRow,
+      {
+        borderTopWidth: 1,
+        backgroundColor: headerColor,
+        color: "#ffffff",
+      },
+    ]}
+  >
+    <View style={[styles.tableCol, { width: "5%" }]}>
+      <Text style={[styles.tableCell, styles.boldText]}>#</Text>
+    </View>
+    <View style={[styles.tableCol, { width: "11%" }]}>
+      <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
+    </View>
+    <View style={[styles.tableCol, { width: "25%" }]}>
+      <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
+    </View>
+    <View style={[styles.tableCol, { width: "12%" }]}>
+      <Text style={[styles.tableCell, styles.boldText]}>Maturity Level</Text>
+    </View>
+    <View style={[styles.tableCol, { width: "47%" }]}>
+      <Text style={[styles.tableCell, styles.boldText]}>Description</Text>
+    </View>
+  </View>
+);
+
+const MaturityLadderTable: React.FC<{ style: Style | Style[] }> = ({
+  style,
+}) => (
+  <View style={style}>
+    <View
+      style={[
+        styles.maturity_tableRow,
+        styles.greyBackground,
+        {
+          borderBottomWidth: 0,
+          fontWeight: "bold",
+        },
+      ]}
+    >
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Maturity level</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>Short description</Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Initial</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Unpredictable process with poor control and always reactive
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Basic</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Process is characterized by each particular case or project and
+          controls are often reactive
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Advanced</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Process is characterized by organizational standards and controls are
+          proactive
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Managed</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Processes are measured and controlled, proactive approach
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Optimized</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Continuous improvement of the processes and procedures, proactive
+          approach for future technology improvement
+        </Text>
+      </View>
+    </View>
+  </View>
+);
+
+const UsefulResourcesTable: React.FC = () => (
+  <View style={styles.maturity_table}>
+    <View
+      style={[
+        styles.maturity_tableRow,
+        styles.greyBackground,
+        {
+          borderBottomWidth: 0,
+          fontWeight: "bold",
+        },
+      ]}
+    >
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>Resource</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>Description</Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link style={{ color: primaryColor }} src="https://pkic.org">
+            PKI Consortium
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>PKI Consortium home page</Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/model/"
+          >
+            PKI maturity model
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Definition of the PKI maturity model and description of the maturity
+          assessment process and procedures in order to rate the current
+          maturity level and to track progress
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/categories/"
+          >
+            Categories description
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Description of PKI maturity model related categories and associated
+          requirement, guidance, assessment tips, and references
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/assessment/"
+          >
+            PKI maturity assessment process
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Description of the assessment process
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/tools/"
+          >
+            PKI maturity assessment tools
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Available tools for the assessment of the PKI implementation and use
+          case
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://forms.gle/7CgvuNoxaiTYbtK29"
+          >
+            Feedback form
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          PKI maturity model and assessment feedback form
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm"
+          >
+            PKI maturity model community discussion
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Ideas, questions, or feedback that you want to share or discuss
+          related to the PKI maturity model.
+        </Text>
+      </View>
+    </View>
+  </View>
+);
+
 interface PdfDocumentProps {
   chartImgData: string;
   overallMaturityLevel: number;
@@ -379,19 +648,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
 }) => (
   <Document>
     {/*first page contains only PKIC logo centered in the middle of the page*/}
-    <Page size="A4" style={styles.page}>
-      <View style={styles.logo_first}>
-        <PkicLogoSvg />
-      </View>
-      <Text style={[styles.title_first, { marginTop: 50 }]}>
-        PKI Maturity Model
-      </Text>
-      <Text style={styles.subtitle_first}>Self-Assessment Report</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
-        {format(new Date(), "MMMM do, yyyy h:mm a")}
-      </Text>
-    </Page>
+    <CoverPage version={version} />
 
     {/*second page contains summary*/}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
@@ -529,34 +786,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
       </View>
       <Text style={styles.heading}>Details</Text>
       <View style={styles.table}>
-        <View
-          style={[
-            styles.tableRow,
-            {
-              borderTopWidth: 1,
-              backgroundColor: headerColor,
-              color: "#ffffff",
-            },
-          ]}
-        >
-          <View style={[styles.tableCol, { width: "5%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>#</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "11%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "25%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "12%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>
-              Maturity Level
-            </Text>
-          </View>
-          <View style={[styles.tableCol, { width: "47%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Description</Text>
-          </View>
-        </View>
+        <DetailsTableHeader />
         {modules.flatMap((module) =>
           module.categories.map((category, categoryIndex) => {
             const isEvenRow = categoryIndex % 2 === 1;
@@ -650,78 +880,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <Br />
       </Text>
 
-      <View style={styles.maturity_table}>
-        <View
-          style={[
-            styles.maturity_tableRow,
-            styles.greyBackground,
-            {
-              borderBottomWidth: 0,
-              fontWeight: "bold",
-            },
-          ]}
-        >
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Maturity level</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>Short description</Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Initial</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Unpredictable process with poor control and always reactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Basic</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Process is characterized by each particular case or project and
-              controls are often reactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Advanced</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Process is characterized by organizational standards and controls
-              are proactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Managed</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Processes are measured and controlled, proactive approach
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Optimized</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Continuous improvement of the processes and procedures, proactive
-              approach for future technology improvement
-            </Text>
-          </View>
-        </View>
-      </View>
+      <MaturityLadderTable style={styles.maturity_table} />
 
       <Text style={styles.about_heading}>
         <Br />
@@ -742,146 +901,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <Br />
         Useful Resources
       </Text>
-      <View style={styles.maturity_table}>
-        <View
-          style={[
-            styles.maturity_tableRow,
-            styles.greyBackground,
-            {
-              borderBottomWidth: 0,
-              fontWeight: "bold",
-            },
-          ]}
-        >
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>Resource</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>Description</Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link style={{ color: primaryColor }} src="https://pkic.org">
-                PKI Consortium
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              PKI Consortium home page
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/model/"
-              >
-                PKI maturity model
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Definition of the PKI maturity model and description of the
-              maturity assessment process and procedures in order to rate the
-              current maturity level and to track progress
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/categories/"
-              >
-                Categories description
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Description of PKI maturity model related categories and
-              associated requirement, guidance, assessment tips, and references
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/assessment/"
-              >
-                PKI maturity assessment process
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Description of the assessment process
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/tools/"
-              >
-                PKI maturity assessment tools
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Available tools for the assessment of the PKI implementation and
-              use case
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://forms.gle/7CgvuNoxaiTYbtK29"
-              >
-                Feedback form
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              PKI maturity model and assessment feedback form
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm"
-              >
-                PKI maturity model community discussion
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Ideas, questions, or feedback that you want to share or discuss
-              related to the PKI maturity model.
-            </Text>
-          </View>
-        </View>
-      </View>
+      <UsefulResourcesTable />
 
       <View>
         <Text style={styles.about_heading}>
@@ -1071,20 +1091,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
 }) => (
   <Document>
     {/* First page: Cover */}
-    <Page size="A4" style={styles.page}>
-      <View style={styles.logo_first}>
-        <PkicLogoSvg />
-      </View>
-      <Text style={[styles.title_first, { marginTop: 50 }]}>
-        PKI Maturity Model
-      </Text>
-      <Text style={styles.subtitle_first}>Self-Assessment Report</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>Extension</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
-        {format(new Date(), "MMMM do, yyyy h:mm a")}
-      </Text>
-    </Page>
+    <CoverPage version={version} subtitle="Extension" />
 
     {/* Second page: Summary */}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
@@ -1380,34 +1387,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
 
       <Text style={[styles.heading, { marginTop: 20 }]}>Details</Text>
       <View style={styles.table}>
-        <View
-          style={[
-            styles.tableRow,
-            {
-              borderTopWidth: 1,
-              backgroundColor: headerColor,
-              color: "#ffffff",
-            },
-          ]}
-        >
-          <View style={[styles.tableCol, { width: "5%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>#</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "11%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "25%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "12%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>
-              Maturity Level
-            </Text>
-          </View>
-          <View style={[styles.tableCol, { width: "47%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Description</Text>
-          </View>
-        </View>
+        <DetailsTableHeader />
         {rows.map((r, idx) => {
           const isEvenRow = idx % 2 === 1;
           const levelColor = getColorForLevel(r.levelNum).background;
@@ -1635,78 +1615,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         different indicators and associated risks.
       </Text>
 
-      <View style={[styles.maturity_table, { marginTop: 10 }]}>
-        <View
-          style={[
-            styles.maturity_tableRow,
-            styles.greyBackground,
-            {
-              borderBottomWidth: 0,
-              fontWeight: "bold",
-            },
-          ]}
-        >
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Maturity level</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>Short description</Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Initial</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Unpredictable process with poor control and always reactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Basic</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Process is characterized by each particular case or project and
-              controls are often reactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Advanced</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Process is characterized by organizational standards and controls
-              are proactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Managed</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Processes are measured and controlled, proactive approach
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Optimized</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Continuous improvement of the processes and procedures, proactive
-              approach for future technology improvement
-            </Text>
-          </View>
-        </View>
-      </View>
+      <MaturityLadderTable style={[styles.maturity_table, { marginTop: 10 }]} />
 
       <Text style={[styles.about_heading, { marginTop: 20 }]}>
         About PKI MM Extension Framework
@@ -1736,146 +1645,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
       <Text style={[styles.about_heading, { marginTop: 20 }]}>
         Useful Resources
       </Text>
-      <View style={styles.maturity_table}>
-        <View
-          style={[
-            styles.maturity_tableRow,
-            styles.greyBackground,
-            {
-              borderBottomWidth: 0,
-              fontWeight: "bold",
-            },
-          ]}
-        >
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>Resource</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>Description</Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link style={{ color: primaryColor }} src="https://pkic.org">
-                PKI Consortium
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              PKI Consortium home page
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/model/"
-              >
-                PKI maturity model
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Definition of the PKI maturity model and description of the
-              maturity assessment process and procedures in order to rate the
-              current maturity level and to track progress
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/categories/"
-              >
-                Categories description
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Description of PKI maturity model related categories and
-              associated requirement, guidance, assessment tips, and references
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/assessment/"
-              >
-                PKI maturity assessment process
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Description of the assessment process
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/tools/"
-              >
-                PKI maturity assessment tools
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Available tools for the assessment of the PKI implementation and
-              use case
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://forms.gle/7CgvuNoxaiTYbtK29"
-              >
-                Feedback form
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              PKI maturity model and assessment feedback form
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm"
-              >
-                PKI maturity model community discussion
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Ideas, questions, or feedback that you want to share or discuss
-              related to the PKI maturity model.
-            </Text>
-          </View>
-        </View>
-      </View>
+      <UsefulResourcesTable />
 
       <View style={{ marginTop: 20 }}>
         <Text style={styles.about_heading}>Follow us on:</Text>

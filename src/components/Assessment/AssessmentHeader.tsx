@@ -35,7 +35,8 @@ export const AssessmentHeader: React.FC = () => {
 
   return (
     <div className="pkimm-target-dropdown-container" ref={dropdownRef}>
-      <div
+      <button
+        type="button"
         className={`pkimm-target-badge ${isExtension ? "extension" : ""} interactive`}
         onClick={() => setIsOpen(!isOpen)}
         title="Quick switch assessment target"
@@ -44,11 +45,12 @@ export const AssessmentHeader: React.FC = () => {
         <span className="assessing-label">Assessing: </span>
         {name}
         <span className={`dropdown-arrow ${isOpen ? "open" : ""}`}>▼</span>
-      </div>
+      </button>
 
       {isOpen && (
         <div className="pkimm-target-dropdown-menu">
-          <div
+          <button
+            type="button"
             className={`dropdown-item ${target.kind === "original" ? "active" : ""}`}
             onClick={() => {
               setTarget({ kind: "original" });
@@ -56,9 +58,10 @@ export const AssessmentHeader: React.FC = () => {
             }}
           >
             Original PKI Maturity Model
-          </div>
+          </button>
           {enabledExts.map((ext) => (
-            <div
+            <button
+              type="button"
               key={ext.extension.id}
               className={`dropdown-item ${target.kind === "extension" && target.id === ext.extension.id ? "active" : ""}`}
               onClick={() => {
@@ -67,7 +70,7 @@ export const AssessmentHeader: React.FC = () => {
               }}
             >
               {ext.extension.name}
-            </div>
+            </button>
           ))}
         </div>
       )}
