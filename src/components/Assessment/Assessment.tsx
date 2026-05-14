@@ -240,6 +240,17 @@ export const Assessment: React.FC<AssessmentProps> = ({
     enabledExtensions,
   ]);
 
+  function makeProgressEntry(category: {
+    levels: { number: number; description: string }[];
+  }): ProgressData {
+    const progressData = { ...defaultProgressData };
+    const levelOne = category.levels.find((level) => level.number === 1);
+    if (levelOne) {
+      progressData.description = levelOne.description;
+    }
+    return progressData;
+  }
+
   function initProgress(
     parsedData: AssessmentData | null,
     extensionsData: ExtensionData[] = [],
@@ -250,12 +261,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
     if (parsedData) {
       for (const module of parsedData.modules) {
         for (const category of module.categories) {
-          const progressData = { ...defaultProgressData };
-          const levelOne = category.levels.find((level) => level.number === 1);
-          if (levelOne) {
-            progressData.description = levelOne.description;
-          }
-          initialProgress[`${module.id}.${category.id}`] = progressData;
+          initialProgress[`${module.id}.${category.id}`] =
+            makeProgressEntry(category);
         }
       }
     }
@@ -264,12 +271,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       for (const module of ext.relevance.modules) {
         for (const category of module.categories) {
           const key = `${ext.extension.id}.${module.id}.${category.id}`;
-          const progressData = { ...defaultProgressData };
-          const levelOne = category.levels.find((level) => level.number === 1);
-          if (levelOne) {
-            progressData.description = levelOne.description;
-          }
-          initialProgress[key] = progressData;
+          initialProgress[key] = makeProgressEntry(category);
         }
       }
     }
@@ -358,12 +360,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       for (const module of ext.relevance.modules) {
         for (const category of module.categories) {
           const key = `${extensionId}.${module.id}.${category.id}`;
-          const progressData = { ...defaultProgressData };
-          const levelOne = category.levels.find((level) => level.number === 1);
-          if (levelOne) {
-            progressData.description = levelOne.description;
-          }
-          newProgress[key] = progressData;
+          newProgress[key] = makeProgressEntry(category);
         }
       }
       return newProgress;
