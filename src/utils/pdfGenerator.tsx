@@ -323,7 +323,9 @@ const CoverPage: React.FC<{ version: string; subtitle?: string }> = ({
   </Page>
 );
 
-const DetailsTableHeader: React.FC = () => (
+const TableHeaderRow: React.FC<{
+  columns: { width: string; label: string }[];
+}> = ({ columns }) => (
   <View
     style={[
       styles.tableRow,
@@ -334,20 +336,50 @@ const DetailsTableHeader: React.FC = () => (
       },
     ]}
   >
-    <View style={[styles.tableCol, { width: "5%" }]}>
-      <Text style={[styles.tableCell, styles.boldText]}>#</Text>
+    {columns.map((c) => (
+      <View key={c.label} style={[styles.tableCol, { width: c.width }]}>
+        <Text style={[styles.tableCell, styles.boldText]}>{c.label}</Text>
+      </View>
+    ))}
+  </View>
+);
+
+const DetailsTableHeader: React.FC = () => (
+  <TableHeaderRow
+    columns={[
+      { width: "5%", label: "#" },
+      { width: "11%", label: "Module" },
+      { width: "25%", label: "Category" },
+      { width: "12%", label: "Maturity Level" },
+      { width: "47%", label: "Description" },
+    ]}
+  />
+);
+
+const TableBodyRow: React.FC<{
+  idx: number;
+  children: React.ReactNode;
+}> = ({ idx, children }) => (
+  <View
+    style={[styles.tableRow, idx % 2 === 1 ? styles.greyBackground : {}]}
+    wrap={false}
+  >
+    {children}
+  </View>
+);
+
+const SummaryRow: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  labelWidth: string;
+  valueWidth: string;
+}> = ({ label, value, labelWidth, valueWidth }) => (
+  <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+    <View style={[styles.overview_tableCol, { width: labelWidth }]}>
+      <Text style={styles.overview_tableCell}>{label}</Text>
     </View>
-    <View style={[styles.tableCol, { width: "11%" }]}>
-      <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
-    </View>
-    <View style={[styles.tableCol, { width: "25%" }]}>
-      <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-    </View>
-    <View style={[styles.tableCol, { width: "12%" }]}>
-      <Text style={[styles.tableCell, styles.boldText]}>Maturity Level</Text>
-    </View>
-    <View style={[styles.tableCol, { width: "47%" }]}>
-      <Text style={[styles.tableCell, styles.boldText]}>Description</Text>
+    <View style={[styles.overview_tableCol, { width: valueWidth }]}>
+      <Text style={styles.overview_tableCell}>{value}</Text>
     </View>
   </View>
 );
@@ -656,14 +688,12 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
       <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.title}>Summary</Text>
       <View style={styles.overview_table}>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Model Version:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>1.0</Text>
-          </View>
-        </View>
+        <SummaryRow
+          label="Model Version:"
+          value="1.0"
+          labelWidth="25%"
+          valueWidth="75%"
+        />
         <View
           style={[
             styles.overview_tableRow,
@@ -686,34 +716,24 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
             </Text>
           </View>
         </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Assessment Name:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>{assessmentName}</Text>
-          </View>
-        </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Assessor Name:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>{assessorName}</Text>
-          </View>
-        </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={[styles.overview_tableCell]}>
-              Use Case Description:
-            </Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={[styles.overview_tableCell]}>
-              {useCaseDescription}
-            </Text>
-          </View>
-        </View>
+        <SummaryRow
+          label="Assessment Name:"
+          value={assessmentName}
+          labelWidth="25%"
+          valueWidth="75%"
+        />
+        <SummaryRow
+          label="Assessor Name:"
+          value={assessorName}
+          labelWidth="25%"
+          valueWidth="75%"
+        />
+        <SummaryRow
+          label="Use Case Description:"
+          value={useCaseDescription}
+          labelWidth="25%"
+          valueWidth="75%"
+        />
         <View style={styles.overview_tableRow}>
           <View style={[styles.overview_tableCol, { width: "25%" }]}>
             <Text style={styles.overview_tableCell}>Assessment Link:</Text>
@@ -1101,14 +1121,12 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
 
       {/* Core Summary Table */}
       <View style={styles.overview_table}>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "30%" }]}>
-            <Text style={styles.overview_tableCell}>Model Version:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "70%" }]}>
-            <Text style={styles.overview_tableCell}>1.0</Text>
-          </View>
-        </View>
+        <SummaryRow
+          label="Model Version:"
+          value="1.0"
+          labelWidth="30%"
+          valueWidth="70%"
+        />
         <View
           style={[
             styles.overview_tableRow,
@@ -1129,30 +1147,24 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
             </Text>
           </View>
         </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "30%" }]}>
-            <Text style={styles.overview_tableCell}>Assessment Name:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "70%" }]}>
-            <Text style={styles.overview_tableCell}>{assessmentName}</Text>
-          </View>
-        </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "30%" }]}>
-            <Text style={styles.overview_tableCell}>Assessor Name:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "70%" }]}>
-            <Text style={styles.overview_tableCell}>{assessorName}</Text>
-          </View>
-        </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "30%" }]}>
-            <Text style={styles.overview_tableCell}>Use Case Description:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "70%" }]}>
-            <Text style={styles.overview_tableCell}>{useCaseDescription}</Text>
-          </View>
-        </View>
+        <SummaryRow
+          label="Assessment Name:"
+          value={assessmentName}
+          labelWidth="30%"
+          valueWidth="70%"
+        />
+        <SummaryRow
+          label="Assessor Name:"
+          value={assessorName}
+          labelWidth="30%"
+          valueWidth="70%"
+        />
+        <SummaryRow
+          label="Use Case Description:"
+          value={useCaseDescription}
+          labelWidth="30%"
+          valueWidth="70%"
+        />
         <View style={styles.overview_tableRow}>
           <View style={[styles.overview_tableCol, { width: "30%" }]}>
             <Text style={styles.overview_tableCell}>Assessment Link:</Text>
@@ -1389,14 +1401,9 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
       <View style={styles.table}>
         <DetailsTableHeader />
         {rows.map((r, idx) => {
-          const isEvenRow = idx % 2 === 1;
           const levelColor = getColorForLevel(r.levelNum).background;
           return (
-            <View
-              key={idx}
-              style={[styles.tableRow, isEvenRow ? styles.greyBackground : {}]}
-              wrap={false}
-            >
+            <TableBodyRow key={r.id} idx={idx}>
               <View style={[styles.tableCol, { width: "5%" }]}>
                 <Text style={styles.tableCell}>{r.id}</Text>
               </View>
@@ -1421,7 +1428,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
                   {r.description || "N/A"}
                 </Text>
               </View>
-            </View>
+            </TableBodyRow>
           );
         })}
       </View>
@@ -1438,69 +1445,39 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         <Footer assessmentUrl={assessmentUrl} version={version} />
         <Text style={styles.title}>Overlay Details</Text>
         <View style={styles.table}>
-          <View
-            style={[
-              styles.tableRow,
-              {
-                borderTopWidth: 1,
-                backgroundColor: headerColor,
-                color: "#ffffff",
-              },
+          <TableHeaderRow
+            columns={[
+              { width: "5%", label: "#" },
+              { width: "15%", label: "Module" },
+              { width: "25%", label: "Category" },
+              { width: "55%", label: "Overlays Applied" },
             ]}
-          >
-            <View style={[styles.tableCol, { width: "5%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>#</Text>
-            </View>
-            <View style={[styles.tableCol, { width: "15%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
-            </View>
-            <View style={[styles.tableCol, { width: "25%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-            </View>
-            <View style={[styles.tableCol, { width: "55%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>
-                Overlays Applied
-              </Text>
-            </View>
-          </View>
+          />
           {rows
             .filter((r) => r.overlays.length > 0)
-            .map((r, idx) => {
-              const isEvenRow = idx % 2 === 1;
-              return (
-                <View
-                  key={idx}
-                  style={[
-                    styles.tableRow,
-                    isEvenRow ? styles.greyBackground : {},
-                  ]}
-                  wrap={false}
-                >
-                  <View style={[styles.tableCol, { width: "5%" }]}>
-                    <Text style={styles.tableCell}>{r.id}</Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "15%" }]}>
-                    <Text style={styles.tableCell}>{r.module}</Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>{r.category}</Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "55%" }]}>
-                    {r.overlays.map((ov: string, oIdx: number) => (
-                      <Text
-                        key={oIdx}
-                        style={[
-                          styles.tableCell,
-                          { fontSize: 8, color: "#333" },
-                        ]}
-                      >
-                        • {ov}
-                      </Text>
-                    ))}
-                  </View>
+            .map((r, idx) => (
+              <TableBodyRow key={r.id} idx={idx}>
+                <View style={[styles.tableCol, { width: "5%" }]}>
+                  <Text style={styles.tableCell}>{r.id}</Text>
                 </View>
-              );
-            })}
+                <View style={[styles.tableCol, { width: "15%" }]}>
+                  <Text style={styles.tableCell}>{r.module}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "25%" }]}>
+                  <Text style={styles.tableCell}>{r.category}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "55%" }]}>
+                  {r.overlays.map((ov: string) => (
+                    <Text
+                      key={ov}
+                      style={[styles.tableCell, { fontSize: 8, color: "#333" }]}
+                    >
+                      • {ov}
+                    </Text>
+                  ))}
+                </View>
+              </TableBodyRow>
+            ))}
         </View>
       </Page>
     )}
@@ -1516,67 +1493,40 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         <Footer assessmentUrl={assessmentUrl} version={version} />
         <Text style={styles.title}>Extension Relevance Details</Text>
         <View style={styles.table}>
-          <View
-            style={[
-              styles.tableRow,
-              {
-                borderTopWidth: 1,
-                backgroundColor: headerColor,
-                color: "#ffffff",
-              },
+          <TableHeaderRow
+            columns={[
+              { width: "10%", label: "#" },
+              { width: "40%", label: "Category" },
+              { width: "20%", label: "Weight" },
+              { width: "30%", label: "Relevance Level" },
             ]}
-          >
-            <View style={[styles.tableCol, { width: "10%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>#</Text>
-            </View>
-            <View style={[styles.tableCol, { width: "40%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-            </View>
-            <View style={[styles.tableCol, { width: "20%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>Weight</Text>
-            </View>
-            <View style={[styles.tableCol, { width: "30%" }]}>
-              <Text style={[styles.tableCell, styles.boldText]}>
-                Relevance Level
-              </Text>
-            </View>
-          </View>
-          {relevanceRows.map((r, idx) => {
-            const isEvenRow = idx % 2 === 1;
-            return (
-              <View
-                key={idx}
-                style={[
-                  styles.tableRow,
-                  isEvenRow ? styles.greyBackground : {},
-                ]}
-                wrap={false}
-              >
-                <View style={[styles.tableCol, { width: "10%" }]}>
-                  <Text style={styles.tableCell}>{r.id}</Text>
-                </View>
-                <View style={[styles.tableCol, { width: "40%" }]}>
-                  <Text style={styles.tableCell}>{r.category}</Text>
-                </View>
-                <View style={[styles.tableCol, { width: "20%" }]}>
-                  <Text style={styles.tableCell}>{r.weight}</Text>
-                </View>
-                <View style={[styles.tableCol, { width: "30%" }]}>
-                  <Text
-                    style={[
-                      styles.tableCell,
-                      {
-                        color: getColorForLevel(r.level).background,
-                        fontWeight: "bold",
-                      },
-                    ]}
-                  >
-                    {LevelResult[r.level]}
-                  </Text>
-                </View>
+          />
+          {relevanceRows.map((r, idx) => (
+            <TableBodyRow key={r.id} idx={idx}>
+              <View style={[styles.tableCol, { width: "10%" }]}>
+                <Text style={styles.tableCell}>{r.id}</Text>
               </View>
-            );
-          })}
+              <View style={[styles.tableCol, { width: "40%" }]}>
+                <Text style={styles.tableCell}>{r.category}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "20%" }]}>
+                <Text style={styles.tableCell}>{r.weight}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "30%" }]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    {
+                      color: getColorForLevel(r.level).background,
+                      fontWeight: "bold",
+                    },
+                  ]}
+                >
+                  {LevelResult[r.level]}
+                </Text>
+              </View>
+            </TableBodyRow>
+          ))}
         </View>
       </Page>
     )}
