@@ -5,7 +5,7 @@ const utf8ToBase64 = (str: string): string => {
   const bytes = new TextEncoder().encode(str);
   let binary = "";
   bytes.forEach((b) => {
-    binary += String.fromCharCode(b);
+    binary += String.fromCodePoint(b);
   });
   return btoa(binary);
 };
@@ -13,7 +13,7 @@ const utf8ToBase64 = (str: string): string => {
 export const base64ToUtf8 = (encoded: string): string => {
   const binary = atob(encoded);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.codePointAt(i) ?? 0;
   return new TextDecoder().decode(bytes);
 };
 
