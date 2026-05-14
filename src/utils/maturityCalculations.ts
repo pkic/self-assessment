@@ -13,7 +13,7 @@ const getWeightSum = (
   extensions: ExtensionData[],
   enabledExtensions: string[],
 ) => {
-  let weightSum = category.requirements.reduce(
+  let weightSum = (category.requirements || []).reduce(
     (acc, req) => acc + req.weight,
     0,
   );

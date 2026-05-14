@@ -5,7 +5,7 @@ import { Overview } from "../Overview/Overview";
 import { UnifiedReport } from "../Report/UnifiedReport";
 import MaturityWidget from "../MaturityWidget/MaturityWidget"; // Import MaturityWidget
 import { yamlParser } from "../../utils/yamlParser";
-import { generateURL } from "../../utils/urlGenerator";
+import { generateURL, base64ToUtf8 } from "../../utils/urlGenerator";
 import { exportToPDF, exportExtensionPDF } from "../../utils/pdfGenerator";
 import {
   AssessmentData,
@@ -83,7 +83,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
 
       if (encodedProgress) {
         try {
-          const decodedData = JSON.parse(atob(encodedProgress));
+          const decodedData = JSON.parse(base64ToUtf8(encodedProgress));
           const decodedProgress = decodedData.progress || decodedData;
           const initialExtensions: ExtensionData[] = [];
           if (extensions) {
@@ -120,6 +120,9 @@ export const Assessment: React.FC<AssessmentProps> = ({
           setCurrentTab("report");
         } catch (error) {
           console.error("Error decoding progress from URL:", error);
+          if (initialData) {
+            setProgress(initProgress(initialData));
+          }
         }
       } else {
         const storedData = localStorage.getItem(STORAGE_KEY);
@@ -176,9 +179,10 @@ export const Assessment: React.FC<AssessmentProps> = ({
 
       if (initialData) setData(initialData);
 
-      if (assessmentName) setAssessmentName(atob(assessmentName));
-      if (assessorName) setAssessorName(atob(assessorName));
-      if (useCaseDescription) setUseCaseDescription(atob(useCaseDescription));
+      if (assessmentName) setAssessmentName(base64ToUtf8(assessmentName));
+      if (assessorName) setAssessorName(base64ToUtf8(assessorName));
+      if (useCaseDescription)
+        setUseCaseDescription(base64ToUtf8(useCaseDescription));
 
       if (config) {
         fetch(config)
@@ -500,19 +504,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
       return acc;
     }, [] as string[]) || [];
 
-  const getNextModuleId = () => {
-    if (!data || !currentTab) return null;
-    const modulesPlusReport = [
-      ...data.modules.map((m) => m.id),
-      "report",
-      "extensions",
-    ];
-    const currentIndex = modulesPlusReport.indexOf(currentTab);
-    if (currentIndex === -1 || currentIndex === modulesPlusReport.length - 1)
-      return null;
-    return modulesPlusReport[currentIndex + 1];
-  };
-  getNextModuleId();
   // data ? calculateOverallMaturityLevel(data.modules, progress) : 0;
   const moduleMaturityLevels = data
     ? calculateModuleMaturityLevels(data.modules, progress, [], [])
