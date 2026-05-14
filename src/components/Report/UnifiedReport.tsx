@@ -223,12 +223,12 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
                               [activeExtension],
                               [activeExtension.extension.id],
                             );
-                            return effectiveWeight !== category.weight ? (
+                            return effectiveWeight === category.weight ? (
+                              category.weight
+                            ) : (
                               <span>
                                 <strong>{effectiveWeight}</strong>
                               </span>
-                            ) : (
-                              category.weight
                             );
                           })()
                         : category.weight}
@@ -312,8 +312,8 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
                                 fontSize: "0.85em",
                               }}
                             >
-                              {overlayInfo.map((info, i) => (
-                                <li key={i}>{info}</li>
+                              {overlayInfo.map((info) => (
+                                <li key={info}>{info}</li>
                               ))}
                             </ul>
                           </td>

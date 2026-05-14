@@ -20,7 +20,8 @@ export const AssessmentHeader: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        event.target instanceof Node &&
+        !dropdownRef.current.contains(event.target)
       ) {
         setIsOpen(false);
       }

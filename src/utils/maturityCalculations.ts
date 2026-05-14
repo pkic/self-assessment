@@ -23,7 +23,7 @@ const getWeightSum = (
       const extModule = ext.overlays.modules.find((m) => m.id === moduleId);
       const extCat = extModule?.categories.find((c) => c.id === category.id);
 
-      if (extCat && extCat.requirements && category.requirements) {
+      if (extCat?.requirements && category.requirements) {
         extCat.requirements.forEach((extReq) => {
           const coreReq = category.requirements.find((r) => r.id === extReq.id);
           if (coreReq) {
@@ -234,14 +234,14 @@ export const calculateExtensionMaturityLevels = (
       let totalWeight = 0;
       let totalWeightedScore = 0;
 
-      modules.forEach((module) => {
-        module.categories.forEach((category) => {
+      for (const module of modules) {
+        for (const category of module.categories) {
           const coreKey = `${module.id}.${category.id}`;
           const coreProgressData = progress[coreKey];
 
           // Skip if core category is not applicable
           if (!coreProgressData || coreProgressData.applicability === false) {
-            return;
+            continue;
           }
 
           const blendedLevel = calculateBlendedLevel(
@@ -252,7 +252,7 @@ export const calculateExtensionMaturityLevels = (
           );
 
           if (blendedLevel === -1) {
-            return;
+            continue;
           }
 
           const weightSum_C = getWeightSum(
@@ -276,8 +276,8 @@ export const calculateExtensionMaturityLevels = (
             totalWeight += weightSum_C;
             totalWeightedScore += blendedLevel * weightSum_C;
           }
-        });
-      });
+        }
+      }
 
       const level = totalWeight
         ? Math.floor(totalWeightedScore / totalWeight)

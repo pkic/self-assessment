@@ -54,14 +54,13 @@ export const Module: React.FC<ModuleProps> = ({
   };
 
   const nextSectionId = getNextSection(module.id);
-  const nextSectionName =
-    nextSectionId === "report"
-      ? "Report"
-      : nextSectionId === "M"
-        ? "Management"
-        : nextSectionId === "O"
-          ? "Operations"
-          : "Resources";
+  const sectionNames: Record<string, string> = {
+    report: "Report",
+    M: "Management",
+    O: "Operations",
+    R: "Resources",
+  };
+  const nextSectionName = sectionNames[nextSectionId] ?? "Resources";
 
   const categoriesToRender =
     isExtensionMode && activeExtension

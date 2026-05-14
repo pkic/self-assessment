@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
 import { ExtensionData, ModuleData, ProgressData } from "../types/types";
 
 export type AssessmentTarget =
@@ -37,7 +43,6 @@ interface AssessmentTargetProviderProps {
   coreModules: ModuleData[];
   progress: Record<string, ProgressData>;
   enabledExtensions: string[];
-  onTargetChange?: (target: AssessmentTarget) => void;
 }
 
 export const AssessmentTargetProvider: React.FC<
@@ -48,59 +53,44 @@ export const AssessmentTargetProvider: React.FC<
   coreModules,
   progress,
   enabledExtensions,
-  onTargetChange,
 }) => {
-  const [target, setTargetState] = useState<AssessmentTarget>({
-    kind: "original",
-  });
+  const [target, setTarget] = useState<AssessmentTarget>({ kind: "original" });
 
-  const setTarget = (newTarget: AssessmentTarget) => {
-    setTargetState(newTarget);
-    if (onTargetChange) {
-      onTargetChange(newTarget);
-    }
-  };
-
-  const getModules = () => coreModules;
-
-  const getProgress = () => progress;
-
-  const getActiveExtension = () => {
-    if (target.kind === "extension") {
-      const ext =
-        availableExtensions.find((ext) => ext.extension.id === target.id) ||
-        null;
-      // Guard: if currently selected extension is disabled, fall back to Original
-      if (ext && !enabledExtensions.includes(ext.extension.id)) {
+  const value = useMemo<AssessmentTargetContextType>(
+    () => ({
+      target,
+      setTarget,
+      availableExtensions,
+      enabledExtensions,
+      isExtensionEnabled: (id: string) => enabledExtensions.includes(id),
+      getModules: () => coreModules,
+      getProgress: () => progress,
+      getActiveExtension: () => {
+        if (target.kind === "extension") {
+          const ext =
+            availableExtensions.find((ext) => ext.extension.id === target.id) ||
+            null;
+          // Guard: if currently selected extension is disabled, fall back to Original
+          if (ext && !enabledExtensions.includes(ext.extension.id)) {
+            return null;
+          }
+          return ext;
+        }
         return null;
-      }
-      return ext;
-    }
-    return null;
-  };
-
-  const getCurrentTargetName = () => {
-    if (target.kind === "original") return "Original";
-    const ext = availableExtensions.find((e) => e.extension.id === target.id);
-    return ext?.extension.name || "Extension";
-  };
-
-  const isExtensionEnabled = (id: string) => enabledExtensions.includes(id);
+      },
+      getCurrentTargetName: () => {
+        if (target.kind === "original") return "Original";
+        const ext = availableExtensions.find(
+          (e) => e.extension.id === target.id,
+        );
+        return ext?.extension.name || "Extension";
+      },
+    }),
+    [target, availableExtensions, enabledExtensions, coreModules, progress],
+  );
 
   return (
-    <AssessmentTargetContext.Provider
-      value={{
-        target,
-        setTarget,
-        availableExtensions,
-        enabledExtensions,
-        isExtensionEnabled,
-        getModules,
-        getProgress,
-        getActiveExtension,
-        getCurrentTargetName,
-      }}
-    >
+    <AssessmentTargetContext.Provider value={value}>
       {children}
     </AssessmentTargetContext.Provider>
   );

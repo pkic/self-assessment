@@ -1624,16 +1624,27 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
   </Document>
 );
 
-export const exportExtensionPDF = async (
-  progress: Record<string, ProgressData>,
-  extension: ExtensionData,
-  coreModules: ModuleData[],
-  assessmentName: string,
-  assessorName: string,
-  useCaseDescription: string,
-  version: string,
-  chartImgData: string,
-) => {
+interface ExportExtensionPDFOptions {
+  progress: Record<string, ProgressData>;
+  extension: ExtensionData;
+  coreModules: ModuleData[];
+  assessmentName: string;
+  assessorName: string;
+  useCaseDescription: string;
+  version: string;
+  chartImgData: string;
+}
+
+export const exportExtensionPDF = async ({
+  progress,
+  extension,
+  coreModules,
+  assessmentName,
+  assessorName,
+  useCaseDescription,
+  version,
+  chartImgData,
+}: ExportExtensionPDFOptions) => {
   const extId = extension.extension.id;
 
   const overallMaturityLevel = calculateOverallMaturityLevel(
@@ -1688,18 +1699,11 @@ export const exportExtensionPDF = async (
         [extension.extension.id],
       );
 
-      let result = LevelResult[0];
-      let levelNum = 0;
-      if (blendedLevel === -1) {
-        result = LevelResult[-1];
-        levelNum = -1;
-      } else {
-        levelNum = Math.floor(blendedLevel);
-        result = LevelResult[levelNum];
-      }
+      const levelNum = blendedLevel === -1 ? -1 : Math.floor(blendedLevel);
+      const result = LevelResult[levelNum];
 
       const weightDisplay =
-        effectiveWeight !== c.weight ? `${effectiveWeight}` : `${c.weight}`;
+        effectiveWeight === c.weight ? `${c.weight}` : `${effectiveWeight}`;
 
       return {
         id: `${m.id}.${c.id}`,

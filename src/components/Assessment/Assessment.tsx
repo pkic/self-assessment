@@ -62,9 +62,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
     string[] | null
   >(null);
   const [chartAnimate, setChartAnimate] = useState(true);
-  const [, setTarget] = useState<
-    { kind: "original" } | { kind: "extension"; id: string }
-  >({ kind: "original" });
 
   const STORAGE_KEY = "assessmentData";
 
@@ -248,28 +245,24 @@ export const Assessment: React.FC<AssessmentProps> = ({
     extensionsData: ExtensionData[] = [],
     _enabledExtensions: string[] = [],
   ): Record<string, ProgressData> {
-    const initialProgress =
-      parsedData?.modules.reduce(
-        (acc, module) => {
-          module.categories.map((category) => {
-            const progressData = { ...defaultProgressData };
-            const levelOne = category.levels.find(
-              (level) => level.number === 1,
-            );
-            if (levelOne) {
-              progressData.description = levelOne.description;
-            }
-            acc[`${module.id}.${category.id}`] = progressData;
-          });
-          return acc;
-        },
-        {} as Record<string, ProgressData>,
-      ) || {};
+    const initialProgress: Record<string, ProgressData> = {};
 
-    // Initialize progress for extensions
-    extensionsData.forEach((ext) => {
-      ext.relevance.modules.forEach((module) => {
-        module.categories.forEach((category) => {
+    if (parsedData) {
+      for (const module of parsedData.modules) {
+        for (const category of module.categories) {
+          const progressData = { ...defaultProgressData };
+          const levelOne = category.levels.find((level) => level.number === 1);
+          if (levelOne) {
+            progressData.description = levelOne.description;
+          }
+          initialProgress[`${module.id}.${category.id}`] = progressData;
+        }
+      }
+    }
+
+    for (const ext of extensionsData) {
+      for (const module of ext.relevance.modules) {
+        for (const category of module.categories) {
           const key = `${ext.extension.id}.${module.id}.${category.id}`;
           const progressData = { ...defaultProgressData };
           const levelOne = category.levels.find((level) => level.number === 1);
@@ -277,9 +270,9 @@ export const Assessment: React.FC<AssessmentProps> = ({
             progressData.description = levelOne.description;
           }
           initialProgress[key] = progressData;
-        });
-      });
-    });
+        }
+      }
+    }
 
     return initialProgress;
   }
@@ -294,7 +287,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       ? `${extensionId}.${moduleId}.${categoryId}`
       : `${moduleId}.${categoryId}`;
     setProgress((prevProgress) => {
-      let description = defaultProgressData.description;
+      let description: string;
       if (extensionId) {
         const ext = extensionsData.find((e) => e.extension.id === extensionId);
         description =
@@ -362,8 +355,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
 
     setProgress((prevProgress) => {
       const newProgress = { ...prevProgress };
-      ext.relevance.modules.forEach((module) => {
-        module.categories.forEach((category) => {
+      for (const module of ext.relevance.modules) {
+        for (const category of module.categories) {
           const key = `${extensionId}.${module.id}.${category.id}`;
           const progressData = { ...defaultProgressData };
           const levelOne = category.levels.find((level) => level.number === 1);
@@ -371,8 +364,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
             progressData.description = levelOne.description;
           }
           newProgress[key] = progressData;
-        });
-      });
+        }
+      }
       return newProgress;
     });
   };
@@ -455,16 +448,16 @@ export const Assessment: React.FC<AssessmentProps> = ({
     const chartImgData = chartCanvas.toDataURL("image/png");
 
     try {
-      await exportExtensionPDF(
+      await exportExtensionPDF({
         progress,
-        ext,
-        data.modules,
+        extension: ext,
+        coreModules: data.modules,
         assessmentName,
         assessorName,
         useCaseDescription,
         version,
         chartImgData,
-      );
+      });
     } catch (error) {
       console.error("Error exporting extension PDF:", error);
     } finally {
@@ -534,7 +527,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
       coreModules={data?.modules || []}
       progress={progress}
       enabledExtensions={enabledExtensions}
-      onTargetChange={setTarget}
     >
       <div className="pkimm-assessment-container">
         <header className="pkimm-main-header">

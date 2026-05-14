@@ -71,7 +71,10 @@ export const Extensions: React.FC<ExtensionsProps> = ({
                 )}
               </div>
               <div className="extension-actions">
-                <label className="pkimm-toggle-switch">
+                <label
+                  className="pkimm-toggle-switch"
+                  aria-label={`Toggle ${ext.extension.name}`}
+                >
                   <input
                     type="checkbox"
                     checked={isEnabled}
