@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-    "typeRoots": ["./node_modules/@types", "./src/types"],
     "target": "es6",
     "module": "commonjs",
-    "lib": ["dom", "es2015", "es2017"],
+    "lib": ["dom", "es2020"],
     "jsx": "react",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["jest", "node"]
   },
   "include": ["src", "src/styles.d.ts"]
 }
