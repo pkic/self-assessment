@@ -1,115 +1,317 @@
 .pkimm-assessment-container {
   display: flex;
   flex-direction: column;
-  font-family: "Roboto", sans-serif;
+  font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
   text-align: left;
+  background-color: var(--pkimm-background-color);
+  min-height: 100vh;
+  width: 100%;
 }
 
 .pkimm-content-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .pkimm-categories-container {
-  flex: 3;
-  overflow-y: auto;
+  flex: 1;
+  min-width: 0; // Allow it to shrink
+  padding: 1rem 0;
 
   .continue-button {
     display: block;
-    margin: 20px auto;
-    padding: 10px 20px;
+    margin: 2rem auto;
+    padding: 0.75rem 2rem;
     background-color: var(--pkimm-primary-color);
     color: white;
     border: none;
-    border-radius: 0px;
+    border-radius: var(--pkimm-border-radius-md);
     cursor: pointer;
-    font-size: 16px;
+    font-size: 1rem;
+    font-weight: 500;
     text-align: center;
+    transition: all 0.2s ease;
+    box-shadow: var(--pkimm-shadow-sm);
 
     &:hover {
       background-color: var(--pkimm-primary-color-hover);
+      box-shadow: var(--pkimm-shadow-md);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
     }
   }
 }
 
 .pkimm-chart-container {
-  flex: 0 0 400px; /* new */
-  overflow-y: auto;
-  padding-left: 2rem;
+  flex: 0 0 400px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: sticky;
-  top: calc(70px + var(--pkimm-sticky-top-offset));
-  height: calc(100vh - (70px + var(--pkimm-sticky-top-offset)));
+  top: calc(110px + var(--pkimm-sticky-top-offset));
+  height: fit-content;
+  max-height: calc(100vh - (110px + var(--pkimm-sticky-top-offset) + 2rem));
+  overflow-y: auto;
+  background-color: var(--pkimm-surface-color);
+  margin-left: 2rem;
+  border-radius: var(--pkimm-border-radius-lg);
+  box-shadow: var(--pkimm-shadow-sm);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+  min-width: 0;
+  z-index: 10;
+  align-self: flex-start;
+}
+
+.pkimm-version {
+  margin-top: auto;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--pkimm-text-color-muted);
+}
+
+.pkimm-main-header {
+  background-color: var(--pkimm-surface-color);
+  position: sticky;
+  top: var(--pkimm-sticky-top-offset);
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.pkimm-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+
+  .pkimm-logo {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+  }
+}
+
+.pkimm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .pkimm-tabs {
   display: flex;
-  align-items: center; /* Center items vertically */
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 1rem;
-  position: sticky;
-  top: calc(0px + var(--pkimm-sticky-top-offset));
-  z-index: 1000;
-  background-color: var(--pkimm-background-color);
-  padding: 0; /* Remove padding to align items correctly */
-  box-shadow: 0 2px 5px darkgray;
-  justify-content: space-between; /* Space out the tabs and the logo */
+  align-items: stretch;
+  background-color: var(--pkimm-surface-color);
+  padding: 0 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  justify-content: flex-start;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 
   button {
     background: none;
     border: none;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--pkimm-text-color-muted);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+
+    &:after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--pkimm-primary-color);
+      transform: scaleX(0);
+      transition: transform 0.2s ease;
+    }
+
+    &:hover {
+      color: var(--pkimm-primary-color);
+      background-color: rgba(26, 115, 232, 0.04);
+    }
 
     &.active {
-      border-bottom: 2px solid var(--pkimm-primary-color);
-      font-weight: bold;
       color: var(--pkimm-primary-color);
-    }
-  }
 
-  .pkimm-logo {
-    margin-left: auto; /* Push the logo to the right */
-    height: 30px; /* Adjust the height as needed */
-    margin-right: 1rem; /* Add some right margin */
+      &:after {
+        transform: scaleX(1);
+      }
+    }
   }
 }
 
-/* Add the new styles for the burger menu */
 .pkimm-burger-menu {
   display: none;
   flex-direction: column;
   cursor: pointer;
-  //align-items: center; /* Center items vertically */
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 1rem;
-  position: sticky;
-  top: calc(0px + var(--pkimm-sticky-top-offset));
-  z-index: 1001;
-  background-color: var(--pkimm-background-color);
-  padding: 7px; /* Remove padding to align items correctly */
-  box-shadow: 0 2px 5px darkgray;
-  justify-content: space-between; /* Space out the tabs and the logo */
+  padding: 8px;
+  z-index: 1100;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border-radius: var(--pkimm-border-radius-sm);
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 
   div {
-    width: 25px;
-    height: 3px;
-    background-color: #333;
-    margin: 4px 0;
-    transition: 0.4s;
+    width: 22px;
+    height: 2px;
+    background-color: var(--pkimm-text-color-dark);
+    margin: 2px 0;
+    transition: 0.3s;
   }
 
   &.active {
     .bar1 {
-      transform: rotate(-45deg) translate(-5px, 6px);
+      transform: rotate(-45deg) translate(-4px, 4px);
     }
     .bar2 {
       opacity: 0;
     }
     .bar3 {
-      transform: rotate(45deg) translate(-5px, -6px);
+      transform: rotate(45deg) translate(-4px, -4px);
+    }
+  }
+}
+
+.pkimm-target-badge {
+  appearance: none;
+  border: none;
+  font-family: inherit;
+  text-align: inherit;
+  padding: 6px 12px;
+  background-color: var(--pkimm-primary-color);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+
+  &.extension {
+    background-color: var(--pkimm-secondary-color);
+  }
+
+  &.interactive {
+    cursor: pointer;
+    &:hover {
+      opacity: 0.9;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+    }
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .target-dot {
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dropdown-arrow {
+    font-size: 0.6rem;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+    &.open {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.pkimm-target-dropdown-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pkimm-target-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+  box-shadow: var(--pkimm-shadow-md);
+  z-index: 1001;
+  min-width: 240px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .dropdown-item {
+    appearance: none;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-weight: inherit;
+    text-align: left;
+    width: 100%;
+    display: block;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--pkimm-text-color-dark);
+    transition: all 0.2s;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: rgba(26, 115, 232, 0.04);
+      color: var(--pkimm-primary-color);
+    }
+
+    &.active {
+      background-color: rgba(26, 115, 232, 0.08);
+      color: var(--pkimm-primary-color);
+      font-weight: 600;
     }
   }
 }
@@ -124,39 +326,87 @@
 @media (max-width: 768px) {
   .pkimm-content-container {
     flex-direction: column;
+    padding: 0 0.75rem;
+  }
+
+  .pkimm-categories-container {
+    padding: 0.5rem 0;
   }
 
   .pkimm-chart-container {
-    flex: 0 0;
-    padding-left: 0;
-    margin-top: 2rem;
+    flex: 0 0 auto;
+    padding: 1.5rem 1rem;
+    margin-left: 0;
+    margin-top: 1rem;
     width: 100%;
+    position: static;
+    max-height: none;
+
+    canvas {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+  }
+
+  .pkimm-header-top {
+    padding: 0.5rem 1rem;
   }
 
   .pkimm-tabs {
     display: none;
+    flex-direction: column;
+    background-color: white;
+    width: 100%;
+    position: fixed;
+    top: 56px; // Adjust based on header-top height
+    left: 0;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    align-items: stretch;
+    padding: 1rem 0;
+    border-top: none;
 
     &.active {
       display: flex;
-      flex-direction: column;
-      background-color: white;
-      width: 100%;
-      position: sticky;
-      top: calc(48px + var(--pkimm-sticky-top-offset));
-      z-index: 1000;
-      left: 0;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      align-items: center; /* Center items horizontally */
+    }
 
-      .pkimm-logo {
-        display: block; /* Ensure the logo is always visible */
-        align-self: center; /* Center the logo horizontally */
-        margin: 1rem 0; /* Add some margin for spacing */
+    button {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--pkimm-border-color);
+      width: 100%;
+      justify-content: flex-start;
+      font-size: 0.9rem;
+
+      &:after {
+        left: 0;
+        right: auto;
+        width: 4px;
+        height: 100%;
+        top: 0;
+        transform: scaleY(0);
+        transform-origin: top;
+      }
+
+      &.active:after {
+        transform: scaleY(1);
       }
     }
   }
 
   .pkimm-burger-menu {
     display: flex;
+  }
+
+  .pkimm-header-actions {
+    .pkimm-target-badge {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+
+      .assessing-label {
+        display: none; // Hide "Assessing:" prefix on small screens
+      }
+    }
   }
 }

@@ -1,31 +1,56 @@
 .pkimm-maturity-widget {
   text-align: center;
-  margin: 20px 0;
-  padding: 20px;
-  font-size: 1.5em;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-radius: var(--pkimm-border-radius-md);
+  box-shadow: var(--pkimm-shadow-sm);
+  transition: all 0.3s ease;
 
   &.level-1 {
     background-color: var(--pkimm-maturity-level-1);
-    color: var(--pkimm-text-color-light);
+    color: white;
   }
 
   &.level-2 {
     background-color: var(--pkimm-maturity-level-2);
-    color: var(--pkimm-text-color-light);
+    color: white;
   }
 
   &.level-3 {
     background-color: var(--pkimm-maturity-level-3);
-    color: var(--pkimm-text-color-dark);
+    color: white;
   }
 
   &.level-4 {
     background-color: var(--pkimm-maturity-level-4);
-    color: var(--pkimm-text-color-dark);
+    color: white;
   }
 
   &.level-5 {
     background-color: var(--pkimm-maturity-level-5);
     color: var(--pkimm-text-color-dark);
+  }
+
+  &.below-target {
+    border: 4px solid #d93025;
+    position: relative;
+    box-shadow: 0 0 15px rgba(217, 48, 37, 0.2);
+
+    &::after {
+      content: "⚠️ BELOW TARGET";
+      position: absolute;
+      top: -12px;
+      right: 12px;
+      background: #d93025;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
   }
 }

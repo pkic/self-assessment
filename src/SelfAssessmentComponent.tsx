@@ -12,10 +12,17 @@ class SelfAssessmentComponent extends HTMLElement {
   connectedCallback() {
     const dataUrl = this.getAttribute("dataUrl");
     const configUrl = this.getAttribute("configUrl");
+    const extensionsUrl = this.getAttribute("extensionsUrl");
     if (!this.root) {
       this.root = createRoot(this);
     }
-    this.root.render(<App dataUrl={dataUrl} configUrl={configUrl} />);
+    this.root.render(
+      <App
+        dataUrl={dataUrl}
+        configUrl={configUrl}
+        extensionsUrl={extensionsUrl}
+      />,
+    );
   }
 
   disconnectedCallback() {

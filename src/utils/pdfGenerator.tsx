@@ -14,9 +14,19 @@ import {
 } from "@react-pdf/renderer";
 import { Style } from "@react-pdf/types";
 import React from "react";
-import { ProgressData } from "../types/types";
+import { ProgressData, ExtensionData, ModuleData } from "../types/types";
 import "../index.module.scss";
 import LevelResult from "../enums/LevelResult";
+import { generateURL } from "./urlGenerator";
+import {
+  calculateExtensionWeightedPKIMMScore,
+  calculateExtensionFloorScore,
+  calculateOverallMaturityLevel,
+  calculateModuleMaturityLevels,
+  getCategoryOverlayInfo,
+  calculateBlendedLevel,
+  getEffectiveWeight,
+} from "./maturityCalculations";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
   faGithub,
@@ -291,6 +301,307 @@ const Footer: React.FC<{ assessmentUrl: string; version: string }> = ({
   </View>
 );
 
+const CoverPage: React.FC<{ version: string; subtitle?: string }> = ({
+  version,
+  subtitle,
+}) => (
+  <Page size="A4" style={styles.page}>
+    <View style={styles.logo_first}>
+      <PkicLogoSvg />
+    </View>
+    <Text style={[styles.title_first, { marginTop: 50 }]}>
+      PKI Maturity Model
+    </Text>
+    <Text style={styles.subtitle_first}>Self-Assessment Report</Text>
+    {subtitle && (
+      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{subtitle}</Text>
+    )}
+    <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
+    <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
+      {format(new Date(), "MMMM do, yyyy h:mm a")}
+    </Text>
+  </Page>
+);
+
+const TableHeaderRow: React.FC<{
+  columns: { width: string; label: string }[];
+}> = ({ columns }) => (
+  <View
+    style={[
+      styles.tableRow,
+      {
+        borderTopWidth: 1,
+        backgroundColor: headerColor,
+        color: "#ffffff",
+      },
+    ]}
+  >
+    {columns.map((c) => (
+      <View key={c.label} style={[styles.tableCol, { width: c.width }]}>
+        <Text style={[styles.tableCell, styles.boldText]}>{c.label}</Text>
+      </View>
+    ))}
+  </View>
+);
+
+const DetailsTableHeader: React.FC = () => (
+  <TableHeaderRow
+    columns={[
+      { width: "5%", label: "#" },
+      { width: "11%", label: "Module" },
+      { width: "25%", label: "Category" },
+      { width: "12%", label: "Maturity Level" },
+      { width: "47%", label: "Description" },
+    ]}
+  />
+);
+
+const TableBodyRow: React.FC<{
+  idx: number;
+  children: React.ReactNode;
+}> = ({ idx, children }) => (
+  <View
+    style={[styles.tableRow, idx % 2 === 1 ? styles.greyBackground : {}]}
+    wrap={false}
+  >
+    {children}
+  </View>
+);
+
+const SummaryRow: React.FC<{
+  label: string;
+  value: React.ReactNode;
+  labelWidth: string;
+  valueWidth: string;
+}> = ({ label, value, labelWidth, valueWidth }) => (
+  <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+    <View style={[styles.overview_tableCol, { width: labelWidth }]}>
+      <Text style={styles.overview_tableCell}>{label}</Text>
+    </View>
+    <View style={[styles.overview_tableCol, { width: valueWidth }]}>
+      <Text style={styles.overview_tableCell}>{value}</Text>
+    </View>
+  </View>
+);
+
+const MaturityLadderTable: React.FC<{ style: Style | Style[] }> = ({
+  style,
+}) => (
+  <View style={style}>
+    <View
+      style={[
+        styles.maturity_tableRow,
+        styles.greyBackground,
+        {
+          borderBottomWidth: 0,
+          fontWeight: "bold",
+        },
+      ]}
+    >
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Maturity level</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>Short description</Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Initial</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Unpredictable process with poor control and always reactive
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Basic</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Process is characterized by each particular case or project and
+          controls are often reactive
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Advanced</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Process is characterized by organizational standards and controls are
+          proactive
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Managed</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Processes are measured and controlled, proactive approach
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
+      <View style={[styles.maturity_tableCol, { width: "15%" }]}>
+        <Text style={styles.maturity_tableCell}>Optimized</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "85%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Continuous improvement of the processes and procedures, proactive
+          approach for future technology improvement
+        </Text>
+      </View>
+    </View>
+  </View>
+);
+
+const UsefulResourcesTable: React.FC = () => (
+  <View style={styles.maturity_table}>
+    <View
+      style={[
+        styles.maturity_tableRow,
+        styles.greyBackground,
+        {
+          borderBottomWidth: 0,
+          fontWeight: "bold",
+        },
+      ]}
+    >
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>Resource</Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>Description</Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link style={{ color: primaryColor }} src="https://pkic.org">
+            PKI Consortium
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>PKI Consortium home page</Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/model/"
+          >
+            PKI maturity model
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Definition of the PKI maturity model and description of the maturity
+          assessment process and procedures in order to rate the current
+          maturity level and to track progress
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/categories/"
+          >
+            Categories description
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Description of PKI maturity model related categories and associated
+          requirement, guidance, assessment tips, and references
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/assessment/"
+          >
+            PKI maturity assessment process
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Description of the assessment process
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://pkic.org/pkimm/tools/"
+          >
+            PKI maturity assessment tools
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Available tools for the assessment of the PKI implementation and use
+          case
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://forms.gle/7CgvuNoxaiTYbtK29"
+          >
+            Feedback form
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          PKI maturity model and assessment feedback form
+        </Text>
+      </View>
+    </View>
+    <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
+      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          <Link
+            style={{ color: primaryColor }}
+            src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm"
+          >
+            PKI maturity model community discussion
+          </Link>
+        </Text>
+      </View>
+      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
+        <Text style={styles.maturity_tableCell}>
+          Ideas, questions, or feedback that you want to share or discuss
+          related to the PKI maturity model.
+        </Text>
+      </View>
+    </View>
+  </View>
+);
+
 interface PdfDocumentProps {
   chartImgData: string;
   overallMaturityLevel: number;
@@ -310,55 +621,36 @@ interface PdfDocumentProps {
 
 // Function to determine color based on the level
 const getColorForLevel = (level: number) => {
+  const rootStyle = getComputedStyle(document.documentElement);
   switch (level) {
     case 1:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-1",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-1",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-1"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-1"),
         text: "#ffffff",
       };
     case 2:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-2",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-2",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-2"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-2"),
         text: "#ffffff",
       };
     case 3:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-3",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-3",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-3"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-3"),
         text: "#000000",
       };
     case 4:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-4",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-4",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-4"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-4"),
         text: "#000000",
       };
     case 5:
       return {
-        background: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-5",
-        ),
-        border: getComputedStyle(document.documentElement).getPropertyValue(
-          "--pkimm-maturity-level-5",
-        ),
+        background: rootStyle.getPropertyValue("--pkimm-maturity-level-5"),
+        border: rootStyle.getPropertyValue("--pkimm-maturity-level-5"),
         text: "#000000",
       };
     default:
@@ -388,19 +680,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
 }) => (
   <Document>
     {/*first page contains only PKIC logo centered in the middle of the page*/}
-    <Page size="A4" style={styles.page}>
-      <View style={styles.logo_first}>
-        <PkicLogoSvg />
-      </View>
-      <Text style={[styles.title_first, { marginTop: 50 }]}>
-        PKI Maturity Model
-      </Text>
-      <Text style={styles.subtitle_first}>Self-Assessment Report</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>{version}</Text>
-      <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
-        {format(new Date(), "MMMM do, yyyy h:mm a")}
-      </Text>
-    </Page>
+    <CoverPage version={version} />
 
     {/*second page contains summary*/}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
@@ -408,14 +688,12 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
       <Footer assessmentUrl={assessmentUrl} version={version} />
       <Text style={styles.title}>Summary</Text>
       <View style={styles.overview_table}>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Model Version:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>1.0</Text>
-          </View>
-        </View>
+        <SummaryRow
+          label="Model Version:"
+          value="1.0"
+          labelWidth="25%"
+          valueWidth="75%"
+        />
         <View
           style={[
             styles.overview_tableRow,
@@ -438,34 +716,24 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
             </Text>
           </View>
         </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Assessment Name:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>{assessmentName}</Text>
-          </View>
-        </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={styles.overview_tableCell}>Assessor Name:</Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={styles.overview_tableCell}>{assessorName}</Text>
-          </View>
-        </View>
-        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.overview_tableCol, { width: "25%" }]}>
-            <Text style={[styles.overview_tableCell]}>
-              Use Case Description:
-            </Text>
-          </View>
-          <View style={[styles.overview_tableCol, { width: "75%" }]}>
-            <Text style={[styles.overview_tableCell]}>
-              {useCaseDescription}
-            </Text>
-          </View>
-        </View>
+        <SummaryRow
+          label="Assessment Name:"
+          value={assessmentName}
+          labelWidth="25%"
+          valueWidth="75%"
+        />
+        <SummaryRow
+          label="Assessor Name:"
+          value={assessorName}
+          labelWidth="25%"
+          valueWidth="75%"
+        />
+        <SummaryRow
+          label="Use Case Description:"
+          value={useCaseDescription}
+          labelWidth="25%"
+          valueWidth="75%"
+        />
         <View style={styles.overview_tableRow}>
           <View style={[styles.overview_tableCol, { width: "25%" }]}>
             <Text style={styles.overview_tableCell}>Assessment Link:</Text>
@@ -538,34 +806,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
       </View>
       <Text style={styles.heading}>Details</Text>
       <View style={styles.table}>
-        <View
-          style={[
-            styles.tableRow,
-            {
-              borderTopWidth: 1,
-              backgroundColor: headerColor,
-              color: "#ffffff",
-            },
-          ]}
-        >
-          <View style={[styles.tableCol, { width: "5%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>#</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "11%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Module</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "25%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Category</Text>
-          </View>
-          <View style={[styles.tableCol, { width: "12%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>
-              Maturity Level
-            </Text>
-          </View>
-          <View style={[styles.tableCol, { width: "47%" }]}>
-            <Text style={[styles.tableCell, styles.boldText]}>Description</Text>
-          </View>
-        </View>
+        <DetailsTableHeader />
         {modules.flatMap((module) =>
           module.categories.map((category, categoryIndex) => {
             const isEvenRow = categoryIndex % 2 === 1;
@@ -594,13 +835,15 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
                       style={[
                         styles.tableCell,
                         {
+                          fontWeight: "bold",
                           color: getColorForLevel(
-                            progress[`${module.id}.${category.id}`]?.level,
+                            progress[`${module.id}.${category.id}`]?.level || 0,
                           ).background,
                         },
                       ]}
                     >
-                      {progress[`${module.id}.${category.id}`]?.result || "N/A"}
+                      {progress[`${module.id}.${category.id}`]?.result ||
+                        "Not Assessed"}
                     </Text>
                   </View>
                   <View style={[styles.tableCol, { width: "47%" }]}>
@@ -657,78 +900,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <Br />
       </Text>
 
-      <View style={styles.maturity_table}>
-        <View
-          style={[
-            styles.maturity_tableRow,
-            styles.greyBackground,
-            {
-              borderBottomWidth: 0,
-              fontWeight: "bold",
-            },
-          ]}
-        >
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Maturity level</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>Short description</Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Initial</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Unpredictable process with poor control and always reactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Basic</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Process is characterized by each particular case or project and
-              controls are often reactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Advanced</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Process is characterized by organizational standards and controls
-              are proactive
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Managed</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Processes are measured and controlled, proactive approach
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
-          <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-            <Text style={styles.maturity_tableCell}>Optimized</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "85%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Continuous improvement of the processes and procedures, proactive
-              approach for future technology improvement
-            </Text>
-          </View>
-        </View>
-      </View>
+      <MaturityLadderTable style={styles.maturity_table} />
 
       <Text style={styles.about_heading}>
         <Br />
@@ -749,146 +921,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
         <Br />
         Useful Resources
       </Text>
-      <View style={styles.maturity_table}>
-        <View
-          style={[
-            styles.maturity_tableRow,
-            styles.greyBackground,
-            {
-              borderBottomWidth: 0,
-              fontWeight: "bold",
-            },
-          ]}
-        >
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>Resource</Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>Description</Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link style={{ color: primaryColor }} src="https://pkic.org">
-                PKI Consortium
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              PKI Consortium home page
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/model/"
-              >
-                PKI maturity model
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Definition of the PKI maturity model and description of the
-              maturity assessment process and procedures in order to rate the
-              current maturity level and to track progress
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/categories/"
-              >
-                Categories description
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Description of PKI maturity model related categories and
-              associated requirement, guidance, assessment tips, and references
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/assessment/"
-              >
-                PKI maturity assessment process
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Description of the assessment process
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://pkic.org/pkimm/tools/"
-              >
-                PKI maturity assessment tools
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Available tools for the assessment of the PKI implementation and
-              use case
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://forms.gle/7CgvuNoxaiTYbtK29"
-              >
-                Feedback form
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              PKI maturity model and assessment feedback form
-            </Text>
-          </View>
-        </View>
-        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
-          <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              <Link
-                style={{ color: primaryColor }}
-                src="https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm"
-              >
-                PKI maturity model community discussion
-              </Link>
-            </Text>
-          </View>
-          <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-            <Text style={styles.maturity_tableCell}>
-              Ideas, questions, or feedback that you want to share or discuss
-              related to the PKI maturity model.
-            </Text>
-          </View>
-        </View>
-      </View>
+      <UsefulResourcesTable />
 
       <View>
         <Text style={styles.about_heading}>
@@ -1019,6 +1052,714 @@ export const exportToPDF = async (
   const a = document.createElement("a");
   a.href = url;
   a.download = "PKIMM-self-assessment-report.pdf";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+interface ExtensionPdfRow {
+  id: string;
+  module: string;
+  category: string;
+  weight: string;
+  result: string;
+  levelNum: number;
+  description: string | undefined;
+  overlays: string[];
+}
+
+interface ExtensionPdfRelevanceRow {
+  id: string;
+  module: string;
+  category: string;
+  weight: string;
+  weightNum: number;
+  level: number;
+}
+
+interface ExtensionPdfDocumentProps {
+  chartImgData: string;
+  overallMaturityLevel: number;
+  overallWeightedMaturity: number;
+  floorScore: number | null;
+  weightedScore: number;
+  moduleWeightedMaturityLevels: { module: string; level: number }[];
+  rows: ExtensionPdfRow[];
+  relevanceRows: ExtensionPdfRelevanceRow[];
+  extension: ExtensionData;
+  assessmentName: string;
+  assessorName: string;
+  useCaseDescription: string;
+  assessmentUrl: string;
+  version: string;
+}
+
+const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
+  chartImgData,
+  overallMaturityLevel,
+  overallWeightedMaturity,
+  floorScore,
+  weightedScore,
+  moduleWeightedMaturityLevels,
+  rows,
+  relevanceRows,
+  extension,
+  assessmentName,
+  assessorName,
+  useCaseDescription,
+  assessmentUrl,
+  version,
+}) => (
+  <Document>
+    {/* First page: Cover */}
+    <CoverPage version={version} subtitle="Extension" />
+
+    {/* Second page: Summary */}
+    <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
+      <Header />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
+      <Text style={styles.title}>Summary</Text>
+
+      {/* Core Summary Table */}
+      <View style={styles.overview_table}>
+        <SummaryRow
+          label="Model Version:"
+          value="1.0"
+          labelWidth="30%"
+          valueWidth="70%"
+        />
+        <View
+          style={[
+            styles.overview_tableRow,
+            { borderBottomWidth: 0, fontWeight: "bold" },
+          ]}
+        >
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>PKI Maturity Level:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text
+              style={[
+                styles.overview_tableCell,
+                { color: getColorForLevel(overallMaturityLevel).background },
+              ]}
+            >
+              {LevelResult[overallMaturityLevel]}
+            </Text>
+          </View>
+        </View>
+        <SummaryRow
+          label="Assessment Name:"
+          value={assessmentName}
+          labelWidth="30%"
+          valueWidth="70%"
+        />
+        <SummaryRow
+          label="Assessor Name:"
+          value={assessorName}
+          labelWidth="30%"
+          valueWidth="70%"
+        />
+        <SummaryRow
+          label="Use Case Description:"
+          value={useCaseDescription}
+          labelWidth="30%"
+          valueWidth="70%"
+        />
+        <View style={styles.overview_tableRow}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Assessment Link:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>
+              <Link
+                src={assessmentUrl}
+                style={{ color: primaryColor, textDecoration: "underline" }}
+              >
+                Go To Assessment
+              </Link>
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={[styles.heading, { marginTop: 20, textAlign: "left" }]}>
+        Extension Information
+      </Text>
+      <View style={styles.overview_table}>
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Extension:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>
+              {extension.extension.name}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Version:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>
+              {extension.extension.version}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.overview_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>Description:</Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text style={styles.overview_tableCell}>
+              {extension.extension.description}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.overview_tableRow}>
+          <View style={[styles.overview_tableCol, { width: "30%" }]}>
+            <Text style={styles.overview_tableCell}>
+              Achieved PKI Maturity (Blended):
+            </Text>
+          </View>
+          <View style={[styles.overview_tableCol, { width: "70%" }]}>
+            <Text
+              style={[
+                styles.overview_tableCell,
+                {
+                  color: getColorForLevel(overallWeightedMaturity).background,
+                  fontWeight: "bold",
+                },
+              ]}
+            >
+              {LevelResult[overallWeightedMaturity]}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={{ textAlign: "center", marginTop: 10 }}>
+        <Text
+          style={{
+            fontWeight: "bold",
+            color: getColorForLevel(overallMaturityLevel).background,
+            fontSize: 10,
+          }}
+        >
+          {LevelResult[overallMaturityLevel]}
+        </Text>
+        <Text
+          style={{
+            fontSize: 9,
+            color: getColorForLevel(overallWeightedMaturity).background,
+            marginTop: 5,
+          }}
+        >
+          {extension.extension.name}:{" "}
+          <strong>{LevelResult[overallWeightedMaturity]}</strong>
+        </Text>
+      </View>
+      <Image style={[styles.chart, { width: 250 }]} src={chartImgData} />
+    </Page>
+
+    {/* Third page: Detailed Metrics and Results */}
+    <Page
+      size="A4"
+      style={styles.page}
+      bookmark={{ title: "Assessment Details" }}
+    >
+      <Header />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
+
+      <Text style={styles.heading}>Maturity Results</Text>
+
+      <View style={styles.maturity_table}>
+        <View
+          style={[
+            styles.maturity_tableRow,
+            styles.greyBackground,
+            { borderBottomWidth: 0, fontWeight: "bold" },
+          ]}
+        >
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text style={styles.maturity_tableCell}>Metric</Text>
+          </View>
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text style={styles.maturity_tableCell}>Maturity Level</Text>
+          </View>
+        </View>
+        <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text style={styles.maturity_tableCell}>
+              Overall Maturity Level
+            </Text>
+          </View>
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text
+              style={[
+                styles.maturity_tableCell,
+                {
+                  color: getColorForLevel(overallWeightedMaturity).background,
+                  fontWeight: "bold",
+                },
+              ]}
+            >
+              {LevelResult[overallWeightedMaturity]}
+            </Text>
+          </View>
+        </View>
+        {floorScore !== null && (
+          <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
+            <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+              <Text style={styles.maturity_tableCell}>Floor Score</Text>
+            </View>
+            <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+              <Text
+                style={[
+                  styles.maturity_tableCell,
+                  {
+                    color: getColorForLevel(floorScore).background,
+                    fontWeight: "bold",
+                  },
+                ]}
+              >
+                {LevelResult[floorScore]}
+              </Text>
+            </View>
+          </View>
+        )}
+        <View style={[styles.maturity_tableRow, { borderBottomWidth: 1 }]}>
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text style={styles.maturity_tableCell}>
+              Extension Weighted Level
+            </Text>
+          </View>
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text
+              style={[
+                styles.maturity_tableCell,
+                {
+                  color: getColorForLevel(weightedScore).background,
+                  fontWeight: "bold",
+                },
+              ]}
+            >
+              {LevelResult[weightedScore]}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/*<Text style={[styles.heading, { marginTop: 20 }]}>Module Maturity Levels</Text>*/}
+      <View style={styles.maturity_table}>
+        <View
+          style={[
+            styles.maturity_tableRow,
+            styles.greyBackground,
+            { borderBottomWidth: 0, fontWeight: "bold" },
+          ]}
+        >
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text style={styles.maturity_tableCell}>Module</Text>
+          </View>
+          <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+            <Text style={styles.maturity_tableCell}>Maturity Level</Text>
+          </View>
+        </View>
+        {moduleWeightedMaturityLevels.map(({ module, level }, idx) => (
+          <View
+            key={module}
+            style={[
+              styles.maturity_tableRow,
+              {
+                borderBottomWidth:
+                  idx === moduleWeightedMaturityLevels.length - 1 ? 1 : 0,
+              },
+            ]}
+          >
+            <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+              <Text style={styles.maturity_tableCell}>{module}</Text>
+            </View>
+            <View style={[styles.maturity_tableCol, { width: "50%" }]}>
+              <Text
+                style={[
+                  styles.maturity_tableCell,
+                  {
+                    color: getColorForLevel(level).background,
+                    fontWeight: "bold",
+                  },
+                ]}
+              >
+                {LevelResult[level]}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <Text style={[styles.heading, { marginTop: 20 }]}>Details</Text>
+      <View style={styles.table}>
+        <DetailsTableHeader />
+        {rows.map((r, idx) => {
+          const levelColor = getColorForLevel(r.levelNum).background;
+          return (
+            <TableBodyRow key={r.id} idx={idx}>
+              <View style={[styles.tableCol, { width: "5%" }]}>
+                <Text style={styles.tableCell}>{r.id}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "11%" }]}>
+                <Text style={styles.tableCell}>{r.module}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "25%" }]}>
+                <Text style={styles.tableCell}>{r.category}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "12%" }]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    { color: levelColor, fontWeight: "bold" },
+                  ]}
+                >
+                  {r.result}
+                </Text>
+              </View>
+              <View style={[styles.tableCol, { width: "47%" }]}>
+                <Text style={[styles.tableCell, { fontSize: 6 }]}>
+                  {r.description || "N/A"}
+                </Text>
+              </View>
+            </TableBodyRow>
+          );
+        })}
+      </View>
+    </Page>
+
+    {/* Overlay Details Page */}
+    {rows.some((r) => r.overlays.length > 0) && (
+      <Page
+        size="A4"
+        style={styles.page}
+        bookmark={{ title: "Overlay Details" }}
+      >
+        <Header />
+        <Footer assessmentUrl={assessmentUrl} version={version} />
+        <Text style={styles.title}>Overlay Details</Text>
+        <View style={styles.table}>
+          <TableHeaderRow
+            columns={[
+              { width: "5%", label: "#" },
+              { width: "15%", label: "Module" },
+              { width: "25%", label: "Category" },
+              { width: "55%", label: "Overlays Applied" },
+            ]}
+          />
+          {rows
+            .filter((r) => r.overlays.length > 0)
+            .map((r, idx) => (
+              <TableBodyRow key={r.id} idx={idx}>
+                <View style={[styles.tableCol, { width: "5%" }]}>
+                  <Text style={styles.tableCell}>{r.id}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "15%" }]}>
+                  <Text style={styles.tableCell}>{r.module}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "25%" }]}>
+                  <Text style={styles.tableCell}>{r.category}</Text>
+                </View>
+                <View style={[styles.tableCol, { width: "55%" }]}>
+                  {r.overlays.map((ov: string) => (
+                    <Text
+                      key={ov}
+                      style={[styles.tableCell, { fontSize: 8, color: "#333" }]}
+                    >
+                      • {ov}
+                    </Text>
+                  ))}
+                </View>
+              </TableBodyRow>
+            ))}
+        </View>
+      </Page>
+    )}
+
+    {/* Relevance Summary and Details Pages */}
+    {relevanceRows.length > 0 && (
+      <Page
+        size="A4"
+        style={styles.page}
+        bookmark={{ title: "Extension Relevance Details" }}
+      >
+        <Header />
+        <Footer assessmentUrl={assessmentUrl} version={version} />
+        <Text style={styles.title}>Extension Relevance Details</Text>
+        <View style={styles.table}>
+          <TableHeaderRow
+            columns={[
+              { width: "10%", label: "#" },
+              { width: "40%", label: "Category" },
+              { width: "20%", label: "Weight" },
+              { width: "30%", label: "Relevance Level" },
+            ]}
+          />
+          {relevanceRows.map((r, idx) => (
+            <TableBodyRow key={r.id} idx={idx}>
+              <View style={[styles.tableCol, { width: "10%" }]}>
+                <Text style={styles.tableCell}>{r.id}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "40%" }]}>
+                <Text style={styles.tableCell}>{r.category}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "20%" }]}>
+                <Text style={styles.tableCell}>{r.weight}</Text>
+              </View>
+              <View style={[styles.tableCol, { width: "30%" }]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    {
+                      color: getColorForLevel(r.level).background,
+                      fontWeight: "bold",
+                    },
+                  ]}
+                >
+                  {LevelResult[r.level]}
+                </Text>
+              </View>
+            </TableBodyRow>
+          ))}
+        </View>
+      </Page>
+    )}
+
+    {/* Final Page: About (matches core + extension info) */}
+    <Page
+      size="A4"
+      style={styles.page}
+      bookmark={{ title: "About PKI Maturity Model" }}
+    >
+      <Header />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
+      <Text style={styles.about_heading}>About PKI Maturity Model</Text>
+      <Text style={styles.about_text}>
+        The maturity model is based on the Capability Maturity Model Integration
+        (CMMI) developed by Carnegie Mellon University. It should provide the
+        following:
+      </Text>
+      <Text style={styles.about_text}>
+        <ListItem>
+          Quickly understand the current level of capabilities and performance
+          of the PKI
+        </ListItem>
+        <ListItem>
+          Support comparison of PKI maturity with similar organizations based on
+          size or industry (anonymized)
+        </ListItem>
+        <ListItem>
+          Guidance on how to improve the capabilities of the current PKI
+        </ListItem>
+        <ListItem>Improve overall PKI performance</ListItem>
+      </Text>
+      <Text style={styles.about_text}>
+        {"\n"}
+        The PKI maturity model defines 5 levels of the PKI maturity based on
+        different indicators and associated risks.
+      </Text>
+
+      <MaturityLadderTable style={[styles.maturity_table, { marginTop: 10 }]} />
+
+      <Text style={[styles.about_heading, { marginTop: 20 }]}>
+        About PKI MM Extension Framework
+      </Text>
+      <Text style={styles.about_text}>
+        The PKI MM Extension Framework allows to build specific contexts on top
+        of the PKI Maturity Model and use it for specialized assessments.
+        Extensions can introduce new guidance, probes, and maturity definitions
+        for existing categories, as well as weight overlays (multipliers,
+        additions, overrides) to calculate context-aware maturity scores.
+      </Text>
+
+      <Text style={[styles.about_heading, { marginTop: 20 }]}>
+        About PKI Consortium
+      </Text>
+      <Text style={styles.about_text}>
+        The PKI Consortium is comprised of leading organizations that are
+        committed to improve, create, and collaborate on generic, industry or
+        use-case specific policies, procedures, best practices, standards, and
+        tools that advance trust in assets and communication for everyone and
+        everything using Public Key Infrastructure (PKI) as well as the security
+        of the internet in general. By engaging with users, regulators,
+        supervisory bodies and other interested or relying parties the
+        consortium can address actual issues.
+      </Text>
+
+      <Text style={[styles.about_heading, { marginTop: 20 }]}>
+        Useful Resources
+      </Text>
+      <UsefulResourcesTable />
+
+      <View style={{ marginTop: 20 }}>
+        <Text style={styles.about_heading}>Follow us on:</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Link src="https://twitter.com/PKIConsortium">
+            <FontAwesomeIcon
+              faIcon={faXTwitter}
+              style={{ color: "#000000", width: "15px", marginRight: "10px" }}
+            />
+          </Link>
+          <Link src="https://www.linkedin.com/groups/4852478/">
+            <FontAwesomeIcon
+              faIcon={faLinkedin}
+              style={{ color: "#0077B5", width: "15px", marginRight: "10px" }}
+            />
+          </Link>
+          <Link src="https://github.com/pkic">
+            <FontAwesomeIcon
+              faIcon={faGithub}
+              style={{ color: "#6e5494", width: "15px" }}
+            />
+          </Link>
+        </View>
+      </View>
+    </Page>
+  </Document>
+);
+
+interface ExportExtensionPDFOptions {
+  progress: Record<string, ProgressData>;
+  extension: ExtensionData;
+  coreModules: ModuleData[];
+  assessmentName: string;
+  assessorName: string;
+  useCaseDescription: string;
+  version: string;
+  chartImgData: string;
+}
+
+export const exportExtensionPDF = async ({
+  progress,
+  extension,
+  coreModules,
+  assessmentName,
+  assessorName,
+  useCaseDescription,
+  version,
+  chartImgData,
+}: ExportExtensionPDFOptions) => {
+  const extId = extension.extension.id;
+
+  const overallMaturityLevel = calculateOverallMaturityLevel(
+    coreModules,
+    progress,
+    [],
+    [],
+  );
+
+  const overallWeightedMaturity = calculateOverallMaturityLevel(
+    coreModules,
+    progress,
+    [extension],
+    [extId],
+  );
+
+  const moduleWeightedMaturityLevels = calculateModuleMaturityLevels(
+    coreModules,
+    progress,
+    [extension],
+    [extId],
+  );
+
+  const floorScore = calculateExtensionFloorScore(
+    coreModules,
+    extension,
+    progress,
+  );
+
+  const weightedScore = calculateExtensionWeightedPKIMMScore(
+    coreModules,
+    progress,
+    extension,
+  );
+
+  const assessmentUrl = generateURL(
+    progress,
+    assessmentName,
+    assessorName,
+    useCaseDescription,
+    [extId],
+  );
+
+  // Collect rows for details table - including ALL categories
+  const rows = coreModules.flatMap((m) => {
+    return m.categories.map((c) => {
+      const blendedLevel = calculateBlendedLevel(m.id, c, extension, progress);
+      const effectiveWeight = getEffectiveWeight(
+        m.id,
+        c,
+        [extension],
+        [extension.extension.id],
+      );
+
+      const levelNum = blendedLevel === -1 ? -1 : Math.floor(blendedLevel);
+      const result = LevelResult[levelNum];
+
+      const weightDisplay =
+        effectiveWeight === c.weight ? `${c.weight}` : `${effectiveWeight}`;
+
+      return {
+        id: `${m.id}.${c.id}`,
+        module: m.name,
+        category: c.name,
+        weight: weightDisplay,
+        result,
+        levelNum,
+        description: progress[`${m.id}.${c.id}`]?.description,
+        overlays: getCategoryOverlayInfo(m.id, c, extension),
+      };
+    });
+  });
+
+  const relevanceRows = extension.relevance.modules.flatMap((m) => {
+    return m.categories.map((c) => {
+      const coreModule = coreModules.find((cm) => cm.id === m.id);
+      const coreCategory = coreModule?.categories.find((cc) => cc.id === c.id);
+      const extKey = `${extension.extension.id}.${m.id}.${c.id}`;
+      const level = progress[extKey]?.level || 1;
+      return {
+        id: `${m.id}.${c.id}`,
+        module: coreModule?.name || m.id,
+        category: coreCategory?.name || c.id,
+        weight: `${c.weight}`,
+        weightNum: c.weight,
+        level,
+      };
+    });
+  });
+
+  const pdfDoc = (
+    <ExtensionPdfDocument
+      chartImgData={chartImgData}
+      overallMaturityLevel={overallMaturityLevel}
+      overallWeightedMaturity={overallWeightedMaturity}
+      floorScore={floorScore}
+      weightedScore={weightedScore}
+      moduleWeightedMaturityLevels={moduleWeightedMaturityLevels}
+      rows={rows}
+      relevanceRows={relevanceRows}
+      extension={extension}
+      assessmentName={assessmentName}
+      assessorName={assessorName}
+      useCaseDescription={useCaseDescription}
+      assessmentUrl={assessmentUrl}
+      version={version}
+    />
+  );
+
+  const pdfBlob = await pdf(pdfDoc).toBlob();
+
+  const url = URL.createObjectURL(pdfBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${extension.extension.id}-PKIMM-self-assessment-report.pdf`;
   a.click();
   URL.revokeObjectURL(url);
 };

@@ -1,5 +1,5 @@
 import { yamlParser } from "./yamlParser";
-import { AssessmentData } from "../types/types";
+import { AssessmentData, ExtensionData } from "../types/types";
 
 describe("parseYAML", () => {
   it("should parse valid YAML into an AssessmentData object", () => {
@@ -62,5 +62,21 @@ describe("parseYAML", () => {
     const nullYAML = `null`;
 
     expect(() => yamlParser(nullYAML)).toThrow("Invalid YAML format");
+  });
+
+  it("should parse valid extension YAML with documentation", () => {
+    const extensionYAML = `
+extension:
+  id: "test"
+  name: "Test Extension"
+  version: "1.0.0"
+  description: "Test description"
+  documentation: "https://example.com/docs"
+relevance:
+  modules: []
+`;
+    const result = yamlParser(extensionYAML) as ExtensionData;
+    expect(result.extension.id).toBe("test");
+    expect(result.extension.documentation).toBe("https://example.com/docs");
   });
 });

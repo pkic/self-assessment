@@ -17,9 +17,19 @@
   --pkimm-maturity-level-5: #{main.$maturity-level-5};
 
   --pkimm-background-color: #{main.$background-color};
+  --pkimm-surface-color: #{main.$surface-color};
+  --pkimm-border-color: #{main.$border-color};
 
   --pkimm-text-color-dark: #{main.$text-color-dark};
+  --pkimm-text-color-muted: #{main.$text-color-muted};
   --pkimm-text-color-light: #{main.$text-color-light};
+
+  --pkimm-border-radius-sm: #{main.$border-radius-sm};
+  --pkimm-border-radius-md: #{main.$border-radius-md};
+  --pkimm-border-radius-lg: #{main.$border-radius-lg};
+
+  --pkimm-shadow-sm: #{main.$shadow-sm};
+  --pkimm-shadow-md: #{main.$shadow-md};
 
   --pkimm-sticky-top-offset: 0px;
   --pkimm-scroll-query-selector: window;

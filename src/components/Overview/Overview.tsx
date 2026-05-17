@@ -9,8 +9,6 @@ interface OverviewProps {
 }
 
 export const Overview: React.FC<OverviewProps> = ({ overviewData }) => {
-  // console.log(overviewData?.data);
-
   return (
     <div className="pkimm-overview">
       <div className="pkimm-overview-header">
