@@ -128,7 +128,7 @@ export const AssessmentManager: React.FC<Props> = ({
                 className="pkimm-assessment-manager__danger"
                 onClick={() => {
                   if (
-                    window.confirm(
+                    globalThis.confirm(
                       "Remove the old-format storage permanently? This cannot be undone.",
                     )
                   ) {
@@ -171,7 +171,7 @@ const Row: React.FC<RowProps> = ({
   const cls = [
     "pkimm-assessment-manager__row",
     isActive ? "is-active" : "",
-    !isCompatible ? "is-incompatible" : "",
+    isCompatible ? "" : "is-incompatible",
   ]
     .filter(Boolean)
     .join(" ");
@@ -215,7 +215,6 @@ const Row: React.FC<RowProps> = ({
       </div>
       <div
         className="pkimm-assessment-manager__row-actions"
-        role="group"
         aria-label={`Actions for ${assessment.name}`}
       >
         <IconButton
@@ -229,7 +228,10 @@ const Row: React.FC<RowProps> = ({
           icon={faPenToSquare}
           label="Rename"
           onClick={() => {
-            const name = window.prompt("Rename assessment", assessment.name);
+            const name = globalThis.prompt(
+              "Rename assessment",
+              assessment.name,
+            );
             if (name) onRename(name);
           }}
         />
@@ -240,7 +242,7 @@ const Row: React.FC<RowProps> = ({
           label="Delete"
           danger
           onClick={() => {
-            if (window.confirm(`Delete "${assessment.name}"?`)) onDelete();
+            if (globalThis.confirm(`Delete "${assessment.name}"?`)) onDelete();
           }}
         />
       </div>

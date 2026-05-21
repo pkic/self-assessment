@@ -28,10 +28,7 @@ export const buildStructureSnapshot = (
   return { byKey };
 };
 
-const newId = (): string =>
-  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID()
-    : `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+export const newId = (): string => crypto.randomUUID();
 
 export const STORAGE_KEY = "pkimm-sa";
 export const LEGACY_KEY = "assessmentData";

@@ -9,12 +9,14 @@ import type {
   StructureSnapshot,
 } from "../types/types";
 
-const normalize = (s: string): string =>
-  s
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/[.,;:!?]+$/, "");
+const TRAILING_PUNCTUATION = ".,;:!?";
+
+const normalize = (s: string): string => {
+  const collapsed = s.toLowerCase().replace(/\s+/g, " ").trim();
+  let end = collapsed.length;
+  while (end > 0 && TRAILING_PUNCTUATION.includes(collapsed[end - 1])) end--;
+  return collapsed.slice(0, end);
+};
 
 interface TargetCategory {
   newKey: string;

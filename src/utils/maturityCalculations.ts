@@ -180,7 +180,7 @@ export const calculateBlendedLevel = (
   // applicability off on the core category. A missing entry defaults to
   // level 0 (Not Assessed) with applicability true, matching the lazy
   // default the Category component uses for the picker.
-  if (coreProgressData && coreProgressData.applicability === false) {
+  if (coreProgressData?.applicability === false) {
     return -1;
   }
 

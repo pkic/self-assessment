@@ -333,28 +333,7 @@
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-}
 
-.pkimm-tabs__group {
-  display: flex;
-  align-items: stretch;
-}
-
-.pkimm-tabs__group--meta {
-  border-left: 1px solid var(--pkimm-border-color);
-  padding-left: 1rem;
-  margin-left: 1rem;
-
-  button {
-    color: var(--pkimm-text-color-muted);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-  }
-}
-
-.pkimm-tabs {
   button {
     background: none;
     border: none;
@@ -393,6 +372,25 @@
         transform: scaleX(1);
       }
     }
+  }
+}
+
+.pkimm-tabs__group {
+  display: flex;
+  align-items: stretch;
+}
+
+.pkimm-tabs__group--meta {
+  border-left: 1px solid var(--pkimm-border-color);
+  padding-left: 1rem;
+  margin-left: 1rem;
+
+  button {
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
   }
 }
 

@@ -4,7 +4,11 @@ import { SpiderChart } from "../SpiderChart/SpiderChart";
 import { Overview } from "../Overview/Overview";
 import { UnifiedReport } from "../Report/UnifiedReport";
 import { yamlParser } from "../../utils/yamlParser";
-import { generateURL, decodeProgressHash } from "../../utils/urlGenerator";
+import {
+  generateURL,
+  decodeProgressHash,
+  exportToYAML,
+} from "../../utils/urlGenerator";
 import { exportToPDF, exportExtensionPDF } from "../../utils/pdfGenerator";
 import {
   AssessmentData,
@@ -42,6 +46,7 @@ import {
   importYAMLFile,
   removeLegacyAssessmentData,
   buildStructureSnapshot,
+  newId,
   LegacyAssessmentData,
 } from "../../utils/storage";
 import { reclassifyUntouchedLevelOne } from "../../utils/legacyReclassify";
@@ -54,7 +59,6 @@ import {
 import { MigrationSummary as MigrationSummaryView } from "../MigrationSummary/MigrationSummary";
 import { ForwardCompatRefusal } from "../ForwardCompatRefusal/ForwardCompatRefusal";
 import { AssessmentManager } from "../AssessmentManager/AssessmentManager";
-import { exportToYAML } from "../../utils/urlGenerator";
 import { migrate } from "../../utils/stateMigration";
 import type { MigrationSummary } from "../../types/types";
 
@@ -273,9 +277,9 @@ export const Assessment: React.FC<AssessmentProps> = ({
       }
       setReferencesLookup(refMap);
 
-      const hash = window.location.hash.startsWith("#")
-        ? window.location.hash.slice(1)
-        : window.location.hash;
+      const hash = globalThis.location.hash.startsWith("#")
+        ? globalThis.location.hash.slice(1)
+        : globalThis.location.hash;
       let transient: SavedAssessment | null = null;
       if (hash.includes("progress=")) {
         try {
@@ -405,8 +409,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
         // ignore malformed external writes
       }
     };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    globalThis.addEventListener("storage", handleStorageChange);
+    return () => globalThis.removeEventListener("storage", handleStorageChange);
   }, []);
 
   function makeProgressEntry(): ProgressData {
@@ -656,7 +660,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       document.documentElement,
     ).getPropertyValue("--pkimm-scroll-query-selector");
     if (scrollQuerySelector === "window") {
-      window.scrollTo(0, 0);
+      globalThis.scrollTo(0, 0);
     } else {
       const element = document.querySelector(scrollQuerySelector);
       if (element) {
@@ -666,7 +670,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
   };
 
   const isTransient = (a: SavedAssessment | null): boolean =>
-    a !== null && a.id.startsWith("transient-");
+    a?.id.startsWith("transient-") ?? false;
 
   const computeMismatches = (): AxisMismatch[] => {
     if (!activeAssessment || !data) return [];
@@ -708,7 +712,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
     const now = new Date().toISOString();
     const migrated: SavedAssessment = {
       ...activeAssessment,
-      id: `s-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      id: newId(),
       name: `${activeAssessment.name} (PKIMM ${data.version})`,
       dataVersion: data.version ?? "1.0.0",
       progress: result.migratedProgress,
@@ -777,7 +781,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
     const now = new Date().toISOString();
     const copy: SavedAssessment = {
       ...src,
-      id: `s-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      id: newId(),
       name: `${src.name} (copy)`,
       meta: { createdAt: now, updatedAt: now, importedFromId: src.id },
     };
@@ -823,7 +827,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       }));
     } catch (err) {
       console.error("Failed to import YAML:", err);
-      window.alert(
+      globalThis.alert(
         `Could not import file: ${(err as Error).message || "unknown error"}`,
       );
     }
@@ -875,11 +879,11 @@ export const Assessment: React.FC<AssessmentProps> = ({
   };
 
   const clearURLHash = (): void => {
-    if (window.history && window.location.hash) {
-      window.history.replaceState(
+    if (globalThis.history && globalThis.location.hash) {
+      globalThis.history.replaceState(
         null,
         "",
-        window.location.pathname + window.location.search,
+        globalThis.location.pathname + globalThis.location.search,
       );
     }
   };
@@ -889,7 +893,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
     const now = new Date().toISOString();
     const permanent: SavedAssessment = {
       ...activeAssessment,
-      id: `s-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      id: newId(),
       meta: { ...activeAssessment.meta, updatedAt: now },
     };
     setSavedState((prev) => ({

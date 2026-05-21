@@ -164,8 +164,7 @@ const buildSpecFixture = () => {
 };
 
 describe("calculateBlendedLevel — spec self-assessment example", () => {
-  const { catA, modules, extension } = buildSpecFixture();
-  void modules; // module not used directly in this test
+  const { catA, extension } = buildSpecFixture();
 
   const progress: Record<string, ProgressData> = {
     "G.cat-a": {

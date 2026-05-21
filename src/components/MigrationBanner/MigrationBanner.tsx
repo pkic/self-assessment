@@ -31,20 +31,23 @@ export const MigrationBanner: React.FC<Props> = ({
       version of this model:
     </p>
     <ul>
-      {mismatches.map((m, i) => (
-        <li key={i}>
-          {m.label}
-          {m.canKeepHidden && m.extensionId && onKeepHidden && (
-            <button
-              type="button"
-              className="pkimm-migration-banner__keep"
-              onClick={() => onKeepHidden(m.extensionId!)}
-            >
-              Keep on prior version (extension hidden)
-            </button>
-          )}
-        </li>
-      ))}
+      {mismatches.map((m) => {
+        const extId = m.extensionId;
+        return (
+          <li key={`${m.kind}:${m.label}:${extId ?? ""}`}>
+            {m.label}
+            {m.canKeepHidden && extId && onKeepHidden && (
+              <button
+                type="button"
+                className="pkimm-migration-banner__keep"
+                onClick={() => onKeepHidden(extId)}
+              >
+                Keep on prior version (extension hidden)
+              </button>
+            )}
+          </li>
+        );
+      })}
     </ul>
     <div className="pkimm-migration-banner__actions">
       <button

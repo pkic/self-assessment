@@ -13,10 +13,10 @@ export const MigrationSummary: React.FC<Props> = ({
   onClose,
   onReview,
 }) => (
-  <div className="pkimm-migration-summary-overlay" role="dialog">
-    <div
+  <div className="pkimm-migration-summary-overlay">
+    <dialog
+      open
       className="pkimm-migration-summary"
-      role="document"
       aria-labelledby="pkimm-ms-title"
     >
       <h2 id="pkimm-ms-title">Migration complete</h2>
@@ -73,6 +73,6 @@ export const MigrationSummary: React.FC<Props> = ({
           OK
         </button>
       </div>
-    </div>
+    </dialog>
   </div>
 );

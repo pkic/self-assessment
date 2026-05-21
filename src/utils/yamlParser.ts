@@ -20,10 +20,10 @@ const ajv2020 = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv2020);
 
 const validators = {
-  "model:1.0.0": ajvDraft07.compile(schemaModel1 as object),
-  "model:2.0.0": ajvDraft07.compile(schemaModel2 as object),
-  "references:1.0.0": ajvDraft07.compile(schemaReferences1 as object),
-  "extension:1.0.0": ajv2020.compile(schemaExt1 as object),
+  "model:1.0.0": ajvDraft07.compile(schemaModel1),
+  "model:2.0.0": ajvDraft07.compile(schemaModel2),
+  "references:1.0.0": ajvDraft07.compile(schemaReferences1),
+  "extension:1.0.0": ajv2020.compile(schemaExt1),
 };
 
 export const yamlParser = (

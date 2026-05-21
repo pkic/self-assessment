@@ -8,7 +8,7 @@ import { PKIMM_1_0_0_NAMES } from "../legacy/pkimm-model-1.0.0-names";
 
 beforeEach(() => {
   const storage: Record<string, string> = {};
-  (global as { localStorage?: Storage }).localStorage = {
+  const fakeStorage: Storage = {
     getItem: (k: string) => storage[k] ?? null,
     setItem: (k: string, v: string) => {
       storage[k] = v;
@@ -21,7 +21,8 @@ beforeEach(() => {
       for (const k of Object.keys(storage)) delete storage[k];
     },
     length: 0,
-  } as Storage;
+  };
+  (globalThis as { localStorage?: Storage }).localStorage = fakeStorage;
 });
 
 describe("readSavedState / writeSavedState", () => {

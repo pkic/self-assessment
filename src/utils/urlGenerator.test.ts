@@ -2,8 +2,8 @@ import { generateURL, decodeProgressHash, base64ToUtf8 } from "./urlGenerator";
 
 describe("generateURL", () => {
   beforeEach(() => {
-    delete (global as { window?: unknown }).window;
-    (global as unknown as { window: Window }).window = {
+    delete (globalThis as { window?: unknown }).window;
+    (globalThis as unknown as { window: Window }).window = {
       location: { href: "https://example.test/" },
     } as Window;
   });
@@ -39,8 +39,8 @@ describe("generateURL", () => {
 
 describe("decodeProgressHash", () => {
   beforeEach(() => {
-    delete (global as { window?: unknown }).window;
-    (global as unknown as { window: Window }).window = {
+    delete (globalThis as { window?: unknown }).window;
+    (globalThis as unknown as { window: Window }).window = {
       location: { href: "https://example.test/" },
     } as Window;
   });

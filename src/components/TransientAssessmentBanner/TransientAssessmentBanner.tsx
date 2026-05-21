@@ -12,7 +12,7 @@ export const TransientAssessmentBanner: React.FC<Props> = ({
   onSave,
   onDiscard,
 }) => (
-  <div className="pkimm-transient-banner" role="status">
+  <output className="pkimm-transient-banner">
     <p>
       You are viewing a shared assessment{name ? ` (“${name}”)` : ""}. It is not
       saved to this browser yet.
@@ -33,5 +33,5 @@ export const TransientAssessmentBanner: React.FC<Props> = ({
         Discard
       </button>
     </div>
-  </div>
+  </output>
 );
