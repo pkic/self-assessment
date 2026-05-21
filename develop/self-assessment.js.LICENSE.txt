@@ -29,6 +29,12 @@ object-assign
 /*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) */
 
 /**
+ * @license QR Code generator library (TypeScript)
+ * Copyright (c) Project Nayuki.
+ * SPDX-License-Identifier: MIT
+ */
+
+/**
  * @license React
  * react-dom-client.production.js
  *
@@ -76,6 +82,12 @@ object-assign
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
+ */
+
+/**
+ * @license qrcode.react
+ * Copyright (c) Paul O'Shannessy
+ * SPDX-License-Identifier: ISC
  */
 
 /**
