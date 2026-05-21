@@ -1,5 +1,70 @@
 @use "../../styles/main.scss";
 
+.pkimm-category-references {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--pkimm-background-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+  font-size: 0.9rem;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--pkimm-text-color-muted);
+    user-select: none;
+
+    &:hover {
+      color: var(--pkimm-primary-color);
+    }
+  }
+
+  &[open] summary {
+    color: var(--pkimm-text-color-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  li {
+    margin-bottom: 0.25rem;
+    color: var(--pkimm-text-color-dark);
+
+    a {
+      color: var(--pkimm-primary-color);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__authority {
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.85em;
+  }
+
+  &__region {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.45rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--pkimm-text-color-muted);
+    background-color: var(--pkimm-surface-color-alt);
+    border: 1px solid var(--pkimm-border-color);
+    border-radius: var(--pkimm-border-radius-pill);
+    vertical-align: 0.05em;
+  }
+}
+
 .pkimm-category-card {
   background-color: var(--pkimm-surface-color);
   border: 1px solid var(--pkimm-border-color);
@@ -18,7 +83,7 @@
   }
 
   &.extension {
-    border-color: rgba(251, 188, 4, 0.4);
+    border-color: var(--pkimm-secondary-color);
 
     .pkimm-category-text strong {
       color: var(--pkimm-secondary-color);
@@ -75,7 +140,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #e0e0e0;
+    background-color: var(--pkimm-border-color);
     transition: 0.3s;
     border-radius: 24px;
 
@@ -86,7 +151,7 @@
       width: 18px;
       left: 3px;
       bottom: 3px;
-      background-color: white;
+      background-color: var(--pkimm-text-color-light);
       transition: 0.3s;
       border-radius: 50%;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
@@ -112,7 +177,7 @@
   gap: 0.75rem;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .pkimm-category-card {
     padding: 1rem;
   }
@@ -156,11 +221,11 @@
   &.extension {
     &:hover {
       border-color: var(--pkimm-secondary-color);
-      background-color: rgba(251, 188, 4, 0.02);
+      background-color: var(--pkimm-hover-bg-extension-subtle);
     }
 
     &.selected {
-      background-color: rgba(251, 188, 4, 0.08);
+      background-color: var(--pkimm-hover-bg-extension);
       border-color: var(--pkimm-secondary-color);
 
       .pkimm-level-name {

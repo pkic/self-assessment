@@ -31,7 +31,11 @@ ChartJS.register(
 interface SpiderChartProps {
   modules: ModuleData[];
   progress: Record<string, ProgressData>;
+  /** Storage keys, e.g. `G.strategy-and-vision`. Used to read progress. */
   chartLabels: string[];
+  /** Optional per-axis display names parallel to chartLabels, used in
+   *  tooltips. Defaults to a "Module · Category" string built from modules. */
+  axisDisplayNames?: string[];
   extensions?: ExtensionData[];
   enabledExtensions?: string[];
   animate?: boolean;
@@ -91,13 +95,27 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   modules,
   progress,
   chartLabels,
+  axisDisplayNames,
   extensions = [],
   enabledExtensions = [],
   animate = true,
 }) => {
-  const labels = chartLabels;
+  // chartLabels are storage keys (G.kebab-id). Build display labels
+  // ("Governance · Strategy and vision") parallel to the storage keys so
+  // tooltips can show a human-readable category name without exposing the
+  // kebab id on the chart axes.
+  const displayLabels =
+    axisDisplayNames ??
+    chartLabels.map((key) => {
+      const [moduleId, categoryId] = key.split(".");
+      const moduleData = modules.find((m) => m.id === moduleId);
+      const category = moduleData?.categories.find((c) => c.id === categoryId);
+      return moduleData && category
+        ? `${moduleData.name} · ${category.name}`
+        : key;
+    });
 
-  const userData = labels.map((label) => {
+  const userData = chartLabels.map((label) => {
     if (progress[label] && !progress[label].applicability) {
       return 0;
     }
@@ -133,7 +151,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
 
   extensions.forEach((ext, index) => {
     if (enabledExtensions.includes(ext.extension.id)) {
-      const extData = labels.map((label) => {
+      const extData = chartLabels.map((label) => {
         const [moduleId, categoryId] = label.split(".");
         const module = modules.find((m) => m.id === moduleId);
         const category = module?.categories.find((c) => c.id === categoryId);
@@ -165,7 +183,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   });
 
   const chartData = {
-    labels,
+    labels: displayLabels,
     datasets,
   };
 
@@ -178,6 +196,25 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
         max: maxLevel,
         ticks: {
           stepSize: 1,
+          display: false,
+        },
+        pointLabels: {
+          // Hide the per-axis category labels — they cramp the chart with 16
+          // axes. Category names are surfaced via tooltips instead.
+          display: false,
+        },
+      },
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (items: { label: string }[]) =>
+            items.length > 0 ? items[0].label : "",
+          label: (item: { dataset: { label?: string }; raw: unknown }) => {
+            const v = typeof item.raw === "number" ? item.raw : 0;
+            const result = (LevelResult as Record<number, string>)[v];
+            return `${item.dataset.label ?? "Level"}: ${v} (${result})`;
+          },
         },
       },
     },
@@ -215,13 +252,6 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
         })}
       </div>
       <Radar data={chartData} options={chartOptions} />
-      <div style={{ textAlign: "center", marginTop: "20px" }}>
-        <p>
-          This radar chart represents the maturity level of categories. The data
-          is derived from user inputs and reflects the current status of the
-          development.
-        </p>
-      </div>
     </div>
   );
 };

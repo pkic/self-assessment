@@ -4,7 +4,7 @@ import LevelResult from "../../enums/LevelResult";
 
 interface MaturityWidgetProps {
   level: number;
-  label: string;
+  label: React.ReactNode;
   className?: string;
 }
 

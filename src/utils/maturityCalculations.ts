@@ -82,47 +82,35 @@ const calculateWeightedScores = (
   extensions: ExtensionData[] = [],
   enabledExtensions: string[] = [],
 ) => {
+  // Per spec, baseline PKI MM maturity is computed from baseline Level_C
+  // with the (optionally extension-overlay-adjusted) effective category
+  // weight. Blending with extension relevance levels belongs to the
+  // dedicated extension calc functions (calculateExtensionMaturityLevels,
+  // calculateBlendedLevel), not this baseline rollup.
+  //
+  // Pass [] / [] for extensions to get a pure baseline view; pass an
+  // extension to get the ExtensionWeightedPKIMM view (Level_C with
+  // extension-adjusted weights).
   return categories.reduce(
     (acc, category) => {
       const key = `${moduleId}.${category.id}`;
       const progressData = progress[key];
-      if (progressData && progressData.applicability) {
-        let level = progressData.level;
-        let weight = getEffectiveWeight(
+      // Not Assessed (level 0) and Not Applicable (applicability false) are
+      // both excluded from the rollup. Including them as zeros would make a
+      // mostly-empty assessment look worse than it is; the visible per-axis
+      // value on the chart still reflects level 0 for unrated categories.
+      if (
+        progressData &&
+        progressData.applicability &&
+        progressData.level > 0
+      ) {
+        const level = progressData.level;
+        const weight = getEffectiveWeight(
           moduleId,
           category,
           extensions,
           enabledExtensions,
         );
-
-        // If there is exactly one enabled extension, use blended level and correct weight
-        const activeExtensions = extensions.filter((ext) =>
-          enabledExtensions.includes(ext.extension.id),
-        );
-        if (activeExtensions.length === 1) {
-          const ext = activeExtensions[0];
-          const blendedLevel = calculateBlendedLevel(
-            moduleId,
-            category,
-            ext,
-            progress,
-          );
-          if (blendedLevel !== -1) {
-            level = blendedLevel;
-            const weightSum_C = getWeightSum(
-              moduleId,
-              category,
-              [ext],
-              [ext.extension.id],
-            );
-            const extCat = ext.relevance.modules
-              .find((m) => m.id === moduleId)
-              ?.categories.find((c) => c.id === category.id);
-            const relWeight_C = extCat ? extCat.weight : 0;
-            weight = weightSum_C + relWeight_C;
-          }
-        }
-
         acc.totalWeight += weight;
         acc.totalWeightedScore += level * weight;
       }
@@ -188,8 +176,12 @@ export const calculateBlendedLevel = (
   const coreKey = `${moduleId}.${category.id}`;
   const coreProgressData = progress[coreKey];
 
-  if (!coreProgressData || coreProgressData.applicability === false) {
-    return -1; // Not Applicable
+  // Not Applicable is only reached when the user has explicitly toggled
+  // applicability off on the core category. A missing entry defaults to
+  // level 0 (Not Assessed) with applicability true, matching the lazy
+  // default the Category component uses for the picker.
+  if (coreProgressData?.applicability === false) {
+    return -1;
   }
 
   const weightSum_C = getWeightSum(
@@ -198,28 +190,34 @@ export const calculateBlendedLevel = (
     [extension],
     [extension.extension.id],
   );
-  const level_C = coreProgressData.level;
+  const level_C = coreProgressData?.level ?? 0;
 
   const extCat = extension.relevance.modules
     .find((m) => m.id === moduleId)
     ?.categories.find((c) => c.id === category.id);
 
-  if (extCat) {
-    const extKey = `${extension.extension.id}.${moduleId}.${category.id}`;
-    const extProgressData = progress[extKey];
-    const relLevel_C =
-      extProgressData && extProgressData.applicability !== false
-        ? extProgressData.level
-        : 1;
-    const relWeight_C = extCat.weight;
+  if (!extCat) return level_C;
 
-    return (
-      (level_C * weightSum_C + relLevel_C * relWeight_C) /
-      (weightSum_C + relWeight_C)
-    );
-  } else {
-    return level_C;
-  }
+  const extKey = `${extension.extension.id}.${moduleId}.${category.id}`;
+  const extProgressData = progress[extKey];
+  const relLevel_C =
+    extProgressData && extProgressData.applicability !== false
+      ? extProgressData.level
+      : 0;
+  const relWeight_C = extCat.weight;
+
+  // The spec formula assumes Level_C is rated. When the baseline is Not
+  // Assessed, the blend has no baseline to attach to — surface Not Assessed
+  // instead of letting the extension dimension nudge the axis up alone.
+  if (level_C === 0) return 0;
+  // When the extension dimension is not rated, the spec's "no relevance"
+  // rule applies: ExtensionCategoryLevel_C = Level_C.
+  if (relLevel_C === 0) return level_C;
+
+  return (
+    (level_C * weightSum_C + relLevel_C * relWeight_C) /
+    (weightSum_C + relWeight_C)
+  );
 };
 
 export const calculateExtensionMaturityLevels = (
@@ -251,31 +249,26 @@ export const calculateExtensionMaturityLevels = (
             progress,
           );
 
-          if (blendedLevel === -1) {
+          // Skip Not Applicable (-1) and Not Assessed (0) — same exclusion
+          // semantics as the core rollup.
+          if (blendedLevel <= 0) {
             continue;
           }
 
-          const weightSum_C = getWeightSum(
+          // Per the framework spec:
+          //   ExtensionScore = Σ(ExtensionCategoryLevel_C × effective_category_weight)
+          //                    / Σ(effective_category_weight)
+          // i.e., the per-category weight in the rollup is the category's
+          // effective weight after category-level overlays, NOT the sum of
+          // requirement weights + relevance weight.
+          const effectiveWeight = getEffectiveWeight(
             module.id,
             category,
             [ext],
             [ext.extension.id],
           );
-          const extCat = ext.relevance.modules
-            .find((m) => m.id === module.id)
-            ?.categories.find((c) => c.id === category.id);
-
-          if (extCat) {
-            const relWeight_C = extCat.weight;
-            // For extension overall maturity, we use the sum of weights (WeightSum_C + RelWeight_C)
-            const totalCatWeight = weightSum_C + relWeight_C;
-            totalWeight += totalCatWeight;
-            totalWeightedScore += blendedLevel * totalCatWeight;
-          } else {
-            // If relevance is not defined: ExtensionCategoryLevel_C = Level_C
-            totalWeight += weightSum_C;
-            totalWeightedScore += blendedLevel * weightSum_C;
-          }
+          totalWeight += effectiveWeight;
+          totalWeightedScore += blendedLevel * effectiveWeight;
         }
       }
 
@@ -313,7 +306,10 @@ export const calculateExtensionFloorScore = (
         progress,
       );
 
-      if (extensionCategoryLevel_C === -1) {
+      // Skip Not Applicable (-1) and Not Assessed (0) — the floor score is
+      // the minimum *assessed* blended level, so unrated categories
+      // shouldn't pull the floor down to zero.
+      if (extensionCategoryLevel_C <= 0) {
         return;
       }
 
@@ -327,6 +323,14 @@ export const calculateExtensionFloorScore = (
   return hasApplicableCategory ? Math.floor(minLevel) : 0;
 };
 
+// Per spec — Extension-weighted PKI MM score:
+//   ExtensionWeightedPKIMM = Σ(Level_C × effective_category_weight)
+//                            / Σ(effective_category_weight)
+// "Recalculates baseline PKI MM maturity using extension emphasis while
+//  preserving baseline maturity values." Uses the baseline category level
+// (NOT the blended ExtensionCategoryLevel) so the relevance signal does not
+// affect this view — only the category weights are adjusted by the
+// extension's category-level overlays.
 export const calculateExtensionWeightedPKIMMScore = (
   modules: ModuleData[],
   progress: Record<string, ProgressData>,
@@ -335,69 +339,122 @@ export const calculateExtensionWeightedPKIMMScore = (
   let totalWeight = 0;
   let totalWeightedScore = 0;
 
-  modules.forEach((module) => {
-    const {
-      totalWeight: moduleTotalWeight,
-      totalWeightedScore: moduleTotalWeightedScore,
-    } = calculateWeightedScores(
-      module.categories,
-      module.id,
-      progress,
-      [extension],
-      [extension.extension.id],
-    );
-    totalWeight += moduleTotalWeight;
-    totalWeightedScore += moduleTotalWeightedScore;
-  });
+  for (const module of modules) {
+    for (const category of module.categories) {
+      const coreKey = `${module.id}.${category.id}`;
+      const coreProgressData = progress[coreKey];
+      if (!coreProgressData || coreProgressData.applicability === false) {
+        continue;
+      }
+      const level_C = coreProgressData.level;
+      if (level_C <= 0) continue; // Not Assessed — excluded, same as rollup rule
+      const effectiveWeight = getEffectiveWeight(
+        module.id,
+        category,
+        [extension],
+        [extension.extension.id],
+      );
+      totalWeight += effectiveWeight;
+      totalWeightedScore += level_C * effectiveWeight;
+    }
+  }
 
   return totalWeight ? Math.floor(totalWeightedScore / totalWeight) : 0;
 };
 
+export type OverlayOperation = "multiplier" | "addition" | "override";
+
+export interface OverlayEntry {
+  operation: OverlayOperation;
+  value: number;
+  base: number;
+  effective: number;
+}
+
+export interface RequirementOverlayEntry extends OverlayEntry {
+  id: string;
+  description: string;
+}
+
+export interface CategoryOverlayDetails {
+  /** Defined when the extension applies a category-level weight overlay. */
+  category?: OverlayEntry;
+  /** Requirement-level weight overlays defined for this category. */
+  requirements: RequirementOverlayEntry[];
+}
+
+const applyOperation = (
+  base: number,
+  operation: OverlayOperation,
+  value: number,
+): number => {
+  if (operation === "override") return value;
+  if (operation === "multiplier") return base * value;
+  return base + value; // addition
+};
+
+const readOperation = (overlay: {
+  override?: number;
+  multiplier?: number;
+  addition?: number;
+}): { operation: OverlayOperation; value: number } | null => {
+  if (overlay.override !== undefined) {
+    return { operation: "override", value: overlay.override };
+  }
+  if (overlay.multiplier !== undefined) {
+    return { operation: "multiplier", value: overlay.multiplier };
+  }
+  if (overlay.addition !== undefined) {
+    return { operation: "addition", value: overlay.addition };
+  }
+  return null;
+};
+
+/** Returns a structured description of every overlay an extension applies
+ *  to a given category. Renderers can present this however they want —
+ *  the page and PDF share the same input shape. */
 export const getCategoryOverlayInfo = (
   moduleId: string,
   category: CategoryData,
   extension: ExtensionData,
-): string[] => {
-  const info: string[] = [];
-  if (!extension.overlays) return info;
+): CategoryOverlayDetails => {
+  const details: CategoryOverlayDetails = { requirements: [] };
+  if (!extension.overlays) return details;
 
   const extModule = extension.overlays.modules.find((m) => m.id === moduleId);
   const extCat = extModule?.categories.find((c) => c.id === category.id);
+  if (!extCat) return details;
 
-  if (extCat) {
-    if (extCat.override !== undefined) {
-      info.push(`Category weight overridden to ${extCat.override}`);
-    } else if (extCat.multiplier !== undefined) {
-      info.push(
-        `Category weight multiplied by ${extCat.multiplier} (Base: ${category.weight})`,
-      );
-    } else if (extCat.addition !== undefined) {
-      info.push(
-        `Category weight increased by ${extCat.addition} (Base: ${category.weight})`,
-      );
-    }
+  const catOp = readOperation(extCat);
+  if (catOp) {
+    details.category = {
+      operation: catOp.operation,
+      value: catOp.value,
+      base: category.weight,
+      effective: applyOperation(category.weight, catOp.operation, catOp.value),
+    };
+  }
 
-    if (extCat.requirements && category.requirements) {
-      extCat.requirements.forEach((extReq) => {
-        const coreReq = category.requirements.find((r) => r.id === extReq.id);
-        if (coreReq) {
-          if (extReq.override !== undefined) {
-            info.push(
-              `Requirement ${coreReq.id} weight overridden to ${extReq.override} (Base: ${coreReq.weight})`,
-            );
-          } else if (extReq.multiplier !== undefined) {
-            info.push(
-              `Requirement ${coreReq.id} weight multiplied by ${extReq.multiplier} (Base: ${coreReq.weight})`,
-            );
-          } else if (extReq.addition !== undefined) {
-            info.push(
-              `Requirement ${coreReq.id} weight increased by ${extReq.addition} (Base: ${coreReq.weight})`,
-            );
-          }
-        }
+  if (extCat.requirements && category.requirements) {
+    for (const extReq of extCat.requirements) {
+      const coreReq = category.requirements.find((r) => r.id === extReq.id);
+      if (!coreReq) continue;
+      const op = readOperation(extReq);
+      if (!op) continue;
+      details.requirements.push({
+        id: coreReq.id,
+        description: coreReq.description,
+        operation: op.operation,
+        value: op.value,
+        base: coreReq.weight,
+        effective: applyOperation(coreReq.weight, op.operation, op.value),
       });
     }
   }
 
-  return info;
+  return details;
 };
+
+/** Convenience for code that just needs to know "are there any overlays?" */
+export const hasOverlays = (details: CategoryOverlayDetails): boolean =>
+  details.category !== undefined || details.requirements.length > 0;

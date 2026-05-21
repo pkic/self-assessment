@@ -1,0 +1,77 @@
+// Legacy data needs user attention — render with the danger color
+// language: red accent + light danger-bg tint. Surface stays readable
+// (not fully red-tinted) so the prompt invites action without shouting.
+
+.pkimm-legacy-prompt {
+  background-color: var(--pkimm-danger-bg);
+  border: 1px solid var(--pkimm-danger-border);
+  border-left: 4px solid var(--pkimm-danger-fg);
+  border-radius: var(--pkimm-border-radius-md);
+  box-shadow: var(--pkimm-shadow-sm);
+  padding: 1.25rem 1.5rem;
+  margin: 1rem;
+  color: var(--pkimm-text-color-dark);
+
+  p {
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.pkimm-legacy-prompt__icon {
+  color: var(--pkimm-danger-fg);
+  font-weight: 700;
+  margin-right: 0.4rem;
+}
+
+.pkimm-legacy-prompt__hint {
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.9rem;
+}
+
+.pkimm-legacy-prompt__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.pkimm-legacy-prompt__primary,
+.pkimm-legacy-prompt__secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pkimm-legacy-prompt__primary {
+  background-color: var(--pkimm-primary-color);
+  color: var(--pkimm-text-color-light);
+  border-color: var(--pkimm-primary-color);
+
+  &:hover {
+    background-color: var(--pkimm-primary-color-hover);
+    border-color: var(--pkimm-primary-color-hover);
+  }
+}
+
+.pkimm-legacy-prompt__secondary {
+  background-color: var(--pkimm-surface-color);
+  color: var(--pkimm-text-color-dark);
+
+  &:hover {
+    background-color: var(--pkimm-hover-bg-subtle);
+    border-color: var(--pkimm-primary-color);
+    color: var(--pkimm-primary-color);
+  }
+}

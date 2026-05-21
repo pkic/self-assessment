@@ -46,9 +46,26 @@
       transform: translateY(-1px);
     }
 
+    &.incompatible {
+      opacity: 0.6;
+    }
+
+    .extension-incompatible-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: var(--pkimm-border-radius-sm);
+      background-color: var(--pkimm-danger-bg);
+      color: var(--pkimm-danger-fg);
+      border: 1px solid var(--pkimm-danger-border);
+      margin-right: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
     &.enabled {
-      background-color: rgba(26, 115, 232, 0.02);
-      border-color: rgba(26, 115, 232, 0.3);
+      background-color: var(--pkimm-hover-bg-subtle);
+      border-color: var(--pkimm-primary-color);
     }
 
     .extension-info {
@@ -70,11 +87,11 @@
         }
 
         .extension-version {
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           color: var(--pkimm-text-color-muted);
-          background-color: #f1f3f4;
+          background-color: var(--pkimm-surface-color-alt);
           padding: 2px 8px;
-          border-radius: 12px;
+          border-radius: var(--pkimm-border-radius-pill);
           font-weight: 500;
         }
       }

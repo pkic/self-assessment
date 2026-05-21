@@ -1,0 +1,283 @@
+// Matches the surface treatment used by the Extensions tab and the Report:
+// large radius, generous padding, subtle elevation. Inner rows mirror the
+// Extensions row pattern (medium radius, hover lift + border highlight).
+
+.pkimm-assessment-manager {
+  background-color: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--pkimm-shadow-sm);
+  box-sizing: border-box;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-assessment-manager__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--pkimm-text-color-dark);
+  }
+}
+
+.pkimm-assessment-manager__primary-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pkimm-assessment-manager__empty {
+  color: var(--pkimm-text-color-muted);
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+.pkimm-assessment-manager__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pkimm-assessment-manager__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+  transition: all 0.2s ease;
+  flex-wrap: wrap;
+
+  &:hover {
+    border-color: var(--pkimm-primary-color);
+    box-shadow: var(--pkimm-shadow-sm);
+    transform: translateY(-1px);
+  }
+
+  &.is-active {
+    background-color: var(--pkimm-hover-bg-subtle);
+    border-color: var(--pkimm-primary-color);
+  }
+
+  &.is-incompatible {
+    border-color: var(--pkimm-banner-border);
+
+    &:hover {
+      border-color: var(--pkimm-banner-border);
+    }
+  }
+}
+
+.pkimm-assessment-manager__row-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pkimm-assessment-manager__row-headline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pkimm-assessment-manager__row-active-badge {
+  background-color: var(--pkimm-primary-color);
+  color: var(--pkimm-text-color-light);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--pkimm-border-radius-sm);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.pkimm-assessment-manager__row-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--pkimm-text-color-dark);
+  overflow-wrap: anywhere;
+}
+
+.pkimm-assessment-manager__version-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-weight: 500;
+  line-height: 1.4;
+  border: 1px solid transparent;
+
+  &--compatible {
+    background-color: var(--pkimm-success-bg);
+    color: var(--pkimm-success-fg);
+    border-color: var(--pkimm-success-border);
+  }
+
+  &--incompatible {
+    background-color: var(--pkimm-banner-bg);
+    color: var(--pkimm-banner-fg);
+    border-color: var(--pkimm-banner-border);
+  }
+}
+
+.pkimm-assessment-manager__row-meta {
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.85rem;
+}
+
+.pkimm-assessment-manager__row-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.pkimm-assessment-manager__icon-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--pkimm-surface-color);
+  color: var(--pkimm-text-color-muted);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: var(--pkimm-hover-bg-subtle);
+    border-color: var(--pkimm-primary-color);
+    color: var(--pkimm-primary-color);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &--highlight {
+    background-color: var(--pkimm-primary-color);
+    color: var(--pkimm-text-color-light);
+    border-color: var(--pkimm-primary-color);
+
+    &:hover:not(:disabled) {
+      background-color: var(--pkimm-primary-color-hover);
+      border-color: var(--pkimm-primary-color-hover);
+      color: var(--pkimm-text-color-light);
+    }
+  }
+
+  &--danger:hover:not(:disabled) {
+    background-color: var(--pkimm-danger-bg);
+    color: var(--pkimm-danger-fg);
+    border-color: var(--pkimm-danger-border);
+  }
+}
+
+.pkimm-assessment-manager__primary,
+.pkimm-assessment-manager__secondary,
+.pkimm-assessment-manager__danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  background-color: var(--pkimm-surface-color);
+  color: var(--pkimm-text-color-dark);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--pkimm-hover-bg-subtle);
+    border-color: var(--pkimm-primary-color);
+    color: var(--pkimm-primary-color);
+  }
+}
+
+.pkimm-assessment-manager__primary {
+  background-color: var(--pkimm-primary-color);
+  color: var(--pkimm-text-color-light);
+  border-color: var(--pkimm-primary-color);
+
+  &:hover {
+    background-color: var(--pkimm-primary-color-hover);
+    border-color: var(--pkimm-primary-color-hover);
+    color: var(--pkimm-text-color-light);
+  }
+}
+
+.pkimm-assessment-manager__danger {
+  background-color: var(--pkimm-surface-color);
+  color: var(--pkimm-danger-fg);
+  border-color: var(--pkimm-danger-border);
+
+  &:hover {
+    background-color: var(--pkimm-danger-bg);
+    color: var(--pkimm-danger-fg);
+    border-color: var(--pkimm-danger-border);
+  }
+}
+
+.pkimm-assessment-manager__legacy {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--pkimm-border-color);
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--pkimm-text-color-dark);
+  }
+
+  p {
+    color: var(--pkimm-text-color-muted);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+}
+
+.pkimm-assessment-manager__legacy-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .pkimm-assessment-manager {
+    padding: 1.5rem 1rem;
+  }
+
+  .pkimm-assessment-manager__row {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .pkimm-assessment-manager__row-actions {
+    align-self: flex-end;
+  }
+}

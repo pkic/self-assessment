@@ -16,20 +16,48 @@
   --pkimm-maturity-level-4: #{main.$maturity-level-4};
   --pkimm-maturity-level-5: #{main.$maturity-level-5};
 
+  --pkimm-font-family: #{main.$font-family-base};
+
   --pkimm-background-color: #{main.$background-color};
   --pkimm-surface-color: #{main.$surface-color};
+  --pkimm-surface-color-alt: #{main.$surface-color-alt};
   --pkimm-border-color: #{main.$border-color};
+  --pkimm-table-header-bg: #{main.$background-color};
+  --pkimm-table-header-fg: #{main.$text-color-dark};
 
   --pkimm-text-color-dark: #{main.$text-color-dark};
   --pkimm-text-color-muted: #{main.$text-color-muted};
   --pkimm-text-color-light: #{main.$text-color-light};
 
+  --pkimm-banner-bg: #{main.$banner-bg};
+  --pkimm-banner-border: #{main.$banner-border};
+  --pkimm-banner-fg: #{main.$banner-fg};
+
+  --pkimm-success-bg: #{main.$success-bg};
+  --pkimm-success-border: #{main.$success-border};
+  --pkimm-success-fg: #{main.$success-fg};
+
+  --pkimm-danger-bg: #{main.$danger-bg};
+  --pkimm-danger-border: #{main.$danger-border};
+  --pkimm-danger-fg: #{main.$danger-fg};
+
+  --pkimm-overlay-color: #{main.$overlay-color};
+  --pkimm-hover-bg-subtle: #{main.$hover-bg-subtle};
+  --pkimm-hover-bg: #{main.$hover-bg};
+  --pkimm-hover-bg-extension-subtle: #{main.$hover-bg-extension-subtle};
+  --pkimm-hover-bg-extension: #{main.$hover-bg-extension};
+  --pkimm-table-stripe-bg: #{main.$table-stripe-bg};
+  --pkimm-table-row-hover-bg: #{main.$table-row-hover-bg};
+
   --pkimm-border-radius-sm: #{main.$border-radius-sm};
   --pkimm-border-radius-md: #{main.$border-radius-md};
   --pkimm-border-radius-lg: #{main.$border-radius-lg};
+  --pkimm-border-radius-badge: #{main.$border-radius-badge};
+  --pkimm-border-radius-pill: #{main.$border-radius-pill};
 
   --pkimm-shadow-sm: #{main.$shadow-sm};
   --pkimm-shadow-md: #{main.$shadow-md};
+  --pkimm-shadow-header: #{main.$shadow-header};
 
   --pkimm-sticky-top-offset: 0px;
   --pkimm-scroll-query-selector: window;

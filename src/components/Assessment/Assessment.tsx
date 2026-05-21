@@ -3,9 +3,12 @@ import { Module } from "../Module/Module";
 import { SpiderChart } from "../SpiderChart/SpiderChart";
 import { Overview } from "../Overview/Overview";
 import { UnifiedReport } from "../Report/UnifiedReport";
-import MaturityWidget from "../MaturityWidget/MaturityWidget"; // Import MaturityWidget
 import { yamlParser } from "../../utils/yamlParser";
-import { generateURL, base64ToUtf8 } from "../../utils/urlGenerator";
+import {
+  generateURL,
+  decodeProgressHash,
+  exportToYAML,
+} from "../../utils/urlGenerator";
 import { exportToPDF, exportExtensionPDF } from "../../utils/pdfGenerator";
 import {
   AssessmentData,
@@ -14,32 +17,73 @@ import {
   EmailData,
   OverviewData,
   ExtensionData,
+  EnabledExtension,
+  SavedState,
+  Assessment as SavedAssessment,
+  ReferenceEntry,
+  ReferencesCatalog,
 } from "../../types/types";
 import LevelResult from "../../enums/LevelResult";
 import {
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
-} from "../../utils/maturityCalculations"; // Import utilities
+  calculateExtensionMaturityLevels,
+} from "../../utils/maturityCalculations";
 import { AssessmentTargetProvider } from "../../contexts/AssessmentTargetContext";
 import { AssessmentHeader } from "./AssessmentHeader";
 import { Extensions } from "../Extensions/Extensions";
 import "./Assessment.module.scss";
 import { APP_VERSION } from "../../version";
+import {
+  STORAGE_KEY,
+  LEGACY_KEY,
+  readSavedState,
+  writeSavedState,
+  detectLegacyAssessmentData,
+  readLegacyAssessmentData,
+  newEmptyAssessment,
+  importLegacyData,
+  importYAMLFile,
+  removeLegacyAssessmentData,
+  buildStructureSnapshot,
+  newId,
+  LegacyAssessmentData,
+} from "../../utils/storage";
+import { reclassifyUntouchedLevelOne } from "../../utils/legacyReclassify";
+import { LegacyImportPrompt } from "../LegacyImportPrompt/LegacyImportPrompt";
+import { TransientAssessmentBanner } from "../TransientAssessmentBanner/TransientAssessmentBanner";
+import {
+  MigrationBanner,
+  AxisMismatch,
+} from "../MigrationBanner/MigrationBanner";
+import { MigrationSummary as MigrationSummaryView } from "../MigrationSummary/MigrationSummary";
+import { ForwardCompatRefusal } from "../ForwardCompatRefusal/ForwardCompatRefusal";
+import { AssessmentManager } from "../AssessmentManager/AssessmentManager";
+import { migrate } from "../../utils/stateMigration";
+import type { MigrationSummary } from "../../types/types";
 
 interface AssessmentProps {
   src: string | null;
   config: string | null;
   extensions: string | null;
+  references: string | null;
 }
+
+const EMPTY_STATE: SavedState = {
+  stateSchemaVersion: 1,
+  activeId: null,
+  assessments: [],
+};
 
 export const Assessment: React.FC<AssessmentProps> = ({
   src,
   config,
   extensions,
+  references,
 }) => {
   const defaultProgressData = {
-    level: 1,
-    result: LevelResult[1],
+    level: 0,
+    result: LevelResult[0],
     description: "",
     applicability: true,
   };
@@ -47,142 +91,288 @@ export const Assessment: React.FC<AssessmentProps> = ({
   const version = APP_VERSION;
   const [data, setData] = useState<AssessmentData | null>(null);
   const [extensionsData, setExtensionsData] = useState<ExtensionData[]>([]);
-  const [enabledExtensions, setEnabledExtensions] = useState<string[]>([]);
+  const [referencesLookup, setReferencesLookup] = useState<
+    Map<string, ReferenceEntry>
+  >(() => new Map());
   const [emailData, setEmailData] = useState<EmailData | null>(null);
   const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
-  const [progress, setProgress] = useState<Record<string, ProgressData>>({});
   const [currentTab, setCurrentTab] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [assessmentName, setAssessmentName] = useState("");
-  const [assessorName, setAssessorName] = useState("");
-  const [useCaseDescription, setUseCaseDescription] = useState("");
+
+  const [savedState, setSavedState] = useState<SavedState>(EMPTY_STATE);
+  const [legacyPrompt, setLegacyPrompt] = useState<LegacyAssessmentData | null>(
+    null,
+  );
+  // Reserved for the forward-compat refusal screen (N.1).
+  const [forwardCompatFailure, setForwardCompatFailure] = useState<
+    string | null
+  >(null);
+  const [migrationSummary, setMigrationSummary] =
+    useState<MigrationSummary | null>(null);
+  const [migrationDismissedFor, setMigrationDismissedFor] = useState<
+    string | null
+  >(null);
+  const [hiddenExtensions, setHiddenExtensions] = useState<Set<string>>(
+    new Set(),
+  );
+  const [hasLegacyData, setHasLegacyData] = useState(false);
+  const [incompatibleExtensionIds, setIncompatibleExtensionIds] = useState<
+    Set<string>
+  >(new Set());
+
   const chartRef = useRef<HTMLDivElement>(null);
-  // Optional override to control which extensions are visualized in the chart (used for PDF export)
   const [chartExtensionsOverride, setChartExtensionsOverride] = useState<
     string[] | null
   >(null);
   const [chartAnimate, setChartAnimate] = useState(true);
 
-  const STORAGE_KEY = "assessmentData";
+  const activeAssessment =
+    savedState.assessments.find((a) => a.id === savedState.activeId) ?? null;
+  const progress = activeAssessment?.progress ?? {};
+  const assessmentName = activeAssessment?.assessmentName ?? "";
+  const assessorName = activeAssessment?.assessorName ?? "";
+  const useCaseDescription = activeAssessment?.useCaseDescription ?? "";
+  const enabledExtensionRecords = activeAssessment?.enabledExtensions ?? [];
+  // The downstream UI (Extensions, UnifiedReport, SpiderChart) still consumes
+  // a `string[]` of extension ids. Storage carries id+version objects; we
+  // unwrap here so the existing consumers stay untouched.
+  const allEnabledIds = enabledExtensionRecords.map((e) => e.id);
+  // Filter to loaded-and-compatible extensions. Hidden = present in the saved
+  // assessment but not loaded on this page; preserve progress, surface a notice.
+  const enabledExtensions = allEnabledIds.filter((id) =>
+    extensionsData.some((x) => x.extension.id === id),
+  );
+  const hiddenEnabledExtensions = enabledExtensionRecords.filter(
+    (e) => !extensionsData.some((x) => x.extension.id === e.id),
+  );
+
+  const updateActive = (
+    patch: Partial<SavedAssessment> | ((a: SavedAssessment) => SavedAssessment),
+  ): void => {
+    setSavedState((prev) => {
+      if (!prev.activeId) return prev;
+      const now = new Date().toISOString();
+      return {
+        ...prev,
+        assessments: prev.assessments.map((a) => {
+          if (a.id !== prev.activeId) return a;
+          const merged =
+            typeof patch === "function" ? patch(a) : { ...a, ...patch };
+          return { ...merged, meta: { ...merged.meta, updatedAt: now } };
+        }),
+      };
+    });
+  };
+
+  const setProgress = (
+    updater: React.SetStateAction<Record<string, ProgressData>>,
+  ): void => {
+    updateActive((a) => ({
+      ...a,
+      progress:
+        typeof updater === "function"
+          ? (
+              updater as (
+                p: Record<string, ProgressData>,
+              ) => Record<string, ProgressData>
+            )(a.progress)
+          : updater,
+    }));
+  };
+
+  const setAssessmentName = (v: string): void =>
+    updateActive({ assessmentName: v });
+  const setAssessorName = (v: string): void =>
+    updateActive({ assessorName: v });
+  const setUseCaseDescription = (v: string): void =>
+    updateActive({ useCaseDescription: v });
+
+  const setEnabledExtensions = (
+    updater: React.SetStateAction<string[]>,
+  ): void => {
+    updateActive((a) => {
+      const prevIds = a.enabledExtensions.map((e) => e.id);
+      const nextIds =
+        typeof updater === "function"
+          ? (updater as (e: string[]) => string[])(prevIds)
+          : updater;
+      const next: EnabledExtension[] = nextIds.map((id) => {
+        const existing = a.enabledExtensions.find((e) => e.id === id);
+        if (existing) return existing;
+        const loaded = extensionsData.find((x) => x.extension.id === id);
+        return { id, version: loaded?.extension.version ?? "0.0.0" };
+      });
+      return { ...a, enabledExtensions: next };
+    });
+  };
 
   useEffect(() => {
-    const urlHash = new URLSearchParams(window.location.hash.substring(1));
-    const encodedProgress = urlHash.get("progress");
-    const assessmentName = urlHash.get("assessmentName");
-    const assessorName = urlHash.get("assessorName");
-    const useCaseDescription = urlHash.get("useCaseDescription");
+    const load = async (): Promise<void> => {
+      let state: SavedState;
+      try {
+        state = readSavedState() ?? EMPTY_STATE;
+      } catch (err) {
+        setForwardCompatFailure((err as Error).message);
+        return;
+      }
 
-    const loadData = async () => {
+      const hasLegacyKey = localStorage.getItem(LEGACY_KEY) !== null;
+      setHasLegacyData(hasLegacyKey);
+
+      // Detect-but-don't-import legacy data so we can surface a prompt.
+      const legacyData =
+        state.assessments.length === 0 ? detectLegacyAssessmentData() : null;
+      if (legacyData) setLegacyPrompt(legacyData);
+
       let initialData: AssessmentData | null = null;
       if (src) {
         const response = await fetch(src);
         const yamlText = await response.text();
         initialData = yamlParser(yamlText) as AssessmentData;
       }
-      setCurrentTab("overview");
 
-      if (encodedProgress) {
-        try {
-          const decodedData = JSON.parse(base64ToUtf8(encodedProgress));
-          const decodedProgress = decodedData.progress || decodedData;
-          const initialExtensions: ExtensionData[] = [];
-          if (extensions) {
-            const extensionUrls = extensions
-              .split(",")
-              .map((url) => url.trim());
-            for (const url of extensionUrls) {
-              try {
-                const response = await fetch(url);
-                const yamlText = await response.text();
-                const extData = yamlParser(yamlText) as ExtensionData;
-                initialExtensions.push(extData);
-              } catch (error) {
-                console.error(`Error loading extension from ${url}:`, error);
-              }
-            }
-            setExtensionsData(initialExtensions);
-          }
-
-          if (initialData) {
-            const baseProgress = initProgress(
-              initialData,
-              initialExtensions,
-              decodedData.enabledExtensions || [],
-            );
-            setProgress({ ...baseProgress, ...decodedProgress });
-          } else {
-            setProgress(decodedProgress);
-          }
-
-          if (decodedData.enabledExtensions) {
-            setEnabledExtensions(decodedData.enabledExtensions);
-          }
-          setCurrentTab("report");
-        } catch (error) {
-          console.error("Error decoding progress from URL:", error);
-          if (initialData) {
-            setProgress(initProgress(initialData));
-          }
-        }
-      } else {
-        const storedData = localStorage.getItem(STORAGE_KEY);
-        const initialExtensions: ExtensionData[] = [];
-        if (extensions) {
-          const extensionUrls = extensions.split(",").map((url) => url.trim());
-          for (const url of extensionUrls) {
+      const initialExtensions: ExtensionData[] = [];
+      const incompatible = new Set<string>();
+      if (extensions) {
+        const extensionUrls = extensions.split(",").map((url) => url.trim());
+        const results = await Promise.all(
+          extensionUrls.map(async (url) => {
             try {
               const response = await fetch(url);
               const yamlText = await response.text();
-              const extData = yamlParser(yamlText) as ExtensionData;
-              initialExtensions.push(extData);
+              return yamlParser(yamlText) as ExtensionData;
             } catch (error) {
               console.error(`Error loading extension from ${url}:`, error);
+              return null;
             }
+          }),
+        );
+        const loadedVersion = initialData?.version ?? "1.0.0";
+        for (const extData of results) {
+          if (!extData) continue;
+          const compat = extData.extension.compatibility;
+          if (compat && !compat.includes(loadedVersion)) {
+            console.warn(
+              `Extension ${extData.extension.id} (v${extData.extension.version}) is not compatible with PKIMM ${loadedVersion}; toggle will be disabled.`,
+            );
+            incompatible.add(extData.extension.id);
           }
-          setExtensionsData(initialExtensions);
+          initialExtensions.push(extData);
         }
+        setExtensionsData(initialExtensions);
+        setIncompatibleExtensionIds(incompatible);
+      }
 
-        if (storedData) {
-          const {
-            progress: storedProgress,
-            assessmentName,
-            assessorName,
-            useCaseDescription,
-            enabledExtensions: storedEnabledExtensions,
-          } = JSON.parse(storedData);
+      // Build the combined references lookup: start from the main catalog
+      // (when referencesUrl is provided) and merge in extension-local
+      // entries. Later entries with the same id win, so an extension can
+      // shadow a main-catalog entry if it really wants to.
+      const refMap = new Map<string, ReferenceEntry>();
+      if (references) {
+        try {
+          const response = await fetch(references);
+          const yamlText = await response.text();
+          const catalog = yamlParser(yamlText) as ReferencesCatalog;
+          for (const ref of catalog.references ?? []) refMap.set(ref.id, ref);
+        } catch (error) {
+          console.error(`Error loading references from ${references}:`, error);
+        }
+      }
+      for (const ext of initialExtensions) {
+        for (const ref of ext.references ?? []) refMap.set(ref.id, ref);
+      }
+      setReferencesLookup(refMap);
 
-          if (initialData) {
-            const baseProgress = initProgress(
-              initialData,
-              initialExtensions,
-              storedEnabledExtensions || [],
-            );
-            setProgress({ ...baseProgress, ...storedProgress });
-          } else {
-            setProgress(storedProgress);
+      const hash = globalThis.location.hash.startsWith("#")
+        ? globalThis.location.hash.slice(1)
+        : globalThis.location.hash;
+      let transient: SavedAssessment | null = null;
+      if (hash.includes("progress=")) {
+        try {
+          const decoded = decodeProgressHash(hash);
+          if (decoded) {
+            const now = new Date().toISOString();
+            // URLs ship a compact progress map (just level + applicability)
+            // to stay under email/messaging size limits. Re-hydrate result
+            // and description from the source YAML so the PDF/report sees
+            // a full ProgressData.
+            const hydratedProgress: Record<string, ProgressData> = {};
+            for (const [key, entry] of Object.entries(decoded.progress)) {
+              const [moduleId, categoryId] = key.split(".");
+              const level = entry.level ?? 0;
+              const desc =
+                initialData?.modules
+                  .find((m) => m.id === moduleId)
+                  ?.categories.find((c) => c.id === categoryId)
+                  ?.levels.find((l) => l.number === level)?.description ?? "";
+              hydratedProgress[key] = {
+                level,
+                result:
+                  entry.result ??
+                  (LevelResult as Record<number, string>)[level] ??
+                  "Not Assessed",
+                description: entry.description ?? desc,
+                applicability: entry.applicability ?? true,
+              };
+            }
+            transient = {
+              id: `transient-${now}`,
+              name: "Shared assessment",
+              dataVersion: decoded.dataVersion,
+              progress: hydratedProgress,
+              enabledExtensions: decoded.enabledExtensions,
+              assessmentName: decoded.assessmentName,
+              assessorName: decoded.assessorName,
+              useCaseDescription: decoded.useCaseDescription,
+              sourceStructure: initialData
+                ? buildStructureSnapshot(initialData)
+                : { byKey: {} },
+              meta: { createdAt: now, updatedAt: now },
+            };
           }
-
-          setAssessmentName(assessmentName);
-          setAssessorName(assessorName);
-          setUseCaseDescription(useCaseDescription);
-          if (storedEnabledExtensions) {
-            setEnabledExtensions(storedEnabledExtensions);
-          }
-          setCurrentTab("report");
-        } else {
-          if (initialData)
-            setProgress(
-              initProgress(initialData, initialExtensions, enabledExtensions),
-            );
+        } catch (err) {
+          setForwardCompatFailure((err as Error).message);
+          return;
         }
       }
 
-      if (initialData) setData(initialData);
+      if (transient) {
+        // The transient assessment lives in-memory only until the user
+        // explicitly saves it (handled by section L.3's banner).
+        setSavedState({
+          ...state,
+          assessments: [
+            ...state.assessments.filter((a) => a.id !== transient.id),
+            transient,
+          ],
+          activeId: transient.id,
+        });
+        setCurrentTab("report");
+      } else if (legacyData) {
+        // Keep savedState empty; the user's choice in the legacy-import
+        // prompt will populate it. Skip auto-create so we don't pollute the
+        // assessment list with a throwaway entry the user never asked for.
+        setSavedState(state);
+        setCurrentTab("overview");
+      } else if (state.assessments.length === 0 && initialData) {
+        // No saved assessments, no shared link, no legacy data — auto-create
+        // a fresh one so the widget renders the familiar single-assessment UX.
+        const created = newEmptyAssessment(
+          initialData.version ?? "1.0.0",
+          buildStructureSnapshot(initialData),
+        );
+        setSavedState({
+          stateSchemaVersion: 1,
+          activeId: created.id,
+          assessments: [created],
+        });
+        setCurrentTab("overview");
+      } else {
+        setSavedState(state);
+        setCurrentTab(state.activeId ? "report" : "overview");
+      }
 
-      if (assessmentName) setAssessmentName(base64ToUtf8(assessmentName));
-      if (assessorName) setAssessorName(base64ToUtf8(assessorName));
-      if (useCaseDescription)
-        setUseCaseDescription(base64ToUtf8(useCaseDescription));
+      if (initialData) setData(initialData);
 
       if (config) {
         fetch(config)
@@ -191,7 +381,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
             const parsedConfig = yamlParser(yamlText);
             setEmailData((parsedConfig as ConfigData).email);
             setOverviewData((parsedConfig as ConfigData).overview);
-            console.log("Parsed Config:", parsedConfig); // Debugging line
           })
           .catch((error) =>
             console.error("Error fetching YAML config:", error),
@@ -199,60 +388,41 @@ export const Assessment: React.FC<AssessmentProps> = ({
       }
     };
 
-    // Handle the promise returned from loadData
-    loadData().catch((error) => console.error("Error loading data:", error));
-  }, [src, config]);
+    void load().catch((error) => console.error("Error loading data:", error));
+  }, [src, config, extensions, references]);
+
+  // Persist saved state — skip transient-only states (no assessments at all,
+  // or the only one is a transient placeholder) to avoid clobbering valid
+  // existing storage on initial mount. Debounced so keystrokes in the
+  // name/description fields don't fire a localStorage write per character.
+  useEffect(() => {
+    if (forwardCompatFailure) return;
+    if (savedState.assessments.length === 0) return;
+    const allTransient = savedState.assessments.every((a) =>
+      a.id.startsWith("transient-"),
+    );
+    if (allTransient) return;
+    const handle = setTimeout(() => writeSavedState(savedState), 300);
+    return () => clearTimeout(handle);
+  }, [savedState, forwardCompatFailure]);
 
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) {
-        const storedData = JSON.parse(event.newValue || "{}");
-        setProgress(storedData.progress);
-        setAssessmentName(storedData.assessmentName);
-        setAssessorName(storedData.assessorName);
-        setUseCaseDescription(storedData.useCaseDescription);
-        if (storedData.enabledExtensions) {
-          setEnabledExtensions(storedData.enabledExtensions);
-        }
+      if (event.key !== STORAGE_KEY || !event.newValue) return;
+      try {
+        const next = JSON.parse(event.newValue) as SavedState;
+        if (next.stateSchemaVersion > 1) return;
+        setSavedState(next);
+      } catch {
+        // ignore malformed external writes
       }
     };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
+    globalThis.addEventListener("storage", handleStorageChange);
+    return () => globalThis.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  useEffect(() => {
-    if (data) {
-      const saveData = {
-        progress,
-        assessmentName,
-        assessorName,
-        useCaseDescription,
-        enabledExtensions,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-    }
-  }, [
-    progress,
-    assessmentName,
-    assessorName,
-    useCaseDescription,
-    data,
-    enabledExtensions,
-  ]);
-
-  function makeProgressEntry(category: {
-    levels: { number: number; description: string }[];
-  }): ProgressData {
-    const progressData = { ...defaultProgressData };
-    const levelOne = category.levels.find((level) => level.number === 1);
-    if (levelOne) {
-      progressData.description = levelOne.description;
-    }
-    return progressData;
+  function makeProgressEntry(): ProgressData {
+    return { ...defaultProgressData };
   }
 
   function initProgress(
@@ -265,8 +435,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
     if (parsedData) {
       for (const module of parsedData.modules) {
         for (const category of module.categories) {
-          initialProgress[`${module.id}.${category.id}`] =
-            makeProgressEntry(category);
+          initialProgress[`${module.id}.${category.id}`] = makeProgressEntry();
         }
       }
     }
@@ -275,7 +444,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       for (const module of ext.relevance.modules) {
         for (const category of module.categories) {
           const key = `${ext.extension.id}.${module.id}.${category.id}`;
-          initialProgress[key] = makeProgressEntry(category);
+          initialProgress[key] = makeProgressEntry();
         }
       }
     }
@@ -348,11 +517,14 @@ export const Assessment: React.FC<AssessmentProps> = ({
   };
 
   const handleReset = () => {
-    setProgress(initProgress(data, extensionsData, []));
-    setAssessmentName("");
-    setAssessorName("");
-    setUseCaseDescription("");
-    setEnabledExtensions([]);
+    updateActive((a) => ({
+      ...a,
+      progress: initProgress(data, extensionsData, []),
+      assessmentName: "",
+      assessorName: "",
+      useCaseDescription: "",
+      enabledExtensions: [],
+    }));
   };
 
   const handleResetExtension = (extensionId: string) => {
@@ -364,7 +536,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       for (const module of ext.relevance.modules) {
         for (const category of module.categories) {
           const key = `${extensionId}.${module.id}.${category.id}`;
-          newProgress[key] = makeProgressEntry(category);
+          newProgress[key] = makeProgressEntry();
         }
       }
       return newProgress;
@@ -381,13 +553,34 @@ export const Assessment: React.FC<AssessmentProps> = ({
     });
   };
 
+  // Collects every reference id cited by a module set, resolves through
+  // the lookup, and dedupes — used by both PDF exporters to populate
+  // the References appendix page.
+  const collectReferencedEntries = (
+    modulesToScan: AssessmentData["modules"],
+  ): ReferenceEntry[] => {
+    const ids = new Set<string>();
+    for (const m of modulesToScan) {
+      for (const c of m.categories) {
+        for (const r of c.requirements ?? []) {
+          if (Array.isArray(r.references)) {
+            for (const id of r.references) ids.add(id);
+          }
+        }
+      }
+    }
+    const out: ReferenceEntry[] = [];
+    for (const id of ids) {
+      const entry = referencesLookup.get(id);
+      if (entry) out.push(entry);
+    }
+    return out;
+  };
+
   const handleExportPDF = async () => {
     if (chartRef.current && data) {
-      // Force the chart to render baseline-only (no extensions) for the export image
       setChartExtensionsOverride([]);
-      // Disable animation for capture
       setChartAnimate(false);
-      // Wait for next paint so the chart re-renders with the override
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       const overallMaturityLevel = calculateOverallMaturityLevel(
@@ -402,12 +595,15 @@ export const Assessment: React.FC<AssessmentProps> = ({
         [],
         [],
       );
-      const url = generateURL(
+      const url = generateURL({
         progress,
+        enabledExtensions: [],
+        dataVersion: data.version ?? "1.0.0",
+        stateSchemaVersion: 1,
         assessmentName,
         assessorName,
         useCaseDescription,
-      );
+      });
 
       try {
         await exportToPDF(
@@ -421,11 +617,11 @@ export const Assessment: React.FC<AssessmentProps> = ({
           useCaseDescription,
           url,
           version,
+          collectReferencedEntries(data.modules),
         );
       } catch (error) {
         console.error("Error exporting to PDF:", error);
       } finally {
-        // Restore normal chart behavior (show enabled extensions again)
         setChartExtensionsOverride(null);
         setChartAnimate(true);
       }
@@ -436,11 +632,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
     const ext = extensionsData.find((e) => e.extension.id === extensionId);
     if (!ext || !data || !chartRef.current) return;
 
-    // Force the chart to render ONLY this extension for the export image
     setChartExtensionsOverride([extensionId]);
-    // Disable animation for capture
     setChartAnimate(false);
-    // Wait for next paint so the chart re-renders with the override
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const chartCanvas = chartRef.current.querySelector(
@@ -453,6 +646,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
         progress,
         extension: ext,
         coreModules: data.modules,
+        references: collectReferencedEntries(data.modules),
         assessmentName,
         assessorName,
         useCaseDescription,
@@ -462,7 +656,6 @@ export const Assessment: React.FC<AssessmentProps> = ({
     } catch (error) {
       console.error("Error exporting extension PDF:", error);
     } finally {
-      // Restore normal chart behavior (show all enabled extensions again)
       setChartExtensionsOverride(null);
       setChartAnimate(true);
     }
@@ -470,12 +663,12 @@ export const Assessment: React.FC<AssessmentProps> = ({
 
   const handleTabClick = (tab: string) => {
     setCurrentTab(tab);
-    setIsMenuOpen(false); // Close the menu when a tab is clicked
+    setIsMenuOpen(false);
     const scrollQuerySelector = getComputedStyle(
       document.documentElement,
     ).getPropertyValue("--pkimm-scroll-query-selector");
     if (scrollQuerySelector === "window") {
-      window.scrollTo(0, 0);
+      globalThis.scrollTo(0, 0);
     } else {
       const element = document.querySelector(scrollQuerySelector);
       if (element) {
@@ -484,17 +677,291 @@ export const Assessment: React.FC<AssessmentProps> = ({
     }
   };
 
-  const handleAssessmentName = (name: string) => {
-    setAssessmentName(name);
+  const isTransient = (a: SavedAssessment | null): boolean =>
+    a?.id.startsWith("transient-") ?? false;
+
+  const computeMismatches = (): AxisMismatch[] => {
+    if (!activeAssessment || !data) return [];
+    const out: AxisMismatch[] = [];
+    const loadedDataVersion = data.version ?? "1.0.0";
+    if (activeAssessment.dataVersion !== loadedDataVersion) {
+      out.push({
+        kind: "model",
+        label: `PKIMM ${activeAssessment.dataVersion} → ${loadedDataVersion}`,
+        canKeepHidden: false,
+      });
+    }
+    for (const e of activeAssessment.enabledExtensions) {
+      if (hiddenExtensions.has(e.id)) continue;
+      const loaded = extensionsData.find((x) => x.extension.id === e.id);
+      if (!loaded) continue; // not loaded at all — surfaced as preserved-but-hidden in P.1
+      if (loaded.extension.version !== e.version) {
+        out.push({
+          kind: "extension",
+          label: `${loaded.extension.name} ${e.version} → ${loaded.extension.version}`,
+          extensionId: e.id,
+          canKeepHidden: true,
+        });
+      }
+    }
+    return out;
   };
 
-  const handleAssessorName = (name: string) => {
-    setAssessorName(name);
+  const mismatches = computeMismatches();
+  const shouldShowMigrationBanner =
+    activeAssessment !== null &&
+    !isTransient(activeAssessment) &&
+    mismatches.length > 0 &&
+    migrationDismissedFor !== activeAssessment.id;
+
+  const handleMigrate = () => {
+    if (!activeAssessment || !data) return;
+    const result = migrate(activeAssessment, data, extensionsData);
+    const now = new Date().toISOString();
+    const migrated: SavedAssessment = {
+      ...activeAssessment,
+      id: newId(),
+      name: `${activeAssessment.name} (PKIMM ${data.version})`,
+      dataVersion: data.version ?? "1.0.0",
+      progress: result.migratedProgress,
+      enabledExtensions: result.migratedEnabledExtensions,
+      sourceStructure: result.newSourceStructure,
+      meta: {
+        createdAt: now,
+        updatedAt: now,
+        importedFromId: activeAssessment.id,
+      },
+    };
+    setSavedState((prev) => ({
+      ...prev,
+      assessments: [...prev.assessments, migrated],
+      activeId: migrated.id,
+    }));
+    setMigrationSummary(result.summary);
   };
 
-  const handleUseCaseDescription = (description: string) => {
+  const handleStartFresh = () => {
+    if (!data) return;
+    const created = newEmptyAssessment(
+      data.version ?? "1.0.0",
+      buildStructureSnapshot(data),
+    );
+    setSavedState((prev) => ({
+      ...prev,
+      assessments: [...prev.assessments, created],
+      activeId: created.id,
+    }));
+    if (activeAssessment) setMigrationDismissedFor(activeAssessment.id);
+  };
+
+  const handleManagerSelect = (id: string): void => {
+    setSavedState((prev) => ({ ...prev, activeId: id }));
+    setCurrentTab("report");
+  };
+
+  const handleManagerCreateNew = (): void => {
+    if (!data) return;
+    const created = newEmptyAssessment(
+      data.version ?? "1.0.0",
+      buildStructureSnapshot(data),
+    );
+    setSavedState((prev) => ({
+      ...prev,
+      assessments: [...prev.assessments, created],
+      activeId: created.id,
+    }));
+    setCurrentTab("overview");
+  };
+
+  const handleManagerRename = (id: string, name: string): void => {
+    const now = new Date().toISOString();
+    setSavedState((prev) => ({
+      ...prev,
+      assessments: prev.assessments.map((a) =>
+        a.id === id ? { ...a, name, meta: { ...a.meta, updatedAt: now } } : a,
+      ),
+    }));
+  };
+
+  const handleManagerDuplicate = (id: string): void => {
+    const src = savedState.assessments.find((a) => a.id === id);
+    if (!src) return;
+    const now = new Date().toISOString();
+    const copy: SavedAssessment = {
+      ...src,
+      id: newId(),
+      name: `${src.name} (copy)`,
+      meta: { createdAt: now, updatedAt: now, importedFromId: src.id },
+    };
+    setSavedState((prev) => ({
+      ...prev,
+      assessments: [...prev.assessments, copy],
+      activeId: copy.id,
+    }));
+  };
+
+  const handleManagerDelete = (id: string): void => {
+    setSavedState((prev) => {
+      const remaining = prev.assessments.filter((a) => a.id !== id);
+      const activeId =
+        prev.activeId === id ? (remaining[0]?.id ?? null) : prev.activeId;
+      return { ...prev, assessments: remaining, activeId };
+    });
+  };
+
+  const handleManagerDownload = (id: string): void => {
+    const a = savedState.assessments.find((x) => x.id === id);
+    if (!a) return;
+    exportToYAML({
+      name: a.name,
+      dataVersion: a.dataVersion,
+      progress: a.progress,
+      enabledExtensions: a.enabledExtensions,
+      assessmentName: a.assessmentName,
+      assessorName: a.assessorName,
+      useCaseDescription: a.useCaseDescription,
+      sourceStructure: a.sourceStructure,
+    });
+  };
+
+  const handleManagerUpload = async (file: File): Promise<void> => {
+    try {
+      const text = await file.text();
+      const imported = importYAMLFile(text);
+      setSavedState((prev) => ({
+        ...prev,
+        assessments: [...prev.assessments, imported],
+        activeId: imported.id,
+      }));
+    } catch (err) {
+      console.error("Failed to import YAML:", err);
+      globalThis.alert(
+        `Could not import file: ${(err as Error).message || "unknown error"}`,
+      );
+    }
+  };
+
+  const handleManagerImportLegacy = (): void => {
+    // Use the unguarded read here — the Assessment Manager fires this
+    // action after the user explicitly asked to import, even though
+    // pkimm-sa already exists. detectLegacyAssessmentData would refuse
+    // to return the payload in that case.
+    const legacy = readLegacyAssessmentData();
+    if (!legacy || !data) return;
+    const assessment = importLegacyData(legacy);
+    const { progress: reclassified } = reclassifyUntouchedLevelOne(
+      assessment.progress,
+      data,
+    );
+    assessment.progress = reclassified;
+    setSavedState((prev) => ({
+      ...prev,
+      assessments: [...prev.assessments, assessment],
+      activeId: assessment.id,
+    }));
+    setCurrentTab("report");
+  };
+
+  const handleManagerRemoveLegacy = (): void => {
+    removeLegacyAssessmentData();
+    setHasLegacyData(false);
+  };
+
+  const handleDownloadRawSavedState = () => {
+    const raw = localStorage.getItem(STORAGE_KEY) ?? "";
+    const blob = new Blob([raw], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "pkimm-sa-raw.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleKeepHiddenExtension = (extensionId: string) => {
+    setHiddenExtensions((prev) => {
+      const next = new Set(prev);
+      next.add(extensionId);
+      return next;
+    });
+  };
+
+  const clearURLHash = (): void => {
+    if (globalThis.history && globalThis.location.hash) {
+      globalThis.history.replaceState(
+        null,
+        "",
+        globalThis.location.pathname + globalThis.location.search,
+      );
+    }
+  };
+
+  const handleSaveTransient = () => {
+    if (!activeAssessment || !isTransient(activeAssessment)) return;
+    const now = new Date().toISOString();
+    const permanent: SavedAssessment = {
+      ...activeAssessment,
+      id: newId(),
+      meta: { ...activeAssessment.meta, updatedAt: now },
+    };
+    setSavedState((prev) => ({
+      ...prev,
+      activeId: permanent.id,
+      assessments: [
+        ...prev.assessments.filter((a) => !isTransient(a)),
+        permanent,
+      ],
+    }));
+    clearURLHash();
+  };
+
+  const handleDiscardTransient = () => {
+    setSavedState((prev) => {
+      const remaining = prev.assessments.filter((a) => !isTransient(a));
+      return {
+        ...prev,
+        assessments: remaining,
+        activeId: remaining[0]?.id ?? null,
+      };
+    });
+    clearURLHash();
+  };
+
+  const handleLegacyImport = () => {
+    if (!legacyPrompt || !data) return;
+    const assessment = importLegacyData(legacyPrompt);
+    const { progress: reclassifiedProgress } = reclassifyUntouchedLevelOne(
+      assessment.progress,
+      data,
+    );
+    assessment.progress = reclassifiedProgress;
+    setSavedState({
+      stateSchemaVersion: 1,
+      activeId: assessment.id,
+      assessments: [assessment],
+    });
+    setLegacyPrompt(null);
+    setCurrentTab("report");
+  };
+
+  const handleLegacyKeepSeparate = () => {
+    if (!data) return;
+    const created = newEmptyAssessment(
+      data.version ?? "1.0.0",
+      buildStructureSnapshot(data),
+    );
+    setSavedState({
+      stateSchemaVersion: 1,
+      activeId: created.id,
+      assessments: [created],
+    });
+    setLegacyPrompt(null);
+  };
+
+  const handleAssessmentName = (name: string) => setAssessmentName(name);
+  const handleAssessorName = (name: string) => setAssessorName(name);
+  const handleUseCaseDescription = (description: string) =>
     setUseCaseDescription(description);
-  };
 
   const chartLabels =
     data?.modules.reduce((acc, module) => {
@@ -504,10 +971,29 @@ export const Assessment: React.FC<AssessmentProps> = ({
       return acc;
     }, [] as string[]) || [];
 
-  // data ? calculateOverallMaturityLevel(data.modules, progress) : 0;
   const moduleMaturityLevels = data
     ? calculateModuleMaturityLevels(data.modules, progress, [], [])
     : [];
+  const overallChartMaturityLevel = data
+    ? calculateOverallMaturityLevel(data.modules, progress, [], [])
+    : 0;
+  const extensionMaturityLevels = data
+    ? calculateExtensionMaturityLevels(
+        data.modules,
+        extensionsData,
+        enabledExtensions,
+        progress,
+      )
+    : [];
+
+  if (forwardCompatFailure) {
+    return (
+      <ForwardCompatRefusal
+        message={forwardCompatFailure}
+        onDownloadRaw={handleDownloadRawSavedState}
+      />
+    );
+  }
 
   return (
     <AssessmentTargetProvider
@@ -535,39 +1021,136 @@ export const Assessment: React.FC<AssessmentProps> = ({
             />
 
             <div className="pkimm-header-actions">
+              {savedState.assessments.length > 1 && activeAssessment && (
+                <span
+                  className="pkimm-active-assessment-label"
+                  title={`Currently editing: ${activeAssessment.name}`}
+                >
+                  <span className="pkimm-active-assessment-label__caption">
+                    Editing
+                  </span>
+                  <span className="pkimm-active-assessment-label__name">
+                    {activeAssessment.name}
+                  </span>
+                </span>
+              )}
+              <span
+                className="pkimm-privacy-chip"
+                title="All assessment data stays in this browser. Nothing is sent anywhere."
+              >
+                <span aria-hidden="true">🔒</span>
+                <span>Stored in this browser only</span>
+              </span>
               <AssessmentHeader />
             </div>
           </div>
+          {savedState.assessments.length > 1 && activeAssessment && (
+            <div
+              className="pkimm-active-assessment-mobile"
+              title={`Currently editing: ${activeAssessment.name}`}
+            >
+              <span className="pkimm-active-assessment-mobile__caption">
+                Editing:
+              </span>
+              <span className="pkimm-active-assessment-mobile__name">
+                {activeAssessment.name}
+              </span>
+            </div>
+          )}
           <nav className={`pkimm-tabs ${isMenuOpen ? "active" : ""}`}>
-            <button
-              className={currentTab === "overview" ? "active" : ""}
-              onClick={() => handleTabClick("overview")}
-            >
-              Overview
-            </button>
-            <button
-              className={currentTab === "extensions" ? "active" : ""}
-              onClick={() => handleTabClick("extensions")}
-            >
-              Extensions
-            </button>
-            {data?.modules.map((module) => (
+            <div className="pkimm-tabs__group pkimm-tabs__group--content">
               <button
-                key={module.id}
-                className={module.id === currentTab ? "active" : ""}
-                onClick={() => handleTabClick(module.id)}
+                className={currentTab === "overview" ? "active" : ""}
+                onClick={() => handleTabClick("overview")}
               >
-                {module.name}
+                Overview
               </button>
-            ))}
-            <button
-              className={currentTab === "report" ? "active" : ""}
-              onClick={() => handleTabClick("report")}
-            >
-              Report
-            </button>
+              {data?.modules.map((module) => (
+                <button
+                  key={module.id}
+                  className={module.id === currentTab ? "active" : ""}
+                  onClick={() => handleTabClick(module.id)}
+                >
+                  {module.name}
+                </button>
+              ))}
+              <button
+                className={currentTab === "report" ? "active" : ""}
+                onClick={() => handleTabClick("report")}
+              >
+                Report
+              </button>
+            </div>
+            <div className="pkimm-tabs__group pkimm-tabs__group--meta">
+              {extensionsData.length > 0 && (
+                <button
+                  className={currentTab === "extensions" ? "active" : ""}
+                  onClick={() => handleTabClick("extensions")}
+                >
+                  Extensions
+                </button>
+              )}
+              <button
+                className={currentTab === "assessments" ? "active" : ""}
+                onClick={() => handleTabClick("assessments")}
+              >
+                Assessments
+              </button>
+            </div>
           </nav>
         </header>
+        {legacyPrompt && data && (
+          <LegacyImportPrompt
+            count={Object.keys(legacyPrompt.progress ?? {}).length}
+            onImport={handleLegacyImport}
+            onKeepSeparate={handleLegacyKeepSeparate}
+          />
+        )}
+        {isTransient(activeAssessment) && (
+          <TransientAssessmentBanner
+            name={activeAssessment?.assessmentName ?? ""}
+            onSave={handleSaveTransient}
+            onDiscard={handleDiscardTransient}
+          />
+        )}
+        {shouldShowMigrationBanner && activeAssessment && (
+          <MigrationBanner
+            sourceName={
+              activeAssessment.name ||
+              activeAssessment.assessmentName ||
+              "this assessment"
+            }
+            mismatches={mismatches}
+            onMigrate={handleMigrate}
+            onStartFresh={handleStartFresh}
+            onKeepHidden={handleKeepHiddenExtension}
+          />
+        )}
+        {migrationSummary && (
+          <MigrationSummaryView
+            summary={migrationSummary}
+            onClose={() => setMigrationSummary(null)}
+          />
+        )}
+        {hiddenEnabledExtensions.length > 0 &&
+          activeAssessment &&
+          !isTransient(activeAssessment) && (
+            <div className="pkimm-hidden-ext-notice">
+              {hiddenEnabledExtensions.length === 1
+                ? "An extension referenced by this assessment is not loaded on this page. Its progress is preserved and will reappear when the page loads it."
+                : "Some extensions referenced by this assessment are not loaded on this page. Their progress is preserved and will reappear when the page loads them."}
+              <details>
+                <summary>Details</summary>
+                <ul>
+                  {hiddenEnabledExtensions.map((e) => (
+                    <li key={e.id}>
+                      {e.id} (v{e.version})
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+          )}
         <div className="pkimm-content-container">
           <div className="pkimm-categories-container">
             {currentTab === "overview" && data && (
@@ -591,6 +1174,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
                       key={module.id}
                       module={module}
                       progress={progress}
+                      referencesLookup={referencesLookup}
                       onLevelChange={handleLevelChange}
                       onApplicabilityChange={handleApplicabilityChange}
                       onNextSection={handleTabClick}
@@ -620,12 +1204,32 @@ export const Assessment: React.FC<AssessmentProps> = ({
               <Extensions
                 extensions={extensionsData}
                 enabledExtensions={enabledExtensions}
+                incompatibleExtensionIds={incompatibleExtensionIds}
                 onToggleExtension={handleToggleExtension}
+              />
+            )}
+            {currentTab === "assessments" && (
+              <AssessmentManager
+                state={savedState}
+                loadedDataVersion={data?.version ?? "1.0.0"}
+                onSelect={handleManagerSelect}
+                onCreateNew={handleManagerCreateNew}
+                onRename={handleManagerRename}
+                onDuplicate={handleManagerDuplicate}
+                onDelete={handleManagerDelete}
+                onDownload={handleManagerDownload}
+                onUpload={handleManagerUpload}
+                hasLegacyData={hasLegacyData}
+                onImportLegacy={
+                  hasLegacyData ? handleManagerImportLegacy : undefined
+                }
+                onRemoveLegacy={
+                  hasLegacyData ? handleManagerRemoveLegacy : undefined
+                }
               />
             )}
           </div>
           <div className="pkimm-chart-container" ref={chartRef}>
-            <div className="pkimm-version">Version: {APP_VERSION}</div>
             {data && (
               <SpiderChart
                 modules={data.modules}
@@ -637,17 +1241,185 @@ export const Assessment: React.FC<AssessmentProps> = ({
               />
             )}
             {data && (
-              <>
-                {moduleMaturityLevels.map(({ module, level }) => (
-                  <MaturityWidget
-                    key={module}
-                    level={level}
-                    label={`${module}`}
-                    className="pkimm-assessment-maturity-widget"
-                  />
-                ))}
-              </>
+              <div className="pkimm-chart-progress">
+                {(() => {
+                  // Not Applicable categories are excluded from both
+                  // numerator and denominator — they aren't part of the
+                  // user's PKI scope, so they shouldn't count toward
+                  // "X of Y assessed".
+                  const totalCats = data.modules.reduce((acc, m) => {
+                    return (
+                      acc +
+                      m.categories.filter((c) => {
+                        const entry = progress[`${m.id}.${c.id}`];
+                        return entry?.applicability !== false;
+                      }).length
+                    );
+                  }, 0);
+                  const assessedTotal = data.modules.reduce((acc, m) => {
+                    return (
+                      acc +
+                      m.categories.filter((c) => {
+                        const entry = progress[`${m.id}.${c.id}`];
+                        return (
+                          entry?.applicability !== false &&
+                          (entry?.level ?? 0) > 0
+                        );
+                      }).length
+                    );
+                  }, 0);
+                  const overallPct =
+                    totalCats === 0
+                      ? 0
+                      : Math.round((assessedTotal / totalCats) * 100);
+                  const overallLevelCls =
+                    overallChartMaturityLevel > 0
+                      ? `pkimm-chart-progress__row--level-${overallChartMaturityLevel}`
+                      : "";
+                  return (
+                    <div
+                      className={`pkimm-chart-progress__row pkimm-chart-progress__row--overall ${overallLevelCls}`}
+                      title={`${assessedTotal} of ${totalCats} categories assessed across all modules`}
+                    >
+                      <div className="pkimm-chart-progress__header">
+                        <span className="pkimm-chart-progress__label">
+                          <span className="pkimm-chart-progress__label-text">
+                            Overall
+                          </span>
+                        </span>
+                        <span className="pkimm-chart-progress__level">
+                          {LevelResult[overallChartMaturityLevel] ??
+                            "Not Assessed"}{" "}
+                          · {assessedTotal}/{totalCats}
+                        </span>
+                      </div>
+                      <div className="pkimm-chart-progress__bar">
+                        <div
+                          className="pkimm-chart-progress__fill"
+                          style={{ width: `${overallPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+                {data.modules.map((module) => {
+                  const moduleLevel =
+                    moduleMaturityLevels.find((m) => m.module === module.name)
+                      ?.level ?? 0;
+                  const total = module.categories.filter((c) => {
+                    const entry = progress[`${module.id}.${c.id}`];
+                    return entry?.applicability !== false;
+                  }).length;
+                  const assessed = module.categories.filter((c) => {
+                    const entry = progress[`${module.id}.${c.id}`];
+                    return (
+                      entry?.applicability !== false && (entry?.level ?? 0) > 0
+                    );
+                  }).length;
+                  const pct =
+                    total === 0 ? 0 : Math.round((assessed / total) * 100);
+                  const moduleLevelCls =
+                    moduleLevel > 0
+                      ? `pkimm-chart-progress__row--level-${moduleLevel}`
+                      : "";
+                  return (
+                    <div
+                      className={`pkimm-chart-progress__row ${moduleLevelCls}`}
+                      key={module.id}
+                      title={`${assessed} of ${total} categories assessed in ${module.name}`}
+                    >
+                      <div className="pkimm-chart-progress__header">
+                        <span className="pkimm-chart-progress__label">
+                          <span className="pkimm-chart-progress__label-text">
+                            {module.name}
+                          </span>
+                        </span>
+                        <span className="pkimm-chart-progress__level">
+                          {LevelResult[moduleLevel] ?? "Not Assessed"} ·{" "}
+                          {assessed}/{total}
+                        </span>
+                      </div>
+                      <div className="pkimm-chart-progress__bar">
+                        <div
+                          className="pkimm-chart-progress__fill"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {extensionsData
+                  .filter((ext) => enabledExtensions.includes(ext.extension.id))
+                  .map((ext) => {
+                    const extLevel =
+                      extensionMaturityLevels.find(
+                        (e) => e.id === ext.extension.id,
+                      )?.level ?? 0;
+                    // Total = categories the extension declares relevance for
+                    // whose underlying core category is applicable.
+                    const relCategories = ext.relevance.modules.flatMap((m) =>
+                      m.categories.map((c) => ({
+                        moduleId: m.id,
+                        categoryId: c.id,
+                      })),
+                    );
+                    const total = relCategories.filter(
+                      ({ moduleId, categoryId }) => {
+                        const coreEntry = progress[`${moduleId}.${categoryId}`];
+                        return coreEntry?.applicability !== false;
+                      },
+                    ).length;
+                    const assessed = relCategories.filter(
+                      ({ moduleId, categoryId }) => {
+                        const coreEntry = progress[`${moduleId}.${categoryId}`];
+                        const extEntry =
+                          progress[
+                            `${ext.extension.id}.${moduleId}.${categoryId}`
+                          ];
+                        return (
+                          coreEntry?.applicability !== false &&
+                          (extEntry?.level ?? 0) > 0
+                        );
+                      },
+                    ).length;
+                    const pct =
+                      total === 0 ? 0 : Math.round((assessed / total) * 100);
+                    const extLevelCls =
+                      extLevel > 0
+                        ? `pkimm-chart-progress__row--level-${extLevel}`
+                        : "";
+                    return (
+                      <div
+                        className={`pkimm-chart-progress__row pkimm-chart-progress__row--extension ${extLevelCls}`}
+                        key={`ext-${ext.extension.id}`}
+                        title={`${assessed} of ${total} relevance categories assessed for ${ext.extension.name}`}
+                      >
+                        <div className="pkimm-chart-progress__header">
+                          <span className="pkimm-chart-progress__label">
+                            <span className="pkimm-chart-progress__label-text">
+                              {ext.extension.name}
+                            </span>
+                            <span className="pkimm-chart-progress__tag">
+                              ext
+                            </span>
+                          </span>
+                          <span className="pkimm-chart-progress__level">
+                            {LevelResult[extLevel] ?? "Not Assessed"} ·{" "}
+                            {assessed}/{total}
+                          </span>
+                        </div>
+                        <div className="pkimm-chart-progress__bar">
+                          <div
+                            className="pkimm-chart-progress__fill"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             )}
+            <div className="pkimm-version">Version: {APP_VERSION}</div>
           </div>
         </div>
       </div>

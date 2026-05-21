@@ -1,0 +1,64 @@
+.pkimm-migration-summary-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.pkimm-migration-summary {
+  background: var(--pkimm-surface-color, #fff);
+  border-radius: var(--pkimm-border-radius-md, 6px);
+  padding: 1.5rem 1.75rem;
+  max-width: 560px;
+  width: calc(100% - 2rem);
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  color: var(--pkimm-text-color-dark, #222);
+
+  h2 {
+    margin-top: 0;
+  }
+
+  ul {
+    margin: 0.5rem 0 0.75rem 1.25rem;
+  }
+}
+
+.pkimm-migration-summary__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.pkimm-migration-summary__primary,
+.pkimm-migration-summary__secondary {
+  border: 1px solid var(--pkimm-border-color, #ccc);
+  border-radius: var(--pkimm-border-radius-sm, 4px);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.pkimm-migration-summary__primary {
+  background: var(--pkimm-primary-color, #1a5fb4);
+  color: var(--pkimm-text-color-light, #fff);
+  border-color: var(--pkimm-primary-color, #1a5fb4);
+}
+
+.pkimm-migration-summary__primary:hover {
+  background: var(--pkimm-primary-color-hover, #154c91);
+  border-color: var(--pkimm-primary-color-hover, #154c91);
+}
+
+.pkimm-migration-summary__secondary {
+  background: var(--pkimm-surface-color, #fff);
+  color: var(--pkimm-text-color-dark, #222);
+}
+
+.pkimm-migration-summary__secondary:hover {
+  background: var(--pkimm-primary-color-lighter, #eef);
+}

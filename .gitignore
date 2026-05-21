@@ -25,3 +25,9 @@ yarn-error.log*
 /dist/
 
 /.idea/
+
+# Local design/spec notes (not part of the published artifact)
+/docs/superpowers/
+
+# Local Claude Code workspace
+/.claude/

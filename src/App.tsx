@@ -5,11 +5,22 @@ interface AppProps {
   dataUrl: string | null;
   configUrl: string | null;
   extensionsUrl: string | null;
+  referencesUrl: string | null;
 }
 
-const App: React.FC<AppProps> = ({ dataUrl, configUrl, extensionsUrl }) => {
+const App: React.FC<AppProps> = ({
+  dataUrl,
+  configUrl,
+  extensionsUrl,
+  referencesUrl,
+}) => {
   return (
-    <Assessment src={dataUrl} config={configUrl} extensions={extensionsUrl} />
+    <Assessment
+      src={dataUrl}
+      config={configUrl}
+      extensions={extensionsUrl}
+      references={referencesUrl}
+    />
   );
 };
 
