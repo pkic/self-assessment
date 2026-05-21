@@ -235,23 +235,29 @@ export const Assessment: React.FC<AssessmentProps> = ({
       const incompatible = new Set<string>();
       if (extensions) {
         const extensionUrls = extensions.split(",").map((url) => url.trim());
-        for (const url of extensionUrls) {
-          try {
-            const response = await fetch(url);
-            const yamlText = await response.text();
-            const extData = yamlParser(yamlText) as ExtensionData;
-            const loadedVersion = initialData?.version ?? "1.0.0";
-            const compat = extData.extension.compatibility;
-            if (compat && !compat.includes(loadedVersion)) {
-              console.warn(
-                `Extension ${extData.extension.id} (v${extData.extension.version}) is not compatible with PKIMM ${loadedVersion}; toggle will be disabled.`,
-              );
-              incompatible.add(extData.extension.id);
+        const results = await Promise.all(
+          extensionUrls.map(async (url) => {
+            try {
+              const response = await fetch(url);
+              const yamlText = await response.text();
+              return yamlParser(yamlText) as ExtensionData;
+            } catch (error) {
+              console.error(`Error loading extension from ${url}:`, error);
+              return null;
             }
-            initialExtensions.push(extData);
-          } catch (error) {
-            console.error(`Error loading extension from ${url}:`, error);
+          }),
+        );
+        const loadedVersion = initialData?.version ?? "1.0.0";
+        for (const extData of results) {
+          if (!extData) continue;
+          const compat = extData.extension.compatibility;
+          if (compat && !compat.includes(loadedVersion)) {
+            console.warn(
+              `Extension ${extData.extension.id} (v${extData.extension.version}) is not compatible with PKIMM ${loadedVersion}; toggle will be disabled.`,
+            );
+            incompatible.add(extData.extension.id);
           }
+          initialExtensions.push(extData);
         }
         setExtensionsData(initialExtensions);
         setIncompatibleExtensionIds(incompatible);
@@ -387,7 +393,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
 
   // Persist saved state — skip transient-only states (no assessments at all,
   // or the only one is a transient placeholder) to avoid clobbering valid
-  // existing storage on initial mount.
+  // existing storage on initial mount. Debounced so keystrokes in the
+  // name/description fields don't fire a localStorage write per character.
   useEffect(() => {
     if (forwardCompatFailure) return;
     if (savedState.assessments.length === 0) return;
@@ -395,7 +402,8 @@ export const Assessment: React.FC<AssessmentProps> = ({
       a.id.startsWith("transient-"),
     );
     if (allTransient) return;
-    writeSavedState(savedState);
+    const handle = setTimeout(() => writeSavedState(savedState), 300);
+    return () => clearTimeout(handle);
   }, [savedState, forwardCompatFailure]);
 
   useEffect(() => {

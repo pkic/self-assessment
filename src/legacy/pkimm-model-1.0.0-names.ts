@@ -7,5 +7,4 @@
 import type { StructureSnapshot } from "../types/types";
 import names from "./pkimm-model-1.0.0-names.json";
 
-export const PKIMM_1_0_0_NAMES =
-  names as unknown as StructureSnapshot["byKey"];
+export const PKIMM_1_0_0_NAMES = names as unknown as StructureSnapshot["byKey"];

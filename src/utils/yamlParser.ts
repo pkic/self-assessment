@@ -69,7 +69,8 @@ export const validateSchema = (
   }
   const ok = validator(data);
   if (!ok) {
-    const msg = ajv2020.errorsText(validator.errors);
+    const instance = isExtension ? ajv2020 : ajvDraft07;
+    const msg = instance.errorsText(validator.errors);
     throw new Error(`Schema validation failed: ${msg}`);
   }
 };
