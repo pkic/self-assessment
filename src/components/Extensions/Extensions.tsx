@@ -6,12 +6,14 @@ import "./Extensions.module.scss";
 interface ExtensionsProps {
   extensions: ExtensionData[];
   enabledExtensions: string[];
+  incompatibleExtensionIds?: Set<string>;
   onToggleExtension: (extensionId: string) => void;
 }
 
 export const Extensions: React.FC<ExtensionsProps> = ({
   extensions,
   enabledExtensions,
+  incompatibleExtensionIds,
   onToggleExtension,
 }) => {
   const { target, setTarget } = useAssessmentTarget();
@@ -42,10 +44,13 @@ export const Extensions: React.FC<ExtensionsProps> = ({
         {extensions.map((ext) => {
           const id = ext.extension.id;
           const isEnabled = enabledExtensions.includes(id);
+          const isIncompatible = incompatibleExtensionIds?.has(id) ?? false;
           return (
             <div
               key={id}
-              className={`extension-row ${isEnabled ? "enabled" : ""}`}
+              className={`extension-row ${isEnabled ? "enabled" : ""} ${
+                isIncompatible ? "incompatible" : ""
+              }`}
             >
               <div className="extension-info">
                 <div className="extension-name-row">
@@ -71,13 +76,27 @@ export const Extensions: React.FC<ExtensionsProps> = ({
                 )}
               </div>
               <div className="extension-actions">
+                {isIncompatible && (
+                  <span
+                    className="extension-incompatible-tag"
+                    title="Not compatible with the loaded PKIMM model version"
+                  >
+                    incompatible
+                  </span>
+                )}
                 <label
                   className="pkimm-toggle-switch"
                   aria-label={`Toggle ${ext.extension.name}`}
+                  title={
+                    isIncompatible
+                      ? "Not compatible with the loaded PKIMM model version"
+                      : undefined
+                  }
                 >
                   <input
                     type="checkbox"
                     checked={isEnabled}
+                    disabled={isIncompatible}
                     onChange={() => handleToggle(id)}
                   />
                   <span className="pkimm-slider"></span>

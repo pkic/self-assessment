@@ -104,7 +104,7 @@
           border-color: var(--pkimm-primary-color);
           border-width: 2px;
           padding: calc(1.5rem - 1px);
-          background-color: rgba(26, 115, 232, 0.04);
+          background-color: var(--pkimm-hover-bg-subtle);
           box-shadow: var(--pkimm-shadow-sm);
         }
 
@@ -174,7 +174,7 @@
 
       &.share-button {
         background-color: var(--pkimm-primary-color);
-        color: white;
+        color: var(--pkimm-text-color-light);
         box-shadow: var(--pkimm-shadow-sm);
 
         &:hover {
@@ -197,7 +197,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .pkimm-overview {
     padding: 1.25rem;
 

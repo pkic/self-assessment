@@ -12,9 +12,15 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import QRCode from "qrcode";
 import { Style } from "@react-pdf/types";
 import React from "react";
-import { ProgressData, ExtensionData, ModuleData } from "../types/types";
+import {
+  ProgressData,
+  ExtensionData,
+  ModuleData,
+  ReferenceEntry,
+} from "../types/types";
 import "../index.module.scss";
 import LevelResult from "../enums/LevelResult";
 import { generateURL } from "./urlGenerator";
@@ -24,8 +30,13 @@ import {
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
   getCategoryOverlayInfo,
+  hasOverlays,
   calculateBlendedLevel,
   getEffectiveWeight,
+} from "./maturityCalculations";
+import type {
+  CategoryOverlayDetails,
+  OverlayOperation,
 } from "./maturityCalculations";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
@@ -34,6 +45,205 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { format } from "date-fns";
+
+// Operation badge styling shared with the on-page report — uses the same
+// semantic colours so the PDF Overlay Details page reads identically to
+// what users see in the Report tab.
+const overlayBadgeColors: Record<
+  OverlayOperation,
+  { bg: string; fg: string; border: string }
+> = {
+  multiplier: { bg: "#e8f0fe", fg: "#1a73e8", border: "#1a73e8" },
+  addition: { bg: "#e6f5e9", fg: "#1e6b30", border: "#34a853" },
+  override: { bg: "#fff7e6", fg: "#6b3a1e", border: "#f5d28b" },
+};
+
+const overlayBadgeLabel = (op: OverlayOperation, value: number): string => {
+  if (op === "override") return `= ${value}`;
+  if (op === "multiplier") return `× ${value}`;
+  return value >= 0 ? `+ ${value}` : `${value}`;
+};
+
+const formatOverlayWeight = (n: number): string =>
+  Number.isInteger(n) ? n.toString() : n.toFixed(2);
+
+const OverlayBadge: React.FC<{
+  operation: OverlayOperation;
+  value: number;
+}> = ({ operation, value }) => {
+  const colors = overlayBadgeColors[operation];
+  return (
+    <View
+      style={{
+        backgroundColor: colors.bg,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: 999,
+        paddingHorizontal: 5,
+        paddingVertical: 1,
+        minWidth: 32,
+        alignItems: "center",
+      }}
+    >
+      <Text style={{ fontSize: 7, color: colors.fg, fontWeight: 600 }}>
+        {overlayBadgeLabel(operation, value)}
+      </Text>
+    </View>
+  );
+};
+
+const OverlayWeights: React.FC<{ base: number; effective: number }> = ({
+  base,
+  effective,
+}) => (
+  <View style={{ flexDirection: "row", alignItems: "baseline", gap: 3 }}>
+    <Text
+      style={{ fontSize: 8, color: "#888", textDecoration: "line-through" }}
+    >
+      {formatOverlayWeight(base)}
+    </Text>
+    {/* ASCII arrow: the Roboto subset we register doesn't include U+2192,
+        so use plain hyphen+gt which the font has. */}
+    <Text style={{ fontSize: 8, color: "#888" }}>{"->"}</Text>
+    <Text style={{ fontSize: 8, color: "#222", fontWeight: 600 }}>
+      {formatOverlayWeight(effective)}
+    </Text>
+  </View>
+);
+
+// Single-line overlay layout: label | weights | badge, columns aligned via
+// fixed widths on the right two so all rows in the cell stack neatly.
+// Appendix page listing every reference cited by at least one rendered
+// category. Sorted by title for a stable, alphabetical print order.
+const ReferencesAppendixPage: React.FC<{
+  references: ReferenceEntry[];
+  assessmentUrl: string;
+  version: string;
+}> = ({ references, assessmentUrl, version }) => {
+  if (references.length === 0) return null;
+  const sorted = [...references].sort((a, b) => a.title.localeCompare(b.title));
+  return (
+    <Page size="A4" style={styles.page} bookmark={{ title: "References" }}>
+      <Header />
+      <Footer assessmentUrl={assessmentUrl} version={version} />
+      <Text style={styles.title}>References</Text>
+      <View style={styles.table}>
+        <TableHeaderRow
+          columns={[
+            { width: "55%", label: "Reference" },
+            { width: "30%", label: "Authority" },
+            { width: "15%", label: "Regions" },
+          ]}
+        />
+        {sorted.map((ref, idx) => (
+          <TableBodyRow key={ref.id} idx={idx}>
+            <View style={[styles.tableCol, { width: "55%" }]}>
+              <Text style={styles.tableCell}>
+                {ref.url ? (
+                  <Link
+                    src={ref.url}
+                    style={{ color: primaryColor, textDecoration: "underline" }}
+                  >
+                    {ref.title}
+                  </Link>
+                ) : (
+                  ref.title
+                )}
+              </Text>
+            </View>
+            <View style={[styles.tableCol, { width: "30%" }]}>
+              <Text style={styles.tableCell}>{ref.authority ?? "—"}</Text>
+            </View>
+            <View style={[styles.tableCol, { width: "15%" }]}>
+              <Text style={styles.tableCell}>
+                {ref.regions?.join(", ") ?? "—"}
+              </Text>
+            </View>
+          </TableBodyRow>
+        ))}
+      </View>
+    </Page>
+  );
+};
+
+const OverlayCell: React.FC<{ details: CategoryOverlayDetails }> = ({
+  details,
+}) => (
+  <View>
+    {details.category && (
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          paddingVertical: 1,
+        }}
+      >
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: "#dadce0",
+            borderRadius: 3,
+            paddingHorizontal: 4,
+            paddingVertical: 1,
+            backgroundColor: "#f8f9fa",
+            flex: 1,
+            alignSelf: "flex-start",
+          }}
+        >
+          <Text style={{ fontSize: 6, color: "#666", fontWeight: 700 }}>
+            CATEGORY
+          </Text>
+        </View>
+        <View style={{ width: 55 }}>
+          <OverlayWeights
+            base={details.category.base}
+            effective={details.category.effective}
+          />
+        </View>
+        <OverlayBadge
+          operation={details.category.operation}
+          value={details.category.value}
+        />
+      </View>
+    )}
+    {details.requirements.map((req) => (
+      <View
+        key={req.id}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          paddingVertical: 1,
+        }}
+      >
+        <Text style={{ flex: 1, fontSize: 7, color: "#222" }}>
+          {req.description}
+        </Text>
+        <View style={{ width: 55 }}>
+          <OverlayWeights base={req.base} effective={req.effective} />
+        </View>
+        <OverlayBadge operation={req.operation} value={req.value} />
+      </View>
+    ))}
+  </View>
+);
+
+// QR codes have a hard upper bound around 2.9 KB; longer URLs are common
+// when a host bundles many large extensions. Don't fail the whole PDF —
+// the caller falls back to qrImgData === null and the Image is skipped.
+const generateQRDataUrl = async (url: string): Promise<string | null> => {
+  try {
+    return await QRCode.toDataURL(url, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 240,
+      color: { dark: "#000000", light: "#ffffff" },
+    });
+  } catch {
+    return null;
+  }
+};
 
 // Register Roboto font
 Font.register({
@@ -301,10 +511,11 @@ const Footer: React.FC<{ assessmentUrl: string; version: string }> = ({
   </View>
 );
 
-const CoverPage: React.FC<{ version: string; subtitle?: string }> = ({
-  version,
-  subtitle,
-}) => (
+const CoverPage: React.FC<{
+  version: string;
+  subtitle?: string;
+  qrImgData?: string | null;
+}> = ({ version, subtitle, qrImgData }) => (
   <Page size="A4" style={styles.page}>
     <View style={styles.logo_first}>
       <PkicLogoSvg />
@@ -320,6 +531,27 @@ const CoverPage: React.FC<{ version: string; subtitle?: string }> = ({
     <Text style={[styles.subtitle_first, { fontSize: 12 }]}>
       {format(new Date(), "MMMM do, yyyy h:mm a")}
     </Text>
+    {qrImgData && (
+      <View
+        style={{
+          marginTop: 40,
+          alignItems: "center",
+          alignSelf: "center",
+        }}
+      >
+        <Image src={qrImgData} style={{ width: 140, height: 140 }} />
+        <Text
+          style={{
+            fontSize: 10,
+            color: "#555",
+            marginTop: 8,
+            textAlign: "center",
+          }}
+        >
+          Scan to open the assessment
+        </Text>
+      </View>
+    )}
   </Page>
 );
 
@@ -347,10 +579,9 @@ const TableHeaderRow: React.FC<{
 const DetailsTableHeader: React.FC = () => (
   <TableHeaderRow
     columns={[
-      { width: "5%", label: "#" },
-      { width: "11%", label: "Module" },
-      { width: "25%", label: "Category" },
-      { width: "12%", label: "Maturity Level" },
+      { width: "13%", label: "Module" },
+      { width: "27%", label: "Category" },
+      { width: "13%", label: "Maturity Level" },
       { width: "47%", label: "Description" },
     ]}
   />
@@ -417,7 +648,7 @@ const MaturityLadderTable: React.FC<{ style: Style | Style[] }> = ({
     </View>
     <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
       <View style={[styles.maturity_tableCol, { width: "15%" }]}>
-        <Text style={styles.maturity_tableCell}>Basic</Text>
+        <Text style={styles.maturity_tableCell}>Foundational</Text>
       </View>
       <View style={[styles.maturity_tableCol, { width: "85%" }]}>
         <Text style={styles.maturity_tableCell}>
@@ -497,7 +728,7 @@ const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://pkic.org/pkimm/model/"
+            src="https://pkic.org/wg/pkimm/model/"
           >
             PKI maturity model
           </Link>
@@ -516,7 +747,7 @@ const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://pkic.org/pkimm/categories/"
+            src="https://pkic.org/wg/pkimm/categories/"
           >
             Categories description
           </Link>
@@ -534,7 +765,7 @@ const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://pkic.org/pkimm/assessment/"
+            src="https://pkic.org/wg/pkimm/assessment/"
           >
             PKI maturity assessment process
           </Link>
@@ -551,7 +782,7 @@ const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://pkic.org/pkimm/tools/"
+            src="https://pkic.org/wg/pkimm/tools/"
           >
             PKI maturity assessment tools
           </Link>
@@ -569,15 +800,16 @@ const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://forms.gle/7CgvuNoxaiTYbtK29"
+            src="https://pkic.org/wg/pkimm/extensions/"
           >
-            Feedback form
+            Extension framework
           </Link>
         </Text>
       </View>
       <View style={[styles.maturity_tableCol, { width: "75%" }]}>
         <Text style={styles.maturity_tableCell}>
-          PKI maturity model and assessment feedback form
+          Overview of the extension framework, including structure, scoring
+          model, and the catalog of available extensions
         </Text>
       </View>
     </View>
@@ -604,6 +836,7 @@ const UsefulResourcesTable: React.FC = () => (
 
 interface PdfDocumentProps {
   chartImgData: string;
+  qrImgData: string | null;
   overallMaturityLevel: number;
   moduleMaturityLevels: { module: string; level: number }[];
   modules: {
@@ -612,6 +845,7 @@ interface PdfDocumentProps {
     categories: { id: string; name: string }[];
   }[];
   progress: Record<string, ProgressData>;
+  references: ReferenceEntry[];
   assessmentName: string;
   assessorName: string;
   useCaseDescription: string;
@@ -668,10 +902,12 @@ const headerColor = getComputedStyle(document.documentElement).getPropertyValue(
 
 const PdfDocument: React.FC<PdfDocumentProps> = ({
   chartImgData,
+  qrImgData,
   overallMaturityLevel,
   moduleMaturityLevels,
   modules,
   progress,
+  references,
   assessmentName,
   assessorName,
   useCaseDescription,
@@ -680,7 +916,7 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
 }) => (
   <Document>
     {/*first page contains only PKIC logo centered in the middle of the page*/}
-    <CoverPage version={version} />
+    <CoverPage version={version} qrImgData={qrImgData} />
 
     {/*second page contains summary*/}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
@@ -819,18 +1055,13 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
                   ]}
                   key={`${module.id}.${category.id}`}
                 >
-                  <View style={[styles.tableCol, { width: "5%" }]}>
-                    <Text
-                      style={styles.tableCell}
-                    >{`${module.id}.${category.id}`}</Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "11%" }]}>
+                  <View style={[styles.tableCol, { width: "13%" }]}>
                     <Text style={styles.tableCell}>{module.name}</Text>
                   </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
+                  <View style={[styles.tableCol, { width: "27%" }]}>
                     <Text style={styles.tableCell}>{category.name}</Text>
                   </View>
-                  <View style={[styles.tableCol, { width: "12%" }]}>
+                  <View style={[styles.tableCol, { width: "13%" }]}>
                     <Text
                       style={[
                         styles.tableCell,
@@ -860,7 +1091,13 @@ const PdfDocument: React.FC<PdfDocumentProps> = ({
       </View>
     </Page>
 
-    {/*fourth page contains about, consortium and resources*/}
+    <ReferencesAppendixPage
+      references={references}
+      assessmentUrl={assessmentUrl}
+      version={version}
+    />
+
+    {/*final page contains about, consortium and resources*/}
     <Page
       size="A4"
       style={styles.page}
@@ -1027,17 +1264,21 @@ export const exportToPDF = async (
   useCaseDescription: string,
   assessmentUrl: string,
   version: string,
+  references: ReferenceEntry[] = [],
 ) => {
   const chartCanvas = chartElement.querySelector("canvas") as HTMLCanvasElement;
   const chartImgData = chartCanvas.toDataURL("image/png");
+  const qrImgData = await generateQRDataUrl(assessmentUrl);
 
   const pdfDoc = (
     <PdfDocument
       chartImgData={chartImgData}
+      qrImgData={qrImgData}
       overallMaturityLevel={overallMaturityLevel}
       moduleMaturityLevels={moduleMaturityLevels}
       modules={modules}
       progress={progress}
+      references={references}
       assessmentName={assessmentName}
       assessorName={assessorName}
       useCaseDescription={useCaseDescription}
@@ -1064,7 +1305,7 @@ interface ExtensionPdfRow {
   result: string;
   levelNum: number;
   description: string | undefined;
-  overlays: string[];
+  overlays: CategoryOverlayDetails;
 }
 
 interface ExtensionPdfRelevanceRow {
@@ -1078,6 +1319,7 @@ interface ExtensionPdfRelevanceRow {
 
 interface ExtensionPdfDocumentProps {
   chartImgData: string;
+  qrImgData: string | null;
   overallMaturityLevel: number;
   overallWeightedMaturity: number;
   floorScore: number | null;
@@ -1086,6 +1328,7 @@ interface ExtensionPdfDocumentProps {
   rows: ExtensionPdfRow[];
   relevanceRows: ExtensionPdfRelevanceRow[];
   extension: ExtensionData;
+  references: ReferenceEntry[];
   assessmentName: string;
   assessorName: string;
   useCaseDescription: string;
@@ -1095,6 +1338,7 @@ interface ExtensionPdfDocumentProps {
 
 const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
   chartImgData,
+  qrImgData,
   overallMaturityLevel,
   overallWeightedMaturity,
   floorScore,
@@ -1103,6 +1347,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
   rows,
   relevanceRows,
   extension,
+  references,
   assessmentName,
   assessorName,
   useCaseDescription,
@@ -1111,7 +1356,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
 }) => (
   <Document>
     {/* First page: Cover */}
-    <CoverPage version={version} subtitle="Extension" />
+    <CoverPage version={version} subtitle="Extension" qrImgData={qrImgData} />
 
     {/* Second page: Summary */}
     <Page size="A4" style={styles.page} bookmark={{ title: "Summary" }}>
@@ -1238,27 +1483,6 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         </View>
       </View>
 
-      <View style={{ textAlign: "center", marginTop: 10 }}>
-        <Text
-          style={{
-            fontWeight: "bold",
-            color: getColorForLevel(overallMaturityLevel).background,
-            fontSize: 10,
-          }}
-        >
-          {LevelResult[overallMaturityLevel]}
-        </Text>
-        <Text
-          style={{
-            fontSize: 9,
-            color: getColorForLevel(overallWeightedMaturity).background,
-            marginTop: 5,
-          }}
-        >
-          {extension.extension.name}:{" "}
-          <strong>{LevelResult[overallWeightedMaturity]}</strong>
-        </Text>
-      </View>
       <Image style={[styles.chart, { width: 250 }]} src={chartImgData} />
     </Page>
 
@@ -1404,16 +1628,13 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
           const levelColor = getColorForLevel(r.levelNum).background;
           return (
             <TableBodyRow key={r.id} idx={idx}>
-              <View style={[styles.tableCol, { width: "5%" }]}>
-                <Text style={styles.tableCell}>{r.id}</Text>
-              </View>
-              <View style={[styles.tableCol, { width: "11%" }]}>
+              <View style={[styles.tableCol, { width: "13%" }]}>
                 <Text style={styles.tableCell}>{r.module}</Text>
               </View>
-              <View style={[styles.tableCol, { width: "25%" }]}>
+              <View style={[styles.tableCol, { width: "27%" }]}>
                 <Text style={styles.tableCell}>{r.category}</Text>
               </View>
-              <View style={[styles.tableCol, { width: "12%" }]}>
+              <View style={[styles.tableCol, { width: "13%" }]}>
                 <Text
                   style={[
                     styles.tableCell,
@@ -1435,7 +1656,7 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
     </Page>
 
     {/* Overlay Details Page */}
-    {rows.some((r) => r.overlays.length > 0) && (
+    {rows.some((r) => hasOverlays(r.overlays)) && (
       <Page
         size="A4"
         style={styles.page}
@@ -1447,34 +1668,23 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         <View style={styles.table}>
           <TableHeaderRow
             columns={[
-              { width: "5%", label: "#" },
-              { width: "15%", label: "Module" },
-              { width: "25%", label: "Category" },
+              { width: "17%", label: "Module" },
+              { width: "28%", label: "Category" },
               { width: "55%", label: "Overlays Applied" },
             ]}
           />
           {rows
-            .filter((r) => r.overlays.length > 0)
+            .filter((r) => hasOverlays(r.overlays))
             .map((r, idx) => (
               <TableBodyRow key={r.id} idx={idx}>
-                <View style={[styles.tableCol, { width: "5%" }]}>
-                  <Text style={styles.tableCell}>{r.id}</Text>
-                </View>
-                <View style={[styles.tableCol, { width: "15%" }]}>
+                <View style={[styles.tableCol, { width: "17%" }]}>
                   <Text style={styles.tableCell}>{r.module}</Text>
                 </View>
-                <View style={[styles.tableCol, { width: "25%" }]}>
+                <View style={[styles.tableCol, { width: "28%" }]}>
                   <Text style={styles.tableCell}>{r.category}</Text>
                 </View>
                 <View style={[styles.tableCol, { width: "55%" }]}>
-                  {r.overlays.map((ov: string) => (
-                    <Text
-                      key={ov}
-                      style={[styles.tableCell, { fontSize: 8, color: "#333" }]}
-                    >
-                      • {ov}
-                    </Text>
-                  ))}
+                  <OverlayCell details={r.overlays} />
                 </View>
               </TableBodyRow>
             ))}
@@ -1491,22 +1701,22 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
       >
         <Header />
         <Footer assessmentUrl={assessmentUrl} version={version} />
-        <Text style={styles.title}>Extension Relevance Details</Text>
+        <Text style={styles.title}>Relevance Details</Text>
         <View style={styles.table}>
           <TableHeaderRow
             columns={[
-              { width: "10%", label: "#" },
-              { width: "40%", label: "Category" },
+              { width: "20%", label: "Module" },
+              { width: "30%", label: "Category" },
               { width: "20%", label: "Weight" },
               { width: "30%", label: "Relevance Level" },
             ]}
           />
           {relevanceRows.map((r, idx) => (
             <TableBodyRow key={r.id} idx={idx}>
-              <View style={[styles.tableCol, { width: "10%" }]}>
-                <Text style={styles.tableCell}>{r.id}</Text>
+              <View style={[styles.tableCol, { width: "20%" }]}>
+                <Text style={styles.tableCell}>{r.module}</Text>
               </View>
-              <View style={[styles.tableCol, { width: "40%" }]}>
+              <View style={[styles.tableCol, { width: "30%" }]}>
                 <Text style={styles.tableCell}>{r.category}</Text>
               </View>
               <View style={[styles.tableCol, { width: "20%" }]}>
@@ -1530,6 +1740,12 @@ const ExtensionPdfDocument: React.FC<ExtensionPdfDocumentProps> = ({
         </View>
       </Page>
     )}
+
+    <ReferencesAppendixPage
+      references={references}
+      assessmentUrl={assessmentUrl}
+      version={version}
+    />
 
     {/* Final Page: About (matches core + extension info) */}
     <Page
@@ -1628,6 +1844,7 @@ interface ExportExtensionPDFOptions {
   progress: Record<string, ProgressData>;
   extension: ExtensionData;
   coreModules: ModuleData[];
+  references?: ReferenceEntry[];
   assessmentName: string;
   assessorName: string;
   useCaseDescription: string;
@@ -1639,6 +1856,7 @@ export const exportExtensionPDF = async ({
   progress,
   extension,
   coreModules,
+  references = [],
   assessmentName,
   assessorName,
   useCaseDescription,
@@ -1680,13 +1898,15 @@ export const exportExtensionPDF = async ({
     extension,
   );
 
-  const assessmentUrl = generateURL(
+  const assessmentUrl = generateURL({
     progress,
+    enabledExtensions: [{ id: extId, version: "0.0.0" }],
+    dataVersion: "1.0.0",
+    stateSchemaVersion: 1,
     assessmentName,
     assessorName,
     useCaseDescription,
-    [extId],
-  );
+  });
 
   // Collect rows for details table - including ALL categories
   const rows = coreModules.flatMap((m) => {
@@ -1723,7 +1943,7 @@ export const exportExtensionPDF = async ({
       const coreModule = coreModules.find((cm) => cm.id === m.id);
       const coreCategory = coreModule?.categories.find((cc) => cc.id === c.id);
       const extKey = `${extension.extension.id}.${m.id}.${c.id}`;
-      const level = progress[extKey]?.level || 1;
+      const level = progress[extKey]?.level ?? 0;
       return {
         id: `${m.id}.${c.id}`,
         module: coreModule?.name || m.id,
@@ -1735,9 +1955,12 @@ export const exportExtensionPDF = async ({
     });
   });
 
+  const qrImgData = await generateQRDataUrl(assessmentUrl);
+
   const pdfDoc = (
     <ExtensionPdfDocument
       chartImgData={chartImgData}
+      qrImgData={qrImgData}
       overallMaturityLevel={overallMaturityLevel}
       overallWeightedMaturity={overallWeightedMaturity}
       floorScore={floorScore}
@@ -1746,6 +1969,7 @@ export const exportExtensionPDF = async ({
       rows={rows}
       relevanceRows={relevanceRows}
       extension={extension}
+      references={references}
       assessmentName={assessmentName}
       assessorName={assessorName}
       useCaseDescription={useCaseDescription}

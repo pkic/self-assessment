@@ -1,3 +1,193 @@
+.pkimm-module-progress-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pkimm-module-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pkimm-module-progress__bar {
+  flex: 1 1 auto;
+  height: 0.3rem;
+  background: var(--pkimm-primary-color-lighter);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pkimm-module-progress__fill {
+  height: 100%;
+  background-color: var(--pkimm-primary-color);
+  border-radius: var(--pkimm-border-radius-pill);
+  transition:
+    width 0.3s ease,
+    background-color 0.3s ease;
+}
+
+// Color the per-module progress bar fill by the achieved maturity level
+// so the report row mirrors the right-rail panel: bar length = how
+// much is rated, bar color = how mature the rated part is.
+@each $n in (1, 2, 3, 4, 5) {
+  .pkimm-module-progress--level-#{$n} {
+    .pkimm-module-progress__fill {
+      background-color: var(--pkimm-maturity-level-#{$n});
+    }
+  }
+}
+
+.pkimm-module-progress__count {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.85rem;
+  color: var(--pkimm-text-color-muted);
+  white-space: nowrap;
+}
+
+// Overlay Details cell — one line per overlay. Label column (description
+// or "Category" tag) takes available space and truncates with ellipsis;
+// weights and badge sit fixed on the right. Full description still
+// available via row title tooltip.
+.pkimm-overlay-cell {
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.pkimm-overlay-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  column-gap: 0.6rem;
+  padding: 0.1rem 0;
+}
+
+.pkimm-overlay-row__label {
+  color: var(--pkimm-text-color-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.pkimm-overlay-row__kind {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pkimm-text-color-muted);
+  background-color: var(--pkimm-background-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  padding: 0.05rem 0.4rem;
+}
+
+.pkimm-overlay-row__weights {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  color: var(--pkimm-text-color-dark);
+  white-space: nowrap;
+}
+
+.pkimm-overlay-row__base {
+  color: var(--pkimm-text-color-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--pkimm-text-color-muted);
+}
+
+.pkimm-overlay-row__arrow {
+  color: var(--pkimm-text-color-muted);
+  font-family: inherit;
+}
+
+.pkimm-overlay-row__effective {
+  font-weight: 600;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-overlay-badge {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--pkimm-border-radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 3.5rem;
+
+  &--multiplier {
+    background-color: var(--pkimm-hover-bg-subtle);
+    color: var(--pkimm-primary-color);
+    border-color: var(--pkimm-primary-color);
+  }
+
+  &--addition {
+    background-color: var(--pkimm-success-bg);
+    color: var(--pkimm-success-fg);
+    border-color: var(--pkimm-success-border);
+  }
+
+  &--override {
+    background-color: var(--pkimm-banner-bg);
+    color: var(--pkimm-banner-fg);
+    border-color: var(--pkimm-banner-border);
+  }
+}
+
+.pkimm-incomplete-notice {
+  background: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-left: 4px solid var(--pkimm-primary-color);
+  border-radius: var(--pkimm-border-radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  color: var(--pkimm-text-color-dark);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    font-weight: 600;
+  }
+
+  &__count {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-size: 0.9rem;
+    color: var(--pkimm-text-color-muted);
+  }
+
+  &__bar {
+    height: 0.4rem;
+    background: var(--pkimm-primary-color-lighter);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 0.6rem 0 0.5rem 0;
+  }
+
+  &__bar-fill {
+    height: 100%;
+    background: var(--pkimm-primary-color);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  &__hint {
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
 .pkimm-report {
   background-color: var(--pkimm-surface-color);
   border: 1px solid var(--pkimm-border-color);
@@ -6,9 +196,10 @@
   margin-bottom: 2rem;
   box-shadow: var(--pkimm-shadow-sm);
   box-sizing: border-box;
+  // Only break unbreakable runs (long URLs, long ids); never split a
+  // normal word mid-character. `word-break: break-word` is too aggressive
+  // and caused "Governance" to wrap as "Governa\nnce" in narrow columns.
   overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
 
   h1 {
     font-size: 2.5rem;
@@ -56,8 +247,8 @@
     }
 
     th {
-      background-color: #f8f9fa;
-      color: var(--pkimm-text-color-dark);
+      background-color: var(--pkimm-table-header-bg);
+      color: var(--pkimm-table-header-fg);
       font-weight: 600;
       font-size: 0.9rem;
     }
@@ -68,26 +259,97 @@
     }
 
     tr:nth-child(even) {
-      background-color: #fafafa;
+      background-color: var(--pkimm-table-stripe-bg);
     }
 
     tr:hover {
-      background-color: #f5f5f5;
+      background-color: var(--pkimm-table-row-hover-bg);
     }
   }
 }
 
+// Widget grids: viewport-driven breakpoints. 4 cols only kick in on
+// wide desktop where the right-rail chart leaves enough room.
 .pkimm-module-widgets {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.pkimm-metrics-help {
+  margin: 0 0 2.5rem 0;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+  background-color: var(--pkimm-background-color);
+  font-size: 0.9rem;
+  color: var(--pkimm-text-color-dark);
+
+  summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--pkimm-text-color-muted);
+    list-style: revert;
+    user-select: none;
+
+    &:hover {
+      color: var(--pkimm-primary-color);
+    }
+  }
+
+  &[open] summary {
+    border-bottom: 1px solid var(--pkimm-border-color);
+    color: var(--pkimm-text-color-dark);
+  }
+
+  dl {
+    margin: 0;
+    padding: 1rem 1.25rem;
+  }
+
+  dt {
+    font-weight: 600;
+    color: var(--pkimm-text-color-dark);
+    margin-top: 0.75rem;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+  }
+
+  dd {
+    margin: 0.25rem 0 0 0;
+    color: var(--pkimm-text-color-muted);
+    line-height: 1.5;
+  }
+}
+
+.pkimm-module-widgets--with-progress {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
   margin-bottom: 2.5rem;
+}
+
+@media (min-width: 600px) {
+  .pkimm-module-widgets,
+  .pkimm-module-widgets--with-progress {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .pkimm-module-widgets,
+  .pkimm-module-widgets--with-progress {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .pkimm-module-maturity-widget {
   font-size: 1rem;
   padding: 1.5rem;
-  background-color: #f8f9fa;
+  background-color: var(--pkimm-background-color);
   border: 1px solid var(--pkimm-border-color);
   border-radius: var(--pkimm-border-radius-md);
   box-shadow: var(--pkimm-shadow-sm);
@@ -107,7 +369,7 @@
 
   button {
     background-color: var(--pkimm-primary-color);
-    color: white;
+    color: var(--pkimm-text-color-light);
     border: none;
     padding: 0.75rem 1.5rem;
     text-align: center;
@@ -130,7 +392,7 @@
   flex-direction: column;
   gap: 1.5rem;
   margin-bottom: 3rem;
-  background-color: #f8f9fa;
+  background-color: var(--pkimm-background-color);
   padding: 1.5rem;
   border-radius: var(--pkimm-border-radius-md);
   border: 1px solid var(--pkimm-border-color);
@@ -153,7 +415,7 @@
       border-radius: var(--pkimm-border-radius-sm);
       font-size: 1rem;
       color: var(--pkimm-text-color-dark);
-      background-color: white;
+      background-color: var(--pkimm-text-color-light);
       transition: all 0.2s ease;
 
       &:focus {
@@ -185,11 +447,6 @@
     }
   }
 
-  .pkimm-module-widgets {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
   .pkimm-actions-container {
     justify-content: center;
     flex-direction: column;
@@ -207,5 +464,28 @@
     table {
       min-width: 400px;
     }
+  }
+
+  .pkimm-module-maturity-widget {
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+// Very narrow viewports — reduce report padding further so the widgets
+// inside don't get squeezed by the report's own gutter.
+@media (max-width: 480px) {
+  .pkimm-report {
+    padding: 1rem 0.75rem;
+  }
+
+  .pkimm-module-maturity-widget {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .pkimm-module-widgets,
+  .pkimm-module-widgets--with-progress {
+    gap: 0.75rem;
   }
 }

@@ -23,20 +23,24 @@ overview:
     | **Maturity level** | **Short description**                                                                                        |
     |--------------------|--------------------------------------------------------------------------------------------------------------|
     | **Initial**        | Unpredictable process with poor control and always reactive                                                  |
-    | **Basic**          | Process is characterized by each particular case or project and controls are often reactive                  |
+    | **Foundational**   | Process is characterized by each particular case or project and controls are often reactive                  |
     | **Advanced**       | Process is characterized by organizational standards and controls are proactive                              |
     | **Managed**        | Processes are measured and controlled, proactive approach                                                    |
     | **Optimized**      | Continuous improvement of the processes and procedures, proactive approach for future technology improvement |
+
+    # Extension framework
+
+    Extensions let you assess a PKI through an additional lens without changing the underlying model. Each extension declares which categories it considers relevant, contributes its own relevance maturity levels, and may adjust weights through overlays. The result is a complementary score that highlights the strengths and weaknesses of your PKI within the extension's specific scope.
 
     # Resources
 
     | Resource                                                                                                                | Description                                                                                                                                                               |
     |-------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-    | [PKI maturity model](https://pkic.org/pkimm/model/)                                                                     | Definition of the PKI maturity model and description of the maturity assessment process and procedures in order to rate the current maturity level and to track progress. |
-    | [Categories description](https://pkic.org/pkimm/categories/)                                                            | Description of PKI maturity model related categories and associated requirement, guidance, assessment tips, and references.                                               |
-    | [PKI maturity assessment process](https://pkic.org/pkimm/assessment/)                                                   | Description of the assessment process.                                                                                                                                    |
-    | [PKI maturity assessment tools](https://pkic.org/pkimm/tools/)                                                          | Available tools for the assessment of the PKI implementation and use case.                                                                                                |
-    | [Feedback form](https://forms.gle/7CgvuNoxaiTYbtK29)                                                                    | PKI maturity model and assessment feedback form.                                                                                                                          |
+    | [PKI maturity model](https://pkic.org/wg/pkimm/model/)                                                                  | Definition of the PKI maturity model and description of the maturity assessment process and procedures in order to rate the current maturity level and to track progress. |
+    | [Categories description](https://pkic.org/wg/pkimm/categories/)                                                         | Description of PKI maturity model related categories and associated requirement, guidance, assessment tips, and references.                                               |
+    | [PKI maturity assessment process](https://pkic.org/wg/pkimm/assessment/)                                                | Description of the assessment process.                                                                                                                                    |
+    | [PKI maturity assessment tools](https://pkic.org/wg/pkimm/tools/)                                                       | Available tools for the assessment of the PKI implementation and use case.                                                                                                |
+    | [Extension framework](https://pkic.org/wg/pkimm/extensions/)                                                            | Overview of the extension framework, including structure, scoring model, and the catalog of available extensions.                                                         |
     | [PKI maturity model community discussion](https://github.com/orgs/pkic/discussions/categories/pki-maturity-model-pkimm) | Ideas, questions, or feedback that you want to share or discuss related to the PKI maturity model.                                                                        |
 email:
   enabled: true

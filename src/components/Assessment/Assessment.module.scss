@@ -1,11 +1,108 @@
 .pkimm-assessment-container {
   display: flex;
   flex-direction: column;
-  font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--pkimm-font-family);
   text-align: left;
   background-color: var(--pkimm-background-color);
   min-height: 100vh;
   width: 100%;
+}
+
+.pkimm-active-assessment-mobile {
+  display: none;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  background-color: var(--pkimm-background-color);
+  border-top: 1px solid var(--pkimm-border-color);
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+
+  &__caption {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pkimm-text-color-muted);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    font-size: 0.9rem;
+    color: var(--pkimm-text-color-dark);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.pkimm-active-assessment-label {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  max-width: 14rem;
+
+  &__caption {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pkimm-text-color-muted);
+    font-weight: 600;
+  }
+
+  &__name {
+    font-size: 0.9rem;
+    color: var(--pkimm-text-color-dark);
+    font-weight: 600;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.pkimm-privacy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: var(--pkimm-border-radius-pill);
+  background: var(--pkimm-primary-color-lighter);
+  color: var(--pkimm-primary-color);
+  border: 1px solid var(--pkimm-primary-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pkimm-hidden-ext-notice {
+  background: var(--pkimm-banner-bg, #fff7e6);
+  border: 1px solid var(--pkimm-banner-border, #f5d28b);
+  border-radius: var(--pkimm-border-radius-md, 6px);
+  padding: 0.75rem 1rem;
+  margin: 1rem;
+  font-size: 0.95em;
+  color: var(--pkimm-text-color-dark, #222);
+
+  details {
+    margin-top: 0.5rem;
+  }
+
+  summary {
+    cursor: pointer;
+    color: var(--pkimm-text-color-muted, #555);
+  }
+
+  ul {
+    margin: 0.25rem 0 0 1.25rem;
+  }
 }
 
 .pkimm-content-container {
@@ -29,7 +126,7 @@
     margin: 2rem auto;
     padding: 0.75rem 2rem;
     background-color: var(--pkimm-primary-color);
-    color: white;
+    color: var(--pkimm-text-color-light);
     border: none;
     border-radius: var(--pkimm-border-radius-md);
     cursor: pointer;
@@ -53,16 +150,18 @@
 
 .pkimm-chart-container {
   flex: 0 0 400px;
-  padding: 2rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  gap: 1rem;
   position: sticky;
   top: calc(110px + var(--pkimm-sticky-top-offset));
   height: fit-content;
   max-height: calc(100vh - (110px + var(--pkimm-sticky-top-offset) + 2rem));
   overflow-y: auto;
   background-color: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
   margin-left: 2rem;
   border-radius: var(--pkimm-border-radius-lg);
   box-shadow: var(--pkimm-shadow-sm);
@@ -74,10 +173,119 @@
   align-self: flex-start;
 }
 
+.pkimm-chart-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--pkimm-border-color);
+}
+
+.pkimm-chart-progress__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pkimm-chart-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.pkimm-chart-progress__label {
+  font-weight: 600;
+  color: var(--pkimm-text-color-dark);
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.pkimm-chart-progress__label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.pkimm-chart-progress__level {
+  color: var(--pkimm-text-color-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pkimm-chart-progress__row--overall {
+  .pkimm-chart-progress__label {
+    font-size: 0.95rem;
+  }
+}
+
+.pkimm-chart-progress__bar {
+  height: 0.3rem;
+  background-color: var(--pkimm-primary-color-lighter);
+  border-radius: var(--pkimm-border-radius-pill);
+  overflow: hidden;
+}
+
+.pkimm-chart-progress__fill {
+  height: 100%;
+  background-color: var(--pkimm-primary-color);
+  border-radius: var(--pkimm-border-radius-pill);
+  transition:
+    width 0.3s ease,
+    background-color 0.3s ease;
+}
+
+// Visual separator above the first extension row so the user reads the
+// list as "core PKIMM progress, then extension progress".
+.pkimm-chart-progress__row--extension {
+  &:first-of-type {
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--pkimm-border-color);
+  }
+}
+
+.pkimm-chart-progress__tag {
+  display: inline-block;
+  padding: 0 0.4rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--pkimm-border-radius-pill);
+  background-color: var(--pkimm-secondary-color);
+  color: var(--pkimm-text-color-dark);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+// Color the bar fill + the level text by the achieved maturity level so
+// the user can read the right-rail at a glance: bar length = completion,
+// bar/text color = maturity. Rows without a level (Not Assessed) keep
+// the neutral primary blue.
+@each $n in (1, 2, 3, 4, 5) {
+  .pkimm-chart-progress__row--level-#{$n} {
+    .pkimm-chart-progress__fill {
+      background-color: var(--pkimm-maturity-level-#{$n});
+    }
+    .pkimm-chart-progress__level {
+      color: var(--pkimm-maturity-level-#{$n});
+      font-weight: 600;
+    }
+  }
+}
+
 .pkimm-version {
   margin-top: auto;
   margin-bottom: 1rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--pkimm-text-color-muted);
 }
 
@@ -86,7 +294,7 @@
   position: sticky;
   top: var(--pkimm-sticky-top-offset);
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--pkimm-shadow-header);
   width: 100%;
 }
 
@@ -119,12 +327,34 @@
   background-color: var(--pkimm-surface-color);
   padding: 0 1.5rem;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+}
 
+.pkimm-tabs__group {
+  display: flex;
+  align-items: stretch;
+}
+
+.pkimm-tabs__group--meta {
+  border-left: 1px solid var(--pkimm-border-color);
+  padding-left: 1rem;
+  margin-left: 1rem;
+
+  button {
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+}
+
+.pkimm-tabs {
   button {
     background: none;
     border: none;
@@ -153,7 +383,7 @@
 
     &:hover {
       color: var(--pkimm-primary-color);
-      background-color: rgba(26, 115, 232, 0.04);
+      background-color: var(--pkimm-hover-bg-subtle);
     }
 
     &.active {
@@ -177,7 +407,7 @@
   border-radius: var(--pkimm-border-radius-sm);
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--pkimm-hover-bg-subtle);
   }
 
   div {
@@ -208,14 +438,14 @@
   text-align: inherit;
   padding: 6px 12px;
   background-color: var(--pkimm-primary-color);
-  color: white;
-  border-radius: 20px;
+  color: var(--pkimm-text-color-light);
+  border-radius: var(--pkimm-border-radius-badge);
   font-size: 0.85rem;
   font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--pkimm-shadow-sm);
   transition: all 0.2s ease;
 
   &.extension {
@@ -237,7 +467,7 @@
   .target-dot {
     width: 8px;
     height: 8px;
-    background-color: white;
+    background-color: var(--pkimm-text-color-light);
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -263,7 +493,7 @@
   top: 100%;
   right: 0;
   margin-top: 8px;
-  background: white;
+  background-color: var(--pkimm-surface-color);
   border: 1px solid var(--pkimm-border-color);
   border-radius: var(--pkimm-border-radius-md);
   box-shadow: var(--pkimm-shadow-md);
@@ -304,23 +534,26 @@
     }
 
     &:hover {
-      background-color: rgba(26, 115, 232, 0.04);
+      background-color: var(--pkimm-hover-bg-subtle);
       color: var(--pkimm-primary-color);
     }
 
     &.active {
-      background-color: rgba(26, 115, 232, 0.08);
+      background-color: var(--pkimm-hover-bg);
       color: var(--pkimm-primary-color);
       font-weight: 600;
     }
   }
 }
 
+// Right-rail per-module MaturityWidget — used only inside the chart
+// progress panel, smaller scale than the report's full-width widgets.
 .pkimm-assessment-maturity-widget {
-  width: 80%;
-  margin: 5px 0;
-  padding: 5px;
-  font-size: 1em;
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+  text-align: center;
+  border-radius: var(--pkimm-border-radius-md);
 }
 
 @media (max-width: 768px) {
@@ -355,57 +588,100 @@
   .pkimm-tabs {
     display: none;
     flex-direction: column;
-    background-color: white;
+    background-color: var(--pkimm-surface-color);
     width: 100%;
     position: fixed;
-    top: 56px; // Adjust based on header-top height
+    top: 56px;
     left: 0;
     height: calc(100vh - 56px);
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--pkimm-shadow-md);
     align-items: stretch;
-    padding: 1rem 0;
+    padding: 0;
     border-top: none;
+    gap: 0;
 
     &.active {
       display: flex;
     }
+  }
 
-    button {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--pkimm-border-color);
-      width: 100%;
-      justify-content: flex-start;
-      font-size: 0.9rem;
+  // Both tab groups stack column-wise in the mobile dropdown. The meta
+  // group drops the desktop vertical divider/left padding and instead
+  // gets a top divider with a subtle label-style background so users can
+  // still tell content vs nav apart.
+  .pkimm-tabs__group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    border-left: none !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+  }
 
-      &:after {
-        left: 0;
-        right: auto;
-        width: 4px;
-        height: 100%;
-        top: 0;
-        transform: scaleY(0);
-        transform-origin: top;
-      }
+  .pkimm-tabs__group--meta {
+    border-top: 1px solid var(--pkimm-border-color);
+    background-color: var(--pkimm-background-color);
+  }
 
-      &.active:after {
-        transform: scaleY(1);
-      }
+  .pkimm-tabs button {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--pkimm-border-color);
+    width: 100%;
+    justify-content: flex-start;
+    font-size: 0.95rem;
+
+    &:after {
+      left: 0;
+      right: auto;
+      width: 4px;
+      height: 100%;
+      top: 0;
+      transform: scaleY(0);
+      transform-origin: top;
     }
+
+    &.active:after {
+      transform: scaleY(1);
+    }
+  }
+
+  .pkimm-tabs__group:last-child button:last-child {
+    border-bottom: none;
   }
 
   .pkimm-burger-menu {
     display: flex;
   }
 
+  .pkimm-active-assessment-mobile {
+    display: flex;
+  }
+
   .pkimm-header-actions {
+    gap: 0.5rem;
+
+    .pkimm-active-assessment-label {
+      display: none;
+    }
+
     .pkimm-target-badge {
       font-size: 0.75rem;
       padding: 4px 8px;
 
       .assessing-label {
-        display: none; // Hide "Assessing:" prefix on small screens
+        display: none;
+      }
+    }
+
+    // Privacy chip eats horizontal space — collapse to the icon on mobile
+    // and rely on the title tooltip for the rest.
+    .pkimm-privacy-chip {
+      padding: 0.25rem 0.45rem;
+
+      span:last-child {
+        display: none;
       }
     }
   }

@@ -13,8 +13,8 @@
     background-color: var(--pkimm-secondary-color);
     color: var(--pkimm-text-color-dark);
     padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    border-radius: var(--pkimm-border-radius-badge);
+    font-size: 0.85rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -22,7 +22,7 @@
 }
 
 .pkimm-module-description {
-  background: white;
+  background-color: var(--pkimm-surface-color);
   font-weight: 500;
   border: 1px solid var(--pkimm-border-color);
   border-radius: var(--pkimm-border-radius-md);

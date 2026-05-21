@@ -1,0 +1,9 @@
+dist/
+node_modules/
+
+# Vendored from pkimm — formatted to match the canonical source there.
+src/public/pkimm-model-*.yaml
+src/public/pkimm-references.yaml
+src/public/pkimm-model.schema-*.json
+src/public/pkimm-references.schema-*.json
+src/public/extension.schema-*.json

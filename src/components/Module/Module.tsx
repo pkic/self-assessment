@@ -1,5 +1,5 @@
 import React from "react";
-import { ModuleData, ProgressData } from "../../types/types";
+import { ModuleData, ProgressData, ReferenceEntry } from "../../types/types";
 import { Category } from "../Category/Category";
 import ReactMarkdown from "react-markdown";
 import { useAssessmentTarget } from "../../contexts/AssessmentTargetContext";
@@ -8,6 +8,7 @@ import "./Module.module.scss";
 interface ModuleProps {
   module: ModuleData;
   progress: Record<string, ProgressData>;
+  referencesLookup?: Map<string, ReferenceEntry>;
   onLevelChange: (
     moduleId: string,
     categoryId: string,
@@ -25,6 +26,7 @@ interface ModuleProps {
 export const Module: React.FC<ModuleProps> = ({
   module,
   progress,
+  referencesLookup,
   onLevelChange,
   onApplicabilityChange,
   onNextSection,
@@ -123,6 +125,7 @@ export const Module: React.FC<ModuleProps> = ({
             extCategory={extCategory}
             extensionId={extensionId}
             progress={progress}
+            referencesLookup={referencesLookup}
             onLevelChange={onLevelChange}
             onApplicabilityChange={onApplicabilityChange}
           />

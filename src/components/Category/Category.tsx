@@ -3,6 +3,7 @@ import {
   CategoryData,
   ProgressData,
   ExtensionCategoryData,
+  ReferenceEntry,
 } from "../../types/types";
 import ReactMarkdown from "react-markdown";
 import "./Category.module.scss";
@@ -13,6 +14,7 @@ interface CategoryProps {
   extCategory?: ExtensionCategoryData;
   extensionId?: string;
   progress: Record<string, ProgressData>;
+  referencesLookup?: Map<string, ReferenceEntry>;
   onLevelChange: (
     moduleId: string,
     categoryId: string,
@@ -26,12 +28,33 @@ interface CategoryProps {
   ) => void;
 }
 
+// Collects unique reference ids from the category source (either the
+// requirements of a core category or the references field of an extension
+// relevance category) and resolves them through the lookup map.
+const collectReferenceIds = (
+  category: CategoryData,
+  extCategory?: ExtensionCategoryData,
+): string[] => {
+  const ids: string[] = [];
+  if (extCategory) {
+    const refs = extCategory.references;
+    if (Array.isArray(refs)) ids.push(...refs);
+  } else {
+    for (const req of category.requirements ?? []) {
+      const refs = req.references;
+      if (Array.isArray(refs)) ids.push(...refs);
+    }
+  }
+  return Array.from(new Set(ids));
+};
+
 export const Category: React.FC<CategoryProps> = ({
   moduleId,
   category,
   extCategory,
   extensionId,
   progress,
+  referencesLookup,
   onLevelChange,
   onApplicabilityChange,
 }) => {
@@ -107,6 +130,51 @@ export const Category: React.FC<CategoryProps> = ({
               </div>
             ))}
           </div>
+          {(() => {
+            const refIds = collectReferenceIds(category, extCategory);
+            const resolved = referencesLookup
+              ? refIds
+                  .map((id) => referencesLookup.get(id))
+                  .filter((r): r is ReferenceEntry => Boolean(r))
+              : [];
+            if (resolved.length === 0) return null;
+            return (
+              <details className="pkimm-category-references">
+                <summary>References ({resolved.length})</summary>
+                <ul>
+                  {resolved.map((ref) => (
+                    <li key={ref.id}>
+                      {ref.url ? (
+                        <a
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {ref.title}
+                        </a>
+                      ) : (
+                        <span>{ref.title}</span>
+                      )}
+                      {ref.authority && (
+                        <span className="pkimm-category-references__authority">
+                          {" — "}
+                          {ref.authority}
+                        </span>
+                      )}
+                      {ref.regions?.map((region) => (
+                        <span
+                          key={region}
+                          className="pkimm-category-references__region"
+                        >
+                          {region}
+                        </span>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            );
+          })()}
         </>
       )}
     </div>

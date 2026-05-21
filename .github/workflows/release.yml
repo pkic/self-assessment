@@ -22,8 +22,10 @@ jobs:
       - name: Copy index and data files
         run: |
           cp ./src/public/index.html ./dist/index.html
-          cp ./src/public/assessment-data.yaml ./dist/assessment-data.yaml
           cp ./src/public/config.yaml ./dist/config.yaml
+          cp ./src/public/pkimm-model-1.0.0.yaml ./dist/pkimm-model-1.0.0.yaml
+          cp ./src/public/pkimm-model-2.0.0.yaml ./dist/pkimm-model-2.0.0.yaml
+          cp ./src/public/pkimm-references.yaml ./dist/pkimm-references.yaml
       - name: Get tag name
         id: get_tag_name
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV

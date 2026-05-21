@@ -1,116 +1,109 @@
 # PKI Maturity Model Self-Assessment Web Component
 
-This is a web component that allows users to self-assess their organization's PKI maturity level. The component is based on the [PKI Maturity Model](https://pkic.org/pkimm/) developed by the [PKI Consortium](https://pkic.org/).
+A self-contained web component that embeds the [PKI Maturity Model (PKIMM)](https://pkic.org/wg/pkimm/) self-assessment into any HTML page via a `<self-assessment>` custom element. Drop one `<script>` tag, point it at the model YAML, and the component does the rest — local-only data, no backend.
 
-## Quick Start
+## Quick start
 
-To use the component, include the following script in your HTML file. Replace `<version>` with the version number you want to use.
+Include the bundled component and YAML data files in your HTML. Replace `<version>` with a published release (or `develop` for the latest unstable build).
 
 ```html
 <script src="https://pkic.github.io/self-assessment/<version>/self-assessment.js"></script>
-```
 
-Then, add the `<self-assessment>` tag to your HTML file.
-
-```html
 <self-assessment
-  dataurl="https://pkic.github.io/self-assessment/<version>/assessment-data.yaml"
-  configurl="https://pkic.github.io/self-assessment/<version>/config.yaml"
+  dataUrl="https://pkic.github.io/self-assessment/<version>/pkimm-model-2.0.0.yaml"
+  configUrl="https://pkic.github.io/self-assessment/<version>/config.yaml"
 ></self-assessment>
 ```
 
-## Development
+Optional: load one or more extensions (comma-separated URLs) and the references catalog:
 
-Install the dependencies by running the following command:
-
-```bash
-npm install
+```html
+<self-assessment
+  dataUrl="…/pkimm-model-2.0.0.yaml"
+  configUrl="…/config.yaml"
+  extensionsUrl="…/pqc-extension.yaml,…/another-extension.yaml"
+  referencesUrl="…/pkimm-references.yaml"
+></self-assessment>
 ```
 
-Build the component by running the following command:
+## Attributes
 
-```bash
-npm run build
-```
+| Attribute       | Required | Description                                                                                                                                                                                                                                              |
+| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dataUrl`       | yes      | URL of the PKIMM model YAML (`pkimm-model-1.0.0.yaml` or `pkimm-model-2.0.0.yaml`).                                                                                                                                                                      |
+| `configUrl`     | yes      | URL of the widget config YAML (overview Markdown + email-share template).                                                                                                                                                                                |
+| `extensionsUrl` | no       | Comma-separated list of extension YAML URLs. When omitted, the **Extensions** tab is hidden.                                                                                                                                                             |
+| `referencesUrl` | no       | URL of the shared references catalog (`pkimm-references.yaml`). When set, each category card surfaces the standards its requirements cite and the PDF gains a References appendix. Missing or omitted: references silently disappear from both surfaces. |
 
-To start the development server, run the following command:
+### Assessment data
 
-```bash
-npm run start
-```
+The widget can load either version of the PKIMM model. The 2.0.0 file is preferred; 1.0.0 files are accepted and silently migrated when imported into a saved assessment.
 
-The development server will be available at `http://localhost:9000`. You can use [`index.html`](src/public/index.html) and [`assessment-data.yaml`](src/public/assessment-data.yaml) in the [`src/public`](src/public) directory to test the component.
+- `pkimm-model-2.0.0.yaml` — current model. Schema: [`pkimm-model.schema-2.0.0.json`](src/public/pkimm-model.schema-2.0.0.json).
+- `pkimm-model-1.0.0.yaml` — released 1.0.0 model. Schema: [`pkimm-model.schema-1.0.0.json`](src/public/pkimm-model.schema-1.0.0.json).
+- `pkimm-references.yaml` — shared references catalog (cited by both models). Schema: [`pkimm-references.schema-1.0.0.json`](src/public/pkimm-references.schema-1.0.0.json).
+- Extension YAMLs (any name) — must validate against [`extension.schema-1.0.0.json`](src/public/extension.schema-1.0.0.json).
 
-## Configuration
+All schemas are also vendored in the bundle for validation at load time; the canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository.
 
-The component requires two configuration files: `assessment-data.yaml` and `config.yaml`. Strings supports markdown format.
+### Widget config
 
-### `assessment-data.yaml`
+The `configUrl` YAML provides the overview markdown shown on the Overview tab plus the email-share template.
 
-The `assessment-data.yaml` file contains the PKI maturity modules with categories and self-assessment maturity levels:
+| Key             | Description                                                   |
+| --------------- | ------------------------------------------------------------- |
+| `overview.data` | Markdown body rendered on the Overview tab.                   |
+| `email.enabled` | Show the email-share button in the report (`true` / `false`). |
+| `email.subject` | Email subject when sharing.                                   |
+| `email.body`    | Email body, may include `${progressUrl}` placeholder.         |
 
-| Key                                           | Description                       |
-| --------------------------------------------- | --------------------------------- |
-| `modules`                                     | List of PKI maturity modules      |
-| `modules[].id`                                | Module ID                         |
-| `modules[].name`                              | Module name                       |
-| `modules[].description`                       | Module description                |
-| `modules[].categories`                        | List of categories for the module |
-| `modules[].categories[].id`                   | Category ID                       |
-| `modules[].categories[].weight`               | Category weight                   |
-| `modules[].categories[].name`                 | Category name                     |
-| `modules[].categories[].description`          | Category description              |
-| `modules[].categories[].levels`               | List of self-assessment levels    |
-| `modules[].categories[].levels[].number`      | Level number                      |
-| `modules[].categories[].levels[].name`        | Level name                        |
-| `modules[].categories[].levels[].description` | Level description                 |
+Schema: [`config.schema.json`](src/public/config.schema.json).
 
-JSON schema for `assessment-data.yaml` can be found [here](src/public/assessment-data.schema.json).
+## Data storage
 
-### `config.yaml`
+The widget stores assessments **only in the user's browser** (`localStorage`, key `pkimm-sa`). Nothing is sent anywhere unless the user explicitly shares via URL or email. Multiple assessments can be saved; switch between them via the **Assessments** tab.
 
-The `config.yaml` file contains the configuration data for the component:
+Shared URLs encode the assessment progress in the URL hash fragment (`#progress=…`), compacted to fit comfortably under email/messaging and QR-code size limits. PDF reports include a QR code on the cover page linking back to the assessment.
 
-| Key             | Description                             |
-| --------------- | --------------------------------------- |
-| `overview.data` | Overview of the tool in markdown format |
-| `email.enabled` | Enable sharing progress through email   |
-| `email.subject` | Email subject                           |
-| `email.body`    | Email body                              |
+## Theming
 
-JSON schema for `config.yaml` can be found [here](src/public/config.schema.json).
-
-## Customization
-
-You can customize the styles of the component by adding the following CSS to your HTML file. Default values are shown below. See [`index.module.scss`](src/index.module.scss) for more details.
+Visual tokens are exposed as `--pkimm-*` CSS custom properties on the `<self-assessment>` element. Override them in your host page to brand-align the widget.
 
 ```css
-:root {
-  --pkimm-primary-color: #{$primary-color};
-  --pkimm-secondary-color: #{$secondary-color};
-  --pkimm-tertiary-color: #{$tertiary-color};
-
-  --pkimm-primary-color-hover: #{$primary-color-hover};
-  --pkimm-primary-color-lighter: #{$primary-color-lighter};
-
-  --pkimm-secondary-color-lighter: #{$secondary-color-lighter};
-
-  --pkimm-maturity-level-1: #{$maturity-level-1};
-  --pkimm-maturity-level-2: #{$maturity-level-2};
-  --pkimm-maturity-level-3: #{$maturity-level-3};
-  --pkimm-maturity-level-4: #{$maturity-level-4};
-  --pkimm-maturity-level-5: #{$maturity-level-5};
-
-  --pkimm-background-color: #{$background-color};
-
-  --pkimm-text-color-dark: #{$text-color-dark};
-  --pkimm-text-color-light: #{$text-color-light};
-
-  --pkimm-sticky-top-offset: 0px;
-  --pkimm-scroll-query-selector: window;
+self-assessment {
+  --pkimm-primary-color: #1a73e8;
+  --pkimm-primary-color-hover: #154c91;
+  --pkimm-primary-color-lighter: #eef5ff;
+  /* ...full token list in src/index.module.scss... */
 }
 ```
 
+The full token list lives in [`src/index.module.scss`](src/index.module.scss); pick what you want to override. Common starting points include the primary/secondary colours, banner/danger/success status tokens, table-header background, border radii, font family, and the per-level maturity colours.
+
+## Development
+
+Node version is pinned via `.node-version` (22.x).
+
+```bash
+npm install          # install deps
+npm run build        # production UMD build → dist/self-assessment.js
+npm run start        # webpack-dev-server on http://localhost:9000
+npm test             # jest
+npm run lint:check   # eslint (no fix)
+npm run format:check # prettier (no fix)
+```
+
+Local dev note: the webpack-dev-server serves the `dist/` directory. After `npm run build`, the YAML/config/index files in `src/public/` are not automatically copied. Run once:
+
+```bash
+cp src/public/index.html src/public/config.yaml src/public/pkimm-model-1.0.0.yaml \
+   src/public/pkimm-model-2.0.0.yaml src/public/pkimm-references.yaml dist/
+```
+
+The dev fixture (`src/public/index.html`) already sets `referencesUrl="pkimm-references.yaml"`, so per-category reference disclosures appear locally after the copy.
+
+CI workflows do this on every build. To test with extensions locally, copy any extension YAML you want into `dist/` and add `extensionsUrl="…"` to `src/public/index.html` (the dev page) or to `dist/index.html` directly.
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
