@@ -24,7 +24,7 @@
     "@react-pdf/renderer": "^4.5.1",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.3.0",
     "js-yaml": "^4.1.0",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.2.0",
