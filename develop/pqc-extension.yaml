@@ -1,8 +1,21 @@
+# =====================================================================
+# PQC Readiness Extension - Change Log
+# ---------------------------------------------------------------------
+# 0.4.0  - Persona broadening in Governance (community feedback).
+#          G.strategy-and-vision: added software-vendor / product-team
+#            examples to guidance and Levels 3-5. (Source: R8)
+#          G.policies-and-documentation: added certificate-consumer
+#            framing to guidance and Level 3. (Source: R7)
+# 0.3.0  - Expanded segregation-of-duties content in
+#            G.processes-and-procedures: guidance, Levels 1, 3, 4.
+#            (Source: R6, Policy Management Authority Chair)
+# 0.2.0  - Governance relevance + 18 overlays; community RFC baseline.
+# =====================================================================
 schemaVersion: 1.0.0
 extension:
   id: pqc
   name: PQC Readiness Extension
-  version: 0.2.0
+  version: 0.4.0
   description: Extends the assessment model with post-quantum cryptography (PQC) readiness criteria, maturity guidance, and PQC-specific requirement weight overlays to evaluate strategic, policy, compliance, and operational preparedness for quantum-safe PKI transition.
   documentation: https://pkic.org/wg/pkimm/model/extensions/catalog/pqc/
   compatibility:
@@ -55,6 +68,7 @@ relevance:
       weight: 5
       guidance: |
         Strategy and vision form the foundation for quantum-safe transition. Without executive sponsorship recognizing the quantum threat, PQC migration will lack resources and priority. The Dutch Migration Handbook identifies organizational personas ranging from 'unaware' to 'frontrunner,' with most European organizations currently in early awareness stages. Strategic planning must address the Mosca inequality: if data sensitivity lifespan plus migration time exceeds time until cryptographically relevant quantum computers (CRQC), action is required now.
+        The criteria apply to certificate issuers (CA/TSP) and to organizations that build PKI-dependent products. For a software vendor, the strategic question is whether PQC enters the product roadmap and customer commitments, not just the internal certificate estate.
       assessment: |
         Key Probes:
           - Can executives articulate the quantum threat to PKI operations?
@@ -106,6 +120,7 @@ relevance:
           - Board/governance body briefed on quantum risk and migration requirements
           - Budget allocation for PQC assessment and initial planning activities
           - Cross-functional PQC working group or steering committee established
+          - Software vendors and product teams: PQC migration is a tracked item on the product roadmap, with customer-facing timelines for quantum-safe support
       - number: 4
         name: Managed
         description: |
@@ -118,6 +133,7 @@ relevance:
           - Board receives regular quantum readiness updates as governance matter
           - Multi-year budget secured for complete migration programme
           - Strategy explicitly addresses hybrid vs pure PQ approach with rationale
+          - Software vendors and product teams: PQC commitments appear in product release planning and are communicated to customers
       - number: 5
         name: Optimized
         description: |
@@ -129,11 +145,13 @@ relevance:
           - Strategy enables crypto-agility as ongoing capability, not one-time transition
           - Proactive engagement with regulators on PQC implementation approaches
           - Strategic partnerships with quantum-safe technology providers established
+          - Software vendors and product teams: quantum-safe support ships before customers require it, used as a product differentiator
     - id: policies-and-documentation
       weight: 5
       guidance: |
         RFC 3647 governs Certificate Policy and CPS structure. PQC migration requires fundamental policy updates: algorithm specifications must expand to include NIST FIPS 203/204/205 (ML-KEM, ML-DSA, SLH-DSA), deprecation schedules must align with SP 800-131A Rev 3 and regional requirements, hybrid vs pure PQC strategy must be documented, and Cryptographic Bill of Materials (CBOM) requirements are emerging as compliance necessity.
         Multi-jurisdiction complexity creates policy challenges: European regulators (BSI, ANSSI) require hybrid signatures during transition, while CNSA 2.0 recommends pure PQ for US National Security Systems. Key management policies must address larger key sizes, HSM PQC support requirements, and stateful hash-based signature state management where applicable.
+        These criteria are written for a certificate issuer maintaining CP/CPS. An organization that only consumes certificates should read them as requirements to place on its providers: require PQC provisions, deprecation schedules, and CBOM support from CA and trust-service suppliers, and check them through procurement and contracts rather than writing the policy itself.
       assessment: |
         Key Probes:
           - When was CP/CPS last updated? Does it reference PQC algorithms?
@@ -183,6 +201,7 @@ relevance:
           - Key Management Policy updated for PQC considerations (larger keys, HSM support, stateful HBS state management)
           - CBOM framework adopted; initial cryptographic inventory underway
           - Multi-jurisdiction policy alignment documented
+          - Certificate-consuming organizations: PQC requirements are written into procurement and supplier criteria, and providers' PQC roadmaps are reviewed
       - number: 4
         name: Managed
         description: |
@@ -288,6 +307,7 @@ relevance:
       guidance: |
         The transition to post-quantum cryptography transforms operational processes fundamentally. This is not merely an algorithm swap; it represents a multi-year major programme requiring new procedures across every PKI operational domain.
         Key process considerations include: key ceremony evolution for PQC algorithms (larger keys, hybrid generation, stateful HBS state management), crypto-agility procedures per NIST CSWP 39, quantum risk assessment integration using the Mosca inequality framework, operational change management for phased migration, incident response for cryptographic events, and extended segregation of duties for PQC-specific roles.
+        Segregation of duties must extend to PQC-specific roles so that algorithm selection, implementation, and validation are not concentrated in one person. The party that approves which algorithms enter the trust store should not be the same party that implements them, and independent validation should confirm the implementation matches the approved cryptographic policy. This mirrors the established CA separation between policy authority and operations, applied to cryptographic agility.
       assessment: |
         Key Probes:
           - Can the organization demonstrate a key ceremony script that includes PQC algorithms?
@@ -324,7 +344,7 @@ relevance:
           - Risk assessment methodology does not incorporate quantum threat modelling
           - No crypto-agility procedures exist; algorithm changes require ad-hoc engineering
           - Incident response procedures do not include cryptographic failure scenarios
-          - Segregation of duties does not address PQC-specific roles
+          - No separation between those who select cryptographic algorithms and those who implement them; PQC-specific roles are undefined
       - number: 2
         name: Foundational
         description: |
@@ -349,8 +369,8 @@ relevance:
           - Crypto-agility procedures documented with algorithm substitution and rollback
           - Change management integrates PQC migration changes with CAB process
           - Incident response extended for cryptanalytic breakthrough and algorithm deprecation scenarios
-          - PQC-specific roles defined (migration lead, crypto-agility coordinator)
-          - Dual control requirements extended to PQC operations
+          - PQC-specific roles defined and separated: algorithm-approval authority, implementation, and validation are held by different parties (for example migration lead, crypto-agility coordinator, and an independent reviewer)
+          - Dual control extended to PQC key generation and algorithm-change approval
       - number: 4
         name: Managed
         description: |
@@ -361,7 +381,7 @@ relevance:
           - Time-to-transition metrics established and monitored
           - Change management mature with cross-functional CAB including crypto-competent reviewers
           - Incident response tested through tabletop exercises including cryptographic scenarios
-          - Segregation of duties enforced and verified through audit
+          - Segregation of duties enforced and verified through audit, confirming that algorithm approval, implementation, and validation remain separated in practice
       - number: 5
         name: Optimized
         description: |
