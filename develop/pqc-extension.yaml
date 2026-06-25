@@ -1,6 +1,14 @@
 # =====================================================================
 # PQC Readiness Extension - Change Log
 # ---------------------------------------------------------------------
+# 0.5.0  - Added 10 regulatory/standards references to the references
+#            block (US Quantum Prep Act, CSWP 48 draft, CISA product
+#            categories, CSWP 39 final, FIPS 140-2 sunset, NIS2
+#            amendment proposal, and APAC: CRYPTREC, KCMVP, Singapore
+#            CSA, Australian ISM). Sources: R6, R8, R15.
+#            Draft/advisory/proposal status noted per entry to prevent
+#            overclaim. UK NCSC timelines not re-added (already present
+#            as uk-ncsc-pqc-migration).
 # 0.4.0  - Persona broadening in Governance (community feedback).
 #          G.strategy-and-vision: added software-vendor / product-team
 #            examples to guidance and Levels 3-5. (Source: R8)
@@ -15,7 +23,7 @@ schemaVersion: 1.0.0
 extension:
   id: pqc
   name: PQC Readiness Extension
-  version: 0.4.0
+  version: 0.5.0
   description: Extends the assessment model with post-quantum cryptography (PQC) readiness criteria, maturity guidance, and PQC-specific requirement weight overlays to evaluate strategic, policy, compliance, and operational preparedness for quantum-safe PKI transition.
   documentation: https://pkic.org/wg/pkimm/model/extensions/catalog/pqc/
   compatibility:
@@ -60,6 +68,65 @@ references:
   title: NIST IR 8413 - Status Report on the Third Round of the NIST Post-Quantum Cryptography Standardization Process
   authority: NIST
   url: https://csrc.nist.gov/pubs/ir/8413/final
+- id: us-quantum-prep-act-2022
+  title: Quantum Computing Cybersecurity Preparedness Act (Public Law 117-260)
+  authority: United States Congress
+  regions: ["US"]
+  url: https://www.congress.gov/bill/117th-congress/house-bill/7535/text
+  # STATUS: Enacted law, 21 December 2022. Source: R6.
+- id: nist-cswp-48-ipd
+  title: "NIST CSWP 48 (Initial Public Draft): Mappings of Migration to PQC Project Capabilities to Risk Framework Documents"
+  authority: NIST National Cybersecurity Center of Excellence (NCCoE)
+  regions: ["US"]
+  url: https://csrc.nist.gov/pubs/cswp/48/mapping-migration-to-pqc-project-capabilities-to-r/ipd
+  # STATUS: Initial Public Draft. Cite as draft until NIST publishes final. Source: R6.
+- id: cisa-pqc-product-categories-2026
+  title: Product Categories for Technologies That Use Post-Quantum Cryptography Standards
+  authority: Cybersecurity and Infrastructure Security Agency (CISA)
+  regions: ["US"]
+  url: https://www.cisa.gov/resources-tools/resources/product-categories-technologies-use-post-quantum-cryptography-standards
+  # STATUS: Advisory federal buying guidance, NOT a procurement mandate. Source: R8.
+- id: nist-cswp-39
+  title: "NIST CSWP 39: Considerations for Achieving Crypto-Agility - Strategies and Practices"
+  authority: NIST
+  regions: ["US"]
+  url: https://csrc.nist.gov/pubs/cswp/39/considerations-for-achieving-crypto-agility/final
+  # STATUS: Final, 19 December 2025. Catalogues the CSWP 39 already cited in processes guidance.
+- id: us-fips-140-2-sunset-2026
+  title: FIPS 140-2 Validation Sunset (CMVP Historical List Transition)
+  authority: NIST Cryptographic Module Validation Program (CMVP)
+  regions: ["US", "CA"]
+  url: https://csrc.nist.gov/Projects/FIPS-140-3-Transition-Effort
+  # STATUS: Module validation (140-2 to 140-3), not a PQC algorithm standard. Source: R8.
+- id: eu-nis2-amendment-com-2026-13
+  title: "COM(2026) 13 final: Proposed Directive Amending NIS2 (Post-Quantum Cryptography Provision)"
+  authority: European Commission
+  regions: ["EU"]
+  url: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=COM:2026:13:FIN
+  # STATUS: PROPOSED directive, not adopted law. Frame as proposed/forthcoming. Source: R8.
+- id: jp-cryptrec
+  title: CRYPTREC - Cryptography Research and Evaluation Committees
+  authority: CRYPTREC (Japan)
+  regions: ["JP"]
+  url: https://www.cryptrec.go.jp/en/
+  # STATUS: Acknowledgement-level for v1.0. Source: R15.
+- id: kr-kcmvp
+  title: KCMVP - Korea Cryptographic Module Validation Program
+  authority: National Intelligence Service (Republic of Korea)
+  regions: ["KR"]
+  # STATUS: Acknowledgement-level for v1.0. URL pending verification. Source: R15.
+- id: sg-csa-quantum
+  title: Singapore CSA Guidance on Quantum-Safe Transition
+  authority: Cyber Security Agency of Singapore (CSA)
+  regions: ["SG"]
+  url: https://www.csa.gov.sg/
+  # STATUS: Acknowledgement-level for v1.0. Replace with specific advisory URL when confirmed. Source: R15.
+- id: au-ism
+  title: Australian Government Information Security Manual (ISM)
+  authority: Australian Signals Directorate (ASD)
+  regions: ["AU"]
+  url: https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/ism
+  # STATUS: Acknowledgement-level for v1.0. Verify deprecation dates before specific claims. Source: R15.
 relevance:
   modules:
   - id: G
@@ -395,6 +462,15 @@ relevance:
           - Contributing to industry procedure standards
           - Procedures support crypto-agility beyond PQC for future algorithm transitions
 overlays:
+  # OVERLAY STACKING (design note, addresses community feedback on Q5):
+  # Overlays are applied per requirement. Where more than one overlay
+  # affects a requirement's effective weight, multiplier-type overlays
+  # compound multiplicatively rather than additively. This is intended:
+  # a requirement that is important on two independent grounds should be
+  # emphasized more than one important on a single ground. Effective and
+  # base weights are both shown in-tool so the effect is transparent.
+  # Addition- and override-type overlays do not compound; an override
+  # replaces the base weight, and an addition adjusts it once.
   modules:
   - id: G
     categories:
