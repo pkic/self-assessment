@@ -1,0 +1,1347 @@
+schemaVersion: 1.0.0
+extension:
+  id: ai-crypto-governance
+  name: AI System Cryptographic Governance Extension
+  version: 0.1.0
+  description: Extends the assessment model with cryptographic governance criteria for the AI system layer — the identity, integrity, provenance, and trust controls for AI models and autonomous agents that sit above the PKI infrastructure the base model governs. Adds AI-specific maturity guidance and requirement weight overlays so organizations subject to the EU AI Act and DORA can assess whether their AI systems are cryptographically governed, not only their underlying PKI. Criteria are persona-aware — provider (develops or distributes AI systems) and deployer (operates AI systems under its authority, including procured third-party models) receive role-specific criteria where their obligations diverge; unmarked criteria apply to both roles.
+  documentation: https://pkic.org/wg/pkimm/model/extensions/catalog/ai-crypto-governance/
+  compatibility:
+  - 2.0.0
+  floorScore: true
+references:
+- id: eu-ai-act
+  title: Regulation (EU) 2024/1689 (Artificial Intelligence Act) — in particular Article 12 (record-keeping and automatic logging for traceability) and Article 15 (accuracy, robustness, and cybersecurity of high-risk AI systems)
+  authority: European Parliament and Council
+  regions:
+  - EU
+  url: https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng
+- id: dora
+  title: Regulation (EU) 2022/2554 (Digital Operational Resilience Act) — ICT risk management for EU financial entities, applicable to AI systems in the ICT estate
+  authority: European Parliament and Council
+  regions:
+  - EU
+  url: https://eur-lex.europa.eu/eli/reg/2022/2554/oj
+- id: nist-ai-rmf
+  title: NIST AI 100-1 — Artificial Intelligence Risk Management Framework (AI RMF 1.0)
+  authority: NIST
+  regions:
+  - US
+  url: https://www.nist.gov/itl/ai-risk-management-framework
+- id: iso-iec-42001
+  title: ISO/IEC 42001:2023 — Information technology — Artificial intelligence — Management system
+  authority: ISO/IEC
+  regions:
+  - GLOBAL
+- id: spiffe
+  title: SPIFFE — Secure Production Identity Framework for Everyone (workload identity; X.509-SVID and JWT-SVID)
+  authority: CNCF
+  regions:
+  - GLOBAL
+  url: https://spiffe.io/
+- id: rfc-8693
+  title: RFC 8693 — OAuth 2.0 Token Exchange (scoped, attenuated delegation of authority)
+  authority: IETF
+  regions:
+  - GLOBAL
+  url: https://www.rfc-editor.org/rfc/rfc8693
+- id: c2pa
+  title: C2PA — Coalition for Content Provenance and Authenticity Technical Specification (cryptographic provenance for media, including AI-generated content)
+  authority: C2PA / Content Authenticity Initiative
+  regions:
+  - GLOBAL
+  url: https://c2pa.org/specifications/
+- id: slsa
+  title: SLSA — Supply-chain Levels for Software Artifacts (provenance and integrity levels applicable to model artifacts)
+  authority: OpenSSF
+  regions:
+  - GLOBAL
+  url: https://slsa.dev/
+- id: in-toto
+  title: in-toto — A framework to secure the integrity of software supply chains (applicable to training and model build pipelines)
+  authority: CNCF / in-toto project
+  regions:
+  - GLOBAL
+  url: https://in-toto.io/
+- id: cyclonedx-mlbom
+  title: CycloneDX Machine Learning Bill of Materials (ML-BOM / AI-BOM) — inventory of models, datasets, and their dependencies
+  authority: OWASP / CycloneDX
+  regions:
+  - GLOBAL
+  url: https://cyclonedx.org/capabilities/mlbom/
+- id: nist-sp-800-218
+  title: NIST SP 800-218 — Secure Software Development Framework (SSDF), including provenance practices (PS.2 / PS.3) applicable to signed model artifacts
+  authority: NIST
+  regions:
+  - US
+  url: https://csrc.nist.gov/pubs/sp/800/218/final
+- id: nist-fips-203
+  title: NIST FIPS 203 — Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)
+  authority: NIST
+  regions:
+  - US
+  url: https://csrc.nist.gov/pubs/fips/203/final
+- id: nist-fips-204
+  title: NIST FIPS 204 — Module-Lattice-Based Digital Signature Standard (ML-DSA)
+  authority: NIST
+  regions:
+  - US
+  url: https://csrc.nist.gov/pubs/fips/204/final
+- id: nist-fips-205
+  title: NIST FIPS 205 — Stateless Hash-Based Digital Signature Standard (SLH-DSA)
+  authority: NIST
+  regions:
+  - US
+  url: https://csrc.nist.gov/pubs/fips/205/final
+relevance:
+  modules:
+  - id: G
+    categories:
+    - id: strategy-and-vision
+      weight: 4
+      guidance: |
+        AI systems are cryptographic actors. Models are signed artifacts with a provenance chain; autonomous agents hold identities and act on delegated organizational authority; inference endpoints are trust boundaries. Strategy must recognize that governing the underlying PKI does not, by itself, govern the AI systems built on top of it — an organization can hold strong PKI maturity while its models and agents remain unsigned, unidentified, and unaccountable.
+        Executive sponsorship should frame AI system cryptographic governance as a first-class trust concern with its own budget and roadmap, aligned to the EU AI Act application timeline (high-risk obligations from August 2026) and, for financial entities, to DORA ICT risk management. The strategy positions AI identity, model integrity, and output provenance as enablers of trustworthy AI, not as a compliance afterthought bolted on at deployment.
+      assessment: |
+        Key Probes:
+          - Can executives articulate that AI models and agents are cryptographic actors requiring identity, integrity, and provenance controls?
+          - Does strategic planning distinguish the AI system layer from the PKI infrastructure layer, and assign ownership for the former?
+          - Has the organization identified which AI systems are in scope for the EU AI Act (high-risk) and/or DORA?
+          - Is budget allocated specifically for AI identity, model signing, and provenance infrastructure?
+          - Is there executive recognition that ungoverned AI cryptography is a distinct risk from ungoverned PKI?
+
+        Warning Signs:
+          - 'Our PKI is mature, so our AI is covered' — conflates the infrastructure layer with the AI system layer
+          - AI trust treated as a model-quality or safety problem only, with no cryptographic dimension
+          - No executive able to name who owns AI system identity and integrity
+          - AI governance strategy silent on agents that call tools and APIs on the organization's behalf
+
+        Evidence Examples by Level:
+          - Level 2: Meeting notes acknowledging AI systems need identity/integrity controls; informal awareness materials
+          - Level 3: Board or steering-group briefing on AI system cryptographic risk; AI trust roadmap; budget line for AI identity/signing; named accountable owner
+          - Level 4: AI cryptographic governance integrated into the strategic planning cycle and ERM; quarterly steering review; KRIs for AI identity/provenance coverage
+          - Level 5: Published thought leadership; contribution to AI identity/provenance standards; strategy anticipates multi-agent and cross-organizational trust
+      references:
+      - eu-ai-act
+      - dora
+      - nist-ai-rmf
+      - iso-iec-42001
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - No recognition that AI models or agents are cryptographic actors
+          - Strategy documents silent on AI system identity, integrity, or provenance
+          - Executive sponsors unaware of AI system cryptographic governance as a concern distinct from PKI
+          - AI systems deployed with no consideration of who or what they are, cryptographically
+      - number: 2
+        name: Foundational
+        description: |
+          - General awareness that AI systems introduce trust concerns beyond the underlying PKI
+          - AI cryptographic governance mentioned informally but not incorporated into strategy
+          - Executive sponsors aware of the topic but not prioritizing or funding it
+          - No formal assessment of which AI systems are in regulatory scope
+          - Ownership of the AI system layer is unassigned or ambiguous
+      - number: 3
+        name: Advanced
+        description: |
+          - Strategy explicitly addresses AI system cryptographic governance as a priority distinct from PKI maturity
+          - Executive sponsorship formally extended to AI identity, model integrity, and output provenance
+          - In-scope AI systems for the EU AI Act (high-risk) and/or DORA identified
+          - Accountable owner assigned for AI system cryptographic governance
+          - Roadmap includes AI trust milestones aligned to regulatory deadlines
+          - Budget allocated for AI identity, signing, and provenance capabilities
+      - number: 4
+        name: Managed
+        description: |
+          - AI system cryptographic governance fully integrated into the strategic planning cycle
+          - Executive sponsorship active and sustained across affected business and product units
+          - AI trust risk represented in the Enterprise Risk Management framework
+          - Key Risk Indicators defined for AI identity coverage, model signing coverage, and provenance
+          - Strategy reviewed against evolving AI regulation and standards
+          - Multi-year budget secured for AI trust infrastructure
+      - number: 5
+        name: Optimized
+        description: |
+          - AI system cryptographic governance treated as a competitive differentiator and trust enabler
+          - Organization positioned as verifiably trustworthy in AI ahead of regulatory mandates
+          - Strategy anticipates multi-agent ecosystems and cross-organizational AI trust
+          - Executive sponsors engaged in AI identity and provenance standards initiatives
+          - Strategy enables crypto-agility for the AI layer as an ongoing capability, not a one-time project
+    - id: policies-and-documentation
+      weight: 4
+      guidance: |
+        The policy framework must extend to the AI system layer. This means documented policy for AI system identity (what identity an AI system or agent is issued, how it is bound to an accountable owner or sponsor, and what authority it may exercise), for model integrity and provenance (which model artifacts must be signed, and what provenance must be verified before a model is deployed), and for output provenance where applicable (for example C2PA manifests for AI-generated content). Approved-algorithm lists must cover AI use: model-artifact signing, agent credential algorithms, and inference-endpoint transport.
+        Where the organization operates a certificate policy and practice statement, these should be extended — or a parallel AI trust policy established — to define agent credential profiles, delegation rules, revocation triggers (including cascade revocation on sponsor offboarding), and the AI-BOM / ML-BOM required for each AI system. RFC 3647 remains a useful structural template even where the subject is an AI agent rather than a human or classical device.
+        Persona split: a provider's policy governs the production side — which artifacts it signs, under what signing policy, and what provenance and attestations it publishes with distributed models. A deployer's policy governs the consumption side — which signatures and attestations it requires from upstream providers, which trust anchors it accepts, and what verification must pass before a procured model enters service. Organizations holding both roles maintain both; role assignment follows the EU AI Act value-chain rules (Article 25), under which a deployer that substantially modifies or rebrands a system becomes its provider.
+      assessment: |
+        Key Probes:
+          - Is there a documented policy governing AI system and agent identity, including owner/sponsor binding and permitted authority?
+          - Does policy require model artifacts to be signed and their provenance verified before deployment?
+          - Do approved-algorithm lists explicitly cover model signing, agent credentials, and inference transport?
+          - Is an AI-BOM / ML-BOM required and specified per AI system?
+          - Are revocation triggers for AI credentials documented, including cascade revocation?
+          - Which roles does the organization hold — provider, deployer, or both — and does policy cover each held role's side (signing and publication versus verification and vendor requirements)?
+
+        Warning Signs:
+          - CP/CPS or trust policy makes no mention of AI systems, agents, or model artifacts
+          - Agents issued long-lived, broadly-scoped credentials with no documented profile
+          - No policy on model provenance verification — models loaded on trust
+          - Output provenance (C2PA or equivalent) not addressed for generative systems
+
+        Evidence Examples by Level:
+          - Level 2: Internal memo acknowledging policy gaps for AI systems; informal inventory of AI systems and their credentials
+          - Level 3: AI trust policy or CP/CPS amendment covering agent identity, model signing, and provenance; approved-algorithm list with AI entries; ML-BOM template
+          - Level 4: Published AI trust policy; algorithm governance covering the AI layer; ML-BOM integrated with the SDLC; documented delegation and cascade-revocation rules
+          - Level 5: Policy templates shared with the ecosystem; policy anticipates multi-agent delegation and cross-domain trust; provenance policy aligned with emerging standards
+      references:
+      - rfc-3647
+      - eu-ai-act
+      - iso-iec-42001
+      - cyclonedx-mlbom
+      - c2pa
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Policy framework silent on AI system identity, model integrity, and provenance
+          - No approved-algorithm coverage for model signing, agent credentials, or inference transport
+          - No AI-BOM / ML-BOM requirement
+          - Agent and AI system credentials, where they exist, are undocumented
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that policy must be extended to AI systems, but no changes made
+          - AI systems and their credentials inventoried informally, not in policy
+          - No documented model provenance verification requirement
+          - Delegation and revocation rules for AI credentials undefined
+      - number: 3
+        name: Advanced
+        description: |
+          - AI trust policy (or CP/CPS extension) formally covers AI system and agent identity, owner/sponsor binding, and permitted authority
+          - Approved-algorithm list includes model signing, agent credentials, and inference transport, with lifecycle and deprecation dates
+          - Model provenance verification is required before deployment
+          - Provider: model artifacts are signed under a documented signing policy before distribution, with provenance published alongside
+          - Deployer: required upstream signatures and attestations are documented for procured models and agents
+          - AI-BOM / ML-BOM specified and required per AI system
+          - Revocation triggers documented, including cascade revocation on sponsor offboarding
+      - number: 4
+        name: Managed
+        description: |
+          - AI trust policy published and enforced; algorithm governance covers the AI layer with periodic review
+          - ML-BOM generated and maintained, integrated with the SDLC
+          - Delegation rules (for example scoped token exchange) and revocation are policy-governed and audited
+          - Output provenance policy in force for generative systems where applicable
+          - Cross-functional policy governance includes AI/ML, security, legal, and compliance
+      - number: 5
+        name: Optimized
+        description: |
+          - Policy documentation treated as a strategic asset for demonstrable AI trust
+          - Algorithm and provenance governance anticipates regulatory and standards evolution
+          - ML-BOM integrated with ERM, supply-chain security, and incident response
+          - Policy enables crypto-agility for the AI layer through abstract, modular specifications
+          - Contribution to ecosystem policy and provenance standards
+    - id: compliance
+      weight: 5
+      guidance: |
+        The AI system layer carries its own binding regulatory obligations with a cryptographic dimension. The EU AI Act requires high-risk AI systems to keep tamper-evident, automatically generated logs enabling traceability (Article 12) and to achieve appropriate cybersecurity against data poisoning, model poisoning, adversarial examples, and confidentiality attacks (Article 15); the Commission and market-surveillance authorities treat the agent action layer — API and tool calls, including calls to MCP servers — as in scope. For financial entities, DORA extends ICT risk management to AI systems in the estate. NIST AI RMF and ISO/IEC 42001 provide the governance scaffolding.
+        The Act assigns obligations by role. Providers of high-risk AI systems carry the provider duties (Article 16), including keeping the automatically generated logs (Article 19); deployers carry the deployer duties (Article 26), including retaining the logs under their control for at least six months (Article 26(6)). Role assignment follows the value chain (Article 25) — a deployer that substantially modifies or rebrands a system becomes its provider — so the compliance mapping must reflect the roles the organization actually holds.
+        Compliance maturity is about mapping these obligations to concrete cryptographic controls (identity, integrity, provenance, tamper-evident logging) and evidencing them under audit — not achieving PKI-layer certification and assuming the AI layer is covered. The core risk the extension addresses is precisely this: an organization can demonstrate strong PKI-layer maturity while its AI systems remain cryptographically ungoverned and non-conformant with AI-specific requirements.
+      assessment: |
+        Sector and Regime Considerations:
+          - EU high-risk AI (Article 6 / Annex III): Article 12 traceability logging and Article 15 cybersecurity apply, including to the agent action layer
+          - Financial services (EU): DORA ICT risk management extends to AI systems
+          - Any AI management system: ISO/IEC 42001 provides certifiable governance controls
+          - US and international: NIST AI RMF (Govern/Map/Measure/Manage) as a voluntary baseline
+          - Role split: provider obligations (Article 16, Article 19 logs) versus deployer obligations (Article 26, including Article 26(6) log retention) — mapped to the roles the organization holds, with Article 25 role-conversion checked
+
+        Warning Signs:
+          - Compliance team cannot articulate EU AI Act Article 12 / Article 15 obligations or their cryptographic implications
+          - No regulatory mapping covering the AI system layer distinct from PKI
+          - Audit scope covers PKI but not AI system identity, integrity, or logging
+          - Assumption that PKI-layer certification implies AI-layer conformance
+
+        Evidence Examples by Level:
+          - Level 2: Informal tracking of AI regulation; awareness communications
+          - Level 3: Regulatory mapping for the AI layer (EU AI Act, DORA, ISO/IEC 42001); gap analysis; compliance roadmap with AI milestones
+          - Level 4: Quarterly compliance status covering AI systems; audit including AI identity, provenance, and Article 12 logging; ISO/IEC 42001 alignment evidence
+          - Level 5: Regulatory consultation participation; standards engagement; audit program exceeding minimum AI-layer requirements
+      references:
+      - eu-ai-act
+      - dora
+      - iso-iec-42001
+      - nist-ai-rmf
+      - iso-37301
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - No awareness of AI-specific regulatory requirements with a cryptographic dimension
+          - Compliance framework does not reference the EU AI Act, DORA (for the AI estate), or AI management standards
+          - Audit scope excludes AI system identity, integrity, and logging
+          - AI-layer conformance assumed to follow from PKI-layer controls
+      - number: 2
+        name: Foundational
+        description: |
+          - General awareness that AI systems carry compliance obligations
+          - No formal mapping of AI-layer requirements to cryptographic controls
+          - Audit scope unchanged; AI systems not covered
+          - EU AI Act Article 12 / Article 15 implications tracked only informally
+      - number: 3
+        name: Advanced
+        description: |
+          - Formal regulatory mapping completed for the AI system layer, covering as applicable:
+            - EU AI Act Article 12 (tamper-evident traceability logging) and Article 15 (cybersecurity), including the agent action layer
+            - DORA ICT risk management for AI systems (financial entities)
+            - ISO/IEC 42001 AI management system controls
+            - NIST AI RMF functions
+            - Provider (Article 16) and deployer (Article 26) obligations mapped to the roles the organization holds, including Article 25 role-conversion analysis
+          - Gap analysis conducted against applicable AI-layer requirements
+          - Compliance roadmap developed with AI milestones aligned to regulatory deadlines
+          - Audit criteria extended to AI system identity, integrity, provenance, and logging
+      - number: 4
+        name: Managed
+        description: |
+          - Active compliance program executing against AI-layer requirements
+          - AI system cryptographic risk monitored consistently with DORA ICT risk expectations
+          - Quarterly compliance status reporting covers AI systems
+          - Audit program verifies AI identity coverage, model provenance, ML-BOM completeness, and Article 12 log integrity
+          - ISO/IEC 42001 alignment demonstrated
+      - number: 5
+        name: Optimized
+        description: |
+          - Compliance program anticipates and helps shape AI-layer regulation and standards
+          - Audit program sets an industry benchmark, exceeding minimum AI requirements
+          - AI-layer compliance integrated with ERM and quantified
+          - Continuous improvement with effectiveness metrics and post-regulatory-change reviews
+          - Cross-border AI compliance handled with a harmonized approach
+    - id: processes-and-procedures
+      weight: 4
+      guidance: |
+        Operating the AI system layer introduces procedures with no classical-PKI equivalent: issuing and binding agent identities to accountable owners, onboarding and offboarding agents (including cascade revocation of an agent's credentials and any delegated tokens when a sponsor leaves or an agent is decommissioned), conducting model-signing ceremonies, and verifying model provenance before deployment. Delegation of authority to an agent — for example via scoped token exchange — is itself a procedure requiring dual control and documented scope.
+        Incident response must cover cryptographic events specific to AI systems: compromise of an agent credential or model-signing key, detection of a tampered or unsigned model in the pipeline, or a provenance-verification failure at deployment. Segregation of duties should extend to AI trust roles (for example an AI identity operator and a model-signing authority), and procedures should support rapid, tested revocation given that agent populations can be large and short-lived.
+        Persona split: providers operate the production-side procedures — model-signing ceremonies, provenance generation, and publication of attestations with each release. Deployers operate the consumption side — provenance verification as a deployment gate, intake of vendor attestations, and response to upstream security advisories affecting procured models. Agent identity lifecycle, delegation, and incident response apply to both roles.
+      assessment: |
+        Key Probes:
+          - Is there a documented procedure for issuing agent identities and binding them to an accountable owner?
+          - How are agents offboarded, and does offboarding trigger cascade revocation of credentials and delegated tokens?
+          - Is there a model-signing ceremony and a provenance-verification step before deployment?
+          - How would the organization respond to a compromised agent credential or a tampered model in the pipeline?
+          - Who is the designated owner of AI trust operations, and is dual control enforced for model signing and delegation?
+
+        Warning Signs:
+          - Agents created and destroyed with no identity issuance or revocation procedure
+          - Sponsor offboarding does not revoke the agents acting on that sponsor's authority
+          - Models deployed without a signing ceremony or provenance check
+          - Incident response has no play for AI credential compromise or model tampering
+
+        Evidence Examples by Level:
+          - Level 2: Discussion threads on AI trust procedures; collected vendor guidance
+          - Level 3: Documented agent onboarding/offboarding with cascade revocation; model-signing ceremony script; provenance-verification step; incident playbook with AI scenarios
+          - Level 4: Completed signing-ceremony records; tested cascade revocation; tabletop exercises for AI credential/model events; enforced segregation of duties
+          - Level 5: Revocation demonstrably fast across large agent populations; automated detection of unsigned/tampered models; published playbooks; contribution to procedure standards
+      references:
+      - nist-sp-800-61
+      - rfc-8693
+      - slsa
+      - in-toto
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Procedures do not reference AI system identity, model signing, or provenance
+          - Agents, where used, are created and retired ad hoc with no identity lifecycle
+          - No model-signing ceremony or provenance-verification step
+          - Incident response omits AI-specific cryptographic scenarios
+          - Segregation of duties does not address AI trust roles
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that AI trust procedures are needed, but not documented
+          - Agent identity and offboarding handled informally
+          - Model provenance verification recognized as desirable but not procedural
+          - Delegation of authority to agents is undocumented
+      - number: 3
+        name: Advanced
+        description: |
+          - Agent identity issuance and owner binding formally documented
+          - Onboarding and offboarding procedures include cascade revocation of agent credentials and delegated tokens
+          - Provider: model-signing ceremony documented (quorum, key activation, artifact signing)
+          - Deployer: vendor attestation intake and upstream security-advisory response documented
+          - Provenance verification is a required deployment gate
+          - Incident response extended to agent credential compromise, model tampering, and provenance-verification failure
+          - AI trust roles defined; dual control required for model signing and delegation
+      - number: 4
+        name: Managed
+        description: |
+          - Procedures actively support AI trust operations at scale
+          - Provider: signing ceremonies conducted and evidenced
+          - Provenance verification enforced in the pipeline for all models entering service
+          - Cascade revocation tested and validated
+          - Incident response exercised through tabletop scenarios including AI cryptographic events
+          - Segregation of duties enforced and verified through audit
+      - number: 5
+        name: Optimized
+        description: |
+          - Procedures embody rapid, automated revocation across large and short-lived agent populations
+          - Automated detection of unsigned or tampered models blocks deployment
+          - Delegation procedures support scoped, attenuated, time-bound authority by default
+          - Incident response coordinated with external parties where multi-agent trust crosses organizations
+          - Procedures generalize to future AI trust patterns and contribute to standards
+    - id: cryptography
+      weight: 5
+      guidance: |
+        This is the category where the AI-layer governance gap is most directly closed. Cryptographic visibility must extend to AI systems: models, agents, inference endpoints, and their keys and algorithms must appear in the cryptographic inventory (and in the CBOM / ML-BOM), not sit outside it. Approved algorithms must cover model-artifact signing, agent credential issuance, and inference transport. Cryptographic lifecycle and deprecation rules must apply to AI-embedded cryptography — including signing algorithms baked into model-provenance chains and long-lived signed artifacts.
+        Crypto-agility must reach the AI layer: the organization should be able to rotate the algorithm used to sign model artifacts, the algorithm backing agent credentials, and inference-endpoint transport without re-architecting. This layer also inherits the quantum threat — harvest-now-decrypt-later applies to confidential inference traffic and to long-lived signed model provenance — so the AI layer's algorithms should be on a path to the NIST PQC standards (ML-KEM, ML-DSA, SLH-DSA) in step with the infrastructure. An organization can operate a quantum-safe, well-governed PKI while its AI systems still rely on quantum-vulnerable, ungoverned cryptography; this category exists to detect and close that gap.
+        Persona split: a provider governs the algorithms it uses to sign and attest what it distributes; a deployer governs the algorithms and trust anchors it accepts when verifying procured models. Inference-transport and agent-credential algorithm governance applies to both roles.
+      assessment: |
+        Key Probes:
+          - Do AI systems (models, agents, inference endpoints) appear in the cryptographic inventory / CBOM / ML-BOM?
+          - Are approved algorithms defined for model signing, agent credentials, and inference transport?
+          - Can the organization rotate the model-signing algorithm and the agent credential algorithm without re-architecting?
+          - Are AI-layer algorithms on a documented path to the NIST PQC standards, in step with the PKI?
+          - Are deprecation rules applied to cryptography embedded in model-provenance chains?
+
+        Warning Signs:
+          - AI systems are absent from the cryptographic inventory
+          - Model artifacts signed (or not) with unmanaged, unapproved algorithms
+          - Inference endpoints using cryptography chosen by defaults, not governed
+          - No path to PQC for the AI layer even where the PKI has one
+
+        Evidence Examples by Level:
+          - Level 2: Informal note that AI systems use cryptography; partial, manual inventory
+          - Level 3: AI systems included in the CBOM/ML-BOM; approved-algorithm list covers AI uses; documented crypto-agility approach for the AI layer; PQC path identified
+          - Level 4: Automated cryptographic discovery covering AI systems; governed algorithm add/deprecate for the AI layer; tested algorithm substitution for model signing
+          - Level 5: Continuous visibility across all AI systems; algorithm substitution achievable rapidly; AI layer PQC migration coordinated with the PKI; contribution to inventory/agility standards
+      references:
+      - cyclonedx-cbom
+      - cyclonedx-mlbom
+      - nist-cswp-39
+      - eucc-crypto-inventory
+      - nist-fips-203
+      - nist-fips-204
+      - nist-fips-205
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - AI systems are not represented in any cryptographic inventory
+          - No approved-algorithm coverage for model signing, agent credentials, or inference transport
+          - Cryptography embedded in AI systems is chosen ad hoc and ungoverned
+          - No lifecycle, deprecation, or agility consideration for AI-layer cryptography
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that AI systems use cryptography that should be governed
+          - Partial or manual inventory of AI-system cryptography exists
+          - Approved-algorithm lists do not yet cover AI uses
+          - No documented crypto-agility or PQC path for the AI layer
+      - number: 3
+        name: Advanced
+        description: |
+          - AI systems (models, agents, inference endpoints) are included in the cryptographic inventory / CBOM / ML-BOM
+          - Approved-algorithm list covers model signing, agent credentials, and inference transport
+          - Deployer: accepted algorithms and trust anchors for verifying procured models are defined and governed
+          - Cryptographic lifecycle and deprecation rules apply to AI-embedded cryptography, including model-provenance chains
+          - Crypto-agility approach for the AI layer documented (ability to rotate model-signing and agent-credential algorithms)
+          - Path to the NIST PQC standards for the AI layer identified, in step with the PKI
+      - number: 4
+        name: Managed
+        description: |
+          - Cryptographic discovery for AI systems is automated and maintained
+          - Algorithm add/deprecate for the AI layer is governed with periodic review
+          - Algorithm substitution for model signing and agent credentials is tested with validated rollback
+          - AI-layer PQC migration is planned and tracked alongside the PKI
+      - number: 5
+        name: Optimized
+        description: |
+          - Continuous, complete cryptographic visibility across all AI systems
+          - Algorithm substitution across the AI trust chain achievable rapidly, not as a project
+          - Confidential inference and long-lived signed provenance protected on a quantum-safe path
+          - Organization contributes to cryptographic inventory and agility standards for AI systems
+  - id: M
+    categories:
+    - id: key-management
+      weight: 4
+      guidance: |
+        AI systems introduce new key material to manage: agent private keys (often high-volume and short-lived), model-signing keys (high-value, long-lived, ideally HSM-backed), and keys protecting confidential inference. Key management roles, inventory, and lifecycle procedures must explicitly cover these. Model-signing keys warrant the strongest protection because a compromise lets an attacker forge model provenance for the whole estate; agent keys warrant automated, short-lifetime handling because their populations are large and churn quickly.
+        The key inventory and device inventory should include AI-system keys and the HSMs or key stores backing them, and key-management review should confirm that AI-layer key handling matches policy — in particular that ephemeral agent keys are genuinely short-lived and that model-signing keys are held under dual control in hardware.
+        Persona split: model-signing keys are a provider concern — a deployer that only consumes third-party models holds no model-signing keys, but must instead manage the verification trust anchors (provider signing certificates and public keys) it relies on, with the same inventory, protection, and review discipline. Agent and inference keys apply to both roles.
+      assessment: |
+        Key Probes:
+          - Are agent keys, model-signing keys, and inference keys covered by key-management roles and procedures?
+          - Provider: are model-signing keys HSM-backed and under dual control?
+          - Deployer: are verification trust anchors for procured models inventoried and protected?
+          - Are agent keys short-lived and automatically rotated?
+          - Do the key and device inventories include AI-system keys and their backing stores?
+          - Does key-management review cover the AI layer?
+
+        Warning Signs:
+          - Model-signing keys held in software with no dual control
+          - Long-lived agent keys with no rotation
+          - AI-system keys absent from the inventory
+          - No lifecycle defined for ephemeral agent identities
+
+        Evidence Examples by Level:
+          - Level 2: Informal awareness of AI-system keys; partial inventory
+          - Level 3: Documented lifecycle for agent and model-signing keys; HSM backing for signing keys; AI keys in the inventory
+          - Level 4: Automated agent key rotation; dual-control signing-key ceremonies evidenced; periodic AI-layer key review
+          - Level 5: Fully automated, policy-driven key lifecycle for large agent populations; signing-key protection benchmarked; agility for AI-layer key algorithms
+      references:
+      - nist-sp-800-57
+      - iso-11770
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Key-management roles and procedures do not address AI-system keys
+          - Agent, model-signing, and inference keys are handled ad hoc
+          - AI-system keys are not inventoried
+          - No lifecycle defined for ephemeral agent identities
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that AI systems introduce new key material to manage
+          - Partial inventory of AI-system keys
+          - Model-signing key protection not yet defined
+          - Agent key rotation not established
+      - number: 3
+        name: Advanced
+        description: |
+          - Key-management roles and procedures explicitly cover agent, model-signing, and inference keys
+          - Provider: model-signing keys are HSM-backed and held under dual control
+          - Deployer: verification trust anchors for procured models are inventoried, protected, and reviewed
+          - Agent keys have a defined short lifecycle
+          - Key and device inventories include AI-system keys and their backing stores
+          - Key-management review covers the AI layer
+      - number: 4
+        name: Managed
+        description: |
+          - Agent key issuance and rotation are automated at population scale
+          - Signing-key ceremonies conducted under dual control and evidenced
+          - AI-layer key management reviewed periodically against policy
+          - Provider: recovery and compromise procedures defined for model-signing keys
+          - Deployer: upstream trust-anchor rotation and provider-compromise response procedures defined
+      - number: 5
+        name: Optimized
+        description: |
+          - Fully automated, policy-driven key lifecycle for large and short-lived agent populations
+          - Model-signing key protection benchmarked and continuously assured
+          - AI-layer key algorithms are agile and on a quantum-safe path
+          - Key-management practice for AI systems informs standards and peers
+    - id: certificate-management
+      weight: 5
+      guidance: |
+        Agent and workload identity is the flagship of AI system cryptographic governance. Certificate and credential profiles must be defined for AI systems: X.509 identities that bind an agent to an accountable owner or sponsor (for example via a dedicated owner extension) and to a workload identity such as a SPIFFE ID carried as a URI SAN, or JWT-based workload credentials. The lifecycle for these credentials differs sharply from classical certificates — populations are large, lifetimes are short, issuance and renewal are continuous, and revocation must be able to cascade when a sponsor is offboarded or an agent is decommissioned.
+        The organization needs an inventory of issued AI-system credentials and a discovery process able to find agents and workloads that hold identities, so that no agent acts on organizational authority without being accounted for. Certificate-management review should confirm that agent credential profiles, lifetimes, and revocation behavior match policy, and that discovery coverage keeps pace with a fast-changing agent population.
+        Persona note: agent and workload identity criteria apply to both roles. Providers additionally manage the identities and certificates bound into distributed artifacts and attestations so that relying deployers can verify them.
+      assessment: |
+        Key Probes:
+          - Are credential profiles defined for AI agents and workloads (owner/sponsor binding, workload identity such as SPIFFE)?
+          - Is the agent credential lifecycle designed for high volume and short lifetimes, with continuous issuance and renewal?
+          - Can revocation cascade from a sponsor to the agents acting on that sponsor's authority?
+          - Is there an inventory of issued AI-system credentials and a discovery process to find agents/workloads?
+          - Does certificate-management review cover the AI layer?
+
+        Warning Signs:
+          - Agents share a generic credential or use static secrets instead of managed identities
+          - Long-lived agent certificates that are never rotated
+          - No discovery for agent/workload identities — unknown agents may hold credentials
+          - Revocation cannot reach agents when their sponsor leaves
+
+        Evidence Examples by Level:
+          - Level 2: Informal list of agents holding credentials; awareness of workload identity concepts
+          - Level 3: Documented agent/workload credential profiles; short-lifetime lifecycle; inventory and discovery established; cascade revocation defined
+          - Level 4: Automated issuance/renewal at scale; discovery coverage metrics; tested cascade revocation; periodic AI-layer review
+          - Level 5: Continuous, comprehensive agent identity coverage; federated workload identity across domains; revocation demonstrably fast and complete
+      references:
+      - rfc-5280
+      - spiffe
+      - rfc-4210
+      - cab-baseline-requirements
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - No credential profiles for AI agents or workloads
+          - Agents use shared credentials or static secrets, if any identity at all
+          - No inventory or discovery of AI-system credentials
+          - Revocation for AI credentials is undefined
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that agents and workloads need managed identities
+          - Partial inventory of agents holding credentials
+          - Credential profiles for AI systems not yet defined
+          - No discovery process for agent/workload identities
+      - number: 3
+        name: Advanced
+        description: |
+          - Credential profiles defined for AI agents and workloads, with owner/sponsor binding and workload identity (for example SPIFFE URI SAN)
+          - Agent credential lifecycle designed for high volume and short lifetimes
+          - Inventory of issued AI-system credentials maintained
+          - Discovery process finds agents and workloads holding identities
+          - Cascade revocation from sponsor to dependent agents defined
+      - number: 4
+        name: Managed
+        description: |
+          - Issuance and renewal of agent credentials automated at population scale
+          - Discovery coverage measured and maintained against a changing agent population
+          - Cascade revocation tested and validated
+          - Certificate-management review covers the AI layer periodically
+      - number: 5
+        name: Optimized
+        description: |
+          - Continuous, comprehensive identity coverage for all agents and workloads
+          - Workload identity federated across trust domains for multi-agent and cross-organizational use
+          - Revocation demonstrably fast and complete across the agent population
+          - Agent identity practice informs standards and the wider ecosystem
+    - id: infrastructure-management
+      weight: 3
+      guidance: |
+        The infrastructure that trains, hosts, and serves AI systems is part of the trust boundary and should be documented and governed from a cryptographic standpoint: where model artifacts are stored and signed, where signing and agent keys live, where inference endpoints terminate transport, and how these are segmented from general workloads. Vulnerability management should cover AI-serving components (model registries, inference gateways, agent runtimes), and infrastructure recovery objectives should include the AI identity and signing services on which the AI layer depends.
+        Segmentation matters because a compromise of AI-serving infrastructure can expose signing keys or allow tampered models into the pipeline; documenting and separating these components limits blast radius and supports the Article 15 cybersecurity expectations for high-risk systems.
+      assessment: |
+        Key Probes:
+          - Is the infrastructure hosting model storage, signing, agent runtimes, and inference endpoints documented from a trust standpoint?
+          - Are AI-serving components segmented from general workloads?
+          - Does vulnerability management cover model registries, inference gateways, and agent runtimes?
+          - Are AI identity and signing services included in infrastructure recovery objectives?
+
+        Warning Signs:
+          - Model-signing infrastructure co-located with general workloads
+          - AI-serving components excluded from vulnerability management
+          - No recovery objective for AI identity/signing services
+          - Inference endpoints undocumented as trust boundaries
+
+        Evidence Examples by Level:
+          - Level 2: Partial documentation of AI-serving infrastructure; informal awareness of exposure
+          - Level 3: Documented AI trust infrastructure; segmentation applied; vulnerability management extended to AI-serving components; recovery objectives include AI identity/signing
+          - Level 4: Regular review of AI infrastructure; segmentation verified; recovery objectives tested
+          - Level 5: AI trust infrastructure continuously assured and resilient by design
+      references:
+      - iso-27001
+      - nist-csf-identify
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Infrastructure hosting AI systems is not documented as a trust boundary
+          - No segmentation of AI-serving components
+          - Vulnerability management excludes AI-serving infrastructure
+          - AI identity and signing services absent from recovery objectives
+      - number: 2
+        name: Foundational
+        description: |
+          - Partial documentation of AI-serving infrastructure
+          - Awareness of exposure from model storage and signing infrastructure
+          - Segmentation not yet applied
+          - Recovery objectives do not yet include AI services
+      - number: 3
+        name: Advanced
+        description: |
+          - AI trust infrastructure documented (model storage, signing, agent runtimes, inference endpoints)
+          - Segmentation applied to separate AI-serving components from general workloads
+          - Vulnerability management extended to model registries, inference gateways, and agent runtimes
+          - Recovery objectives include AI identity and signing services
+      - number: 4
+        name: Managed
+        description: |
+          - AI infrastructure reviewed regularly; segmentation verified
+          - Vulnerability management for AI-serving components is routine
+          - Recovery objectives for AI services are tested
+      - number: 5
+        name: Optimized
+        description: |
+          - AI trust infrastructure continuously assured, segmented, and resilient by design
+          - Recovery of AI identity and signing services is rapid and validated
+          - Infrastructure practice for AI systems informs standards and peers
+    - id: change-management-and-agility
+      weight: 4
+      guidance: |
+        Changes to the AI trust chain — the algorithm used to sign model artifacts, the algorithm backing agent credentials, inference-endpoint transport, or the delegation model — must flow through change management with the ability to roll back a failed change. Agility requirements should be explicit for the AI layer: the organization should identify, up front, what it must be able to change (algorithms, credential profiles, revocation behavior, provenance formats) and design so those changes do not require re-architecting.
+        This capability is what lets the AI layer keep pace with cryptographic deprecation and the PQC transition without emergency rework, and it is what makes rapid response to an AI-layer cryptographic incident (rotating a compromised signing algorithm, tightening agent scope) feasible rather than heroic.
+      assessment: |
+        Key Probes:
+          - Do changes to AI-layer cryptography (model-signing algorithm, agent credentials, inference transport) flow through change management with rollback?
+          - Are agility requirements for the AI layer identified explicitly?
+          - Can the organization substitute an AI-layer algorithm without re-architecting?
+          - Is change management for the AI layer reviewed and improved?
+
+        Warning Signs:
+          - AI-layer cryptographic changes made outside change control
+          - No rollback plan for a failed model-signing or credential change
+          - Agility for the AI layer assumed but never specified or tested
+          - Algorithm changes in the AI trust chain require re-architecting
+
+        Evidence Examples by Level:
+          - Level 2: Awareness that AI-layer changes need control; informal handling
+          - Level 3: AI-layer changes in the change process; documented agility requirements; rollback defined
+          - Level 4: Tested AI-layer algorithm substitution with validated rollback; agility requirements verified; periodic review
+          - Level 5: Rapid, low-risk change across the AI trust chain via pre-approved templates; agility as a standing capability
+      references:
+      - nist-cswp-39
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Changes to AI-layer cryptography are made ad hoc, outside change control
+          - No rollback for failed AI-layer cryptographic changes
+          - Agility requirements for the AI layer are not identified
+          - Algorithm changes in the AI trust chain require re-architecting
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that AI-layer cryptographic changes need managed change and agility
+          - AI-layer changes handled informally
+          - Rollback not defined for AI-layer changes
+          - Agility requirements not documented
+      - number: 3
+        name: Advanced
+        description: |
+          - Changes to the AI trust chain flow through change management with rollback
+          - Agility requirements for the AI layer are explicitly identified
+          - Algorithm and credential-profile substitution is designed for without re-architecting
+          - Change management for the AI layer is documented and followed
+      - number: 4
+        name: Managed
+        description: |
+          - AI-layer algorithm substitution is tested with validated rollback
+          - Agility requirements are verified against real changes
+          - Change management for the AI layer is reviewed and improved periodically
+      - number: 5
+        name: Optimized
+        description: |
+          - Rapid, low-risk change across the AI trust chain via pre-approved templates
+          - Crypto-agility for the AI layer is a standing capability, not a project
+          - Change practice for AI systems informs standards and peers
+  - id: O
+    categories:
+    - id: resilience
+      weight: 4
+      guidance: |
+        AI system cryptographic risk belongs in risk assessment and business impact analysis: the impact of a compromised model-signing key (forged provenance across the estate), of an agent identity service outage (agents unable to authenticate or be revoked), or of a tampered model reaching production. Incident planning and business continuity should account for these, and technology future-proofing should carry the AI layer onto a quantum-safe path in step with the PKI, since confidential inference and long-lived signed provenance are exposed to harvest-now-decrypt-later.
+        Resilience maturity also covers competence and information sharing (AI trust is a fast-moving field spanning security, ML, and compliance) and continual improvement, so that lessons from AI-layer incidents and near-misses feed back into controls.
+        Persona split: the provider-side worst case is model-signing-key compromise, which forges provenance for every downstream consumer; the deployer-side worst case is compromise of an upstream provider — a tampered third-party model or a revoked provider trust anchor — which the deployer must be able to detect, contain, and replace.
+      assessment: |
+        Key Probes:
+          - Does risk assessment / BIA include AI-system cryptographic scenarios (signing-key compromise, agent identity outage, tampered model)?
+          - Does incident planning cover AI-layer cryptographic events?
+          - Does business continuity address AI identity and signing services?
+          - Is the AI layer on a quantum-safe future-proofing path in step with the PKI?
+
+        Warning Signs:
+          - AI cryptographic risk absent from the risk register
+          - No continuity plan for AI identity/signing services
+          - Future-proofing addresses the PKI but not the AI layer
+          - No mechanism to learn from AI-layer incidents
+
+        Evidence Examples by Level:
+          - Level 2: Informal awareness of AI cryptographic risk
+          - Level 3: AI cryptographic scenarios in the risk register and BIA; continuity provisions for AI identity/signing; AI-layer PQC future-proofing identified
+          - Level 4: Quarterly review of AI cryptographic risk; tested continuity for AI services; cross-functional competence sharing
+          - Level 5: AI cryptographic resilience anticipated and continuously improved; scenario planning across the AI trust chain
+      references:
+      - iso-27005
+      - iso-22301
+      - iso-22317
+      - nist-sp-800-34
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Risk assessment and BIA do not consider AI-system cryptographic scenarios
+          - Incident planning omits AI-layer cryptographic events
+          - Business continuity does not address AI identity or signing services
+          - No future-proofing for AI-layer cryptography
+      - number: 2
+        name: Foundational
+        description: |
+          - General awareness of AI cryptographic risk
+          - AI cryptographic scenarios not yet in the risk register
+          - Continuity for AI services not planned
+          - AI-layer future-proofing not identified
+      - number: 3
+        name: Advanced
+        description: |
+          - AI-system cryptographic scenarios included in risk assessment and BIA (signing-key compromise, agent identity outage, tampered model)
+          - Incident planning covers AI-layer cryptographic events
+          - Business continuity addresses AI identity and signing services
+          - Technology future-proofing carries the AI layer onto a quantum-safe path in step with the PKI
+      - number: 4
+        name: Managed
+        description: |
+          - AI cryptographic risk reviewed quarterly and integrated with enterprise risk
+          - Continuity for AI identity and signing services is tested
+          - Competence and information sharing established across security, ML, and compliance
+      - number: 5
+        name: Optimized
+        description: |
+          - AI cryptographic resilience is anticipated, with scenario planning across the AI trust chain
+          - Continual improvement driven by AI-layer incidents and near-misses
+          - Resilience practice for AI systems informs standards and peers
+    - id: automation
+      weight: 4
+      guidance: |
+        The AI system layer cannot be governed manually. Agent populations are large and short-lived, so credential issuance, renewal, and revocation must be automated; model provenance verification should be an automated gate in the deployment pipeline; and cryptographic inventory of AI systems should be discovered automatically. Automation descriptions should document these flows, monitoring and auditing should cover the automated AI-trust processes themselves, and exception handling should define what happens when automation fails (for example an issuance backlog, or a provenance check that cannot complete).
+        Automation is also what makes the EU AI Act Article 12 expectation of automatically generated, tamper-evident logs practical at AI-system scale, and what keeps cascade revocation timely.
+        Persona split: providers automate signing and attestation generation in the build pipeline; deployers automate signature and attestation verification as a deployment gate. Agent credential automation applies to both roles.
+      assessment: |
+        Key Probes:
+          - Are agent credential issuance, renewal, and revocation automated?
+          - Is model provenance verification an automated deployment gate?
+          - Is cryptographic inventory of AI systems discovered automatically?
+          - Is the automation of AI-trust processes itself monitored and audited, with defined exception handling?
+
+        Warning Signs:
+          - Manual agent credential handling at scale
+          - Model provenance checked manually or not at all
+          - Automated AI-trust processes run unmonitored
+          - No exception handling when AI-trust automation fails
+
+        Evidence Examples by Level:
+          - Level 2: Some scripted AI-trust tasks; largely manual
+          - Level 3: Documented automation for agent credential lifecycle and provenance gating; monitoring of automated processes; exception handling defined
+          - Level 4: Automation covers issuance, renewal, revocation, and provenance at scale; audited; exceptions handled and reviewed
+          - Level 5: Fully automated, self-healing AI-trust operations with comprehensive monitoring
+      references:
+      - nist-sp-800-92
+      - slsa
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - AI-trust processes are manual
+          - Agent credential lifecycle is handled by hand
+          - Model provenance is not verified automatically
+          - No monitoring or exception handling for AI-trust automation
+      - number: 2
+        name: Foundational
+        description: |
+          - Some AI-trust tasks scripted, but largely manual
+          - Awareness that agent scale requires automation
+          - Provenance gating not yet automated
+          - Exception handling for automation undefined
+      - number: 3
+        name: Advanced
+        description: |
+          - Agent credential issuance, renewal, and revocation are automated
+          - Model provenance verification is an automated deployment gate
+          - Provider: model signing and attestation generation are automated in the build pipeline
+          - Cryptographic inventory of AI systems is discovered automatically
+          - Automated AI-trust processes are monitored, with defined exception handling
+      - number: 4
+        name: Managed
+        description: |
+          - Automation covers the agent credential lifecycle and provenance gating at population scale
+          - Automated AI-trust processes are audited
+          - Exceptions are handled and reviewed for improvement
+      - number: 5
+        name: Optimized
+        description: |
+          - AI-trust operations are fully automated and self-healing
+          - Monitoring of automated processes is comprehensive
+          - Automation practice for AI systems informs standards and peers
+    - id: interoperability
+      weight: 3
+      guidance: |
+        AI system trust increasingly crosses boundaries: agents from different teams or organizations interact, workloads federate identity, and AI-generated content moves between systems that need to verify its provenance. Adopting open standards is what makes this tractable — SPIFFE for workload identity, RFC 8693 token exchange for delegated authority, C2PA for content provenance, and SLSA / in-toto for model supply-chain attestations. An interoperability strategy should state which standards the organization adopts for AI trust, and integration guidance should help internal and external parties consume AI-system identities and verify provenance.
+        Betting on proprietary AI-identity or provenance mechanisms creates lock-in and blocks cross-domain trust; open standards keep the AI trust layer composable with partners and with the wider ecosystem.
+        Persona split: providers emit attestations and provenance in open formats so any relying party can verify them; deployers implement verification of those formats and require them from vendors.
+      assessment: |
+        Key Probes:
+          - Does the interoperability strategy cover AI system identity and provenance?
+          - Are open standards adopted for workload identity, delegation, and content/model provenance (SPIFFE, RFC 8693, C2PA, SLSA/in-toto)?
+          - Is integration guidance available for consuming AI-system identities and verifying provenance?
+          - Is cross-domain AI trust (multi-team, multi-organization) tested?
+
+        Warning Signs:
+          - Proprietary agent-identity or provenance mechanisms with no standards basis
+          - No strategy for cross-domain AI trust
+          - Integration guidance for AI identity/provenance absent
+          - Provenance that cannot be verified outside the issuing system
+
+        Evidence Examples by Level:
+          - Level 2: Awareness of AI-trust standards; informal adoption
+          - Level 3: Interoperability strategy covers AI identity/provenance; open standards adopted; integration guidance documented
+          - Level 4: Cross-domain AI trust tested; standards adoption verified in integrations
+          - Level 5: Seamless federated AI trust across domains; contribution to AI identity/provenance standards
+      references:
+      - open-standards-principles
+      - spiffe
+      - c2pa
+      - in-toto
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - No interoperability strategy for AI system identity or provenance
+          - No open standards adopted for the AI trust layer
+          - No integration guidance for AI identities or provenance
+          - AI provenance cannot be verified outside the issuing system
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness of open standards for AI trust
+          - Informal or partial adoption
+          - Interoperability strategy does not yet cover the AI layer
+          - Integration guidance not documented
+      - number: 3
+        name: Advanced
+        description: |
+          - Interoperability strategy covers AI system identity and provenance
+          - Open standards adopted (SPIFFE for workload identity, RFC 8693 for delegation, C2PA for content provenance, SLSA/in-toto for model attestations)
+          - Integration guidance documented for consuming AI identities and verifying provenance
+          - Provider: attestations and provenance emitted in open formats (for example SLSA provenance, in-toto layouts, C2PA manifests)
+          - Deployer: verification of standard attestations implemented and required from vendors
+      - number: 4
+        name: Managed
+        description: |
+          - Cross-domain AI trust (multi-team, multi-organization) is tested
+          - Standards adoption is verified in real integrations
+          - Interoperability for the AI layer is reviewed and maintained
+      - number: 5
+        name: Optimized
+        description: |
+          - Federated AI trust operates seamlessly across domains
+          - Provenance is verifiable across the ecosystem
+          - Organization contributes to AI identity and provenance standards
+    - id: monitoring-and-auditing
+      weight: 5
+      guidance: |
+        This category carries the EU AI Act Article 12 obligation into the base model: high-risk AI systems must automatically generate tamper-evident logs that enable traceability. For AI system cryptographic governance this means logging requirements must define the cryptographic events to capture — which agent acted, under whose delegated authority, against which model version, with which credential — and those logs must support reconstruction of an audit trail that answers, verifiably, what an AI system did and on whose authority. Event monitoring should detect AI credential anomalies (unexpected agent behavior, credential misuse), and critical events (agent credential compromise, detection of a tampered or unsigned model) should be alerted and resolved under the incident plan.
+        Because the agent action layer — tool and API calls — is treated as in scope for the AI Act, the audit trail should extend to action-layer authorization events, not just model outputs. Tamper-evidence of the logs themselves is part of the requirement, so log integrity protection belongs here.
+        Persona note: record-keeping duties fall on both roles — providers keep the automatically generated logs of the systems they place on the market (Article 19), and deployers retain the logs under their control for at least six months (Article 26(6)). The audit-trail criteria apply to whichever role's logs the organization holds.
+      assessment: |
+        Key Probes:
+          - Do logging requirements define AI-system cryptographic events (agent identity, delegated authority, model version, credential used, action-layer authorization)?
+          - Are AI-system logs collected and tamper-evident, consistent with EU AI Act Article 12?
+          - Can an audit trail reconstruct, verifiably, what an AI system did and on whose authority?
+          - Is monitoring in place for AI credential anomalies, with alerting on compromise or model tampering?
+
+        Warning Signs:
+          - AI-system actions not logged, or logs not tamper-evident
+          - Audit trail cannot attribute an action to a specific agent and authority
+          - Action-layer (tool/API) calls not captured
+          - No alerting on AI credential compromise or tampered models
+
+        Evidence Examples by Level:
+          - Level 2: Some AI-system logging; not tamper-evident; attribution incomplete
+          - Level 3: Defined AI cryptographic logging requirements; tamper-evident collection; reconstructable audit trail; monitoring and alerting for AI credential events
+          - Level 4: Audit trail attributes actions to agent and authority across the action layer; anomaly detection tuned; critical events alerted and resolved
+          - Level 5: Comprehensive, verifiable AI-system audit trail; proactive anomaly detection; log integrity continuously assured
+      references:
+      - eu-ai-act
+      - nist-sp-800-92
+      - nist-sp-800-61
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - AI-system cryptographic events are not logged
+          - No tamper-evidence for any AI-system logs that do exist
+          - Audit trail cannot attribute actions to a specific agent or authority
+          - No monitoring or alerting for AI credential events
+      - number: 2
+        name: Foundational
+        description: |
+          - Some AI-system logging exists but is incomplete and not tamper-evident
+          - Attribution of actions to agent and authority is partial
+          - Action-layer (tool/API) calls are not consistently captured
+          - Alerting for AI credential compromise or model tampering is absent
+      - number: 3
+        name: Advanced
+        description: |
+          - Logging requirements define AI-system cryptographic events (agent identity, delegated authority, model version, credential, action-layer authorization)
+          - AI-system logs are collected and tamper-evident, consistent with EU AI Act Article 12
+          - Audit trail can reconstruct what an AI system did and on whose authority
+          - Monitoring detects AI credential anomalies; critical events are alerted and resolved under the incident plan
+      - number: 4
+        name: Managed
+        description: |
+          - Audit trail attributes actions to agent and authority across the action layer
+          - Anomaly detection for AI credentials is tuned and effective
+          - Critical AI cryptographic events are consistently alerted and resolved
+          - Log review for the AI layer is performed periodically
+      - number: 5
+        name: Optimized
+        description: |
+          - AI-system audit trail is comprehensive and verifiable end to end
+          - Anomaly detection is proactive across the agent population and action layer
+          - Log integrity is continuously assured
+          - Monitoring and audit practice for AI systems informs standards and peers
+  - id: R
+    categories:
+    - id: sourcing
+      weight: 3
+      guidance: |
+        Governing the AI system layer requires the right resources: people who understand AI identity and provenance, and tooling and vendors that support it. Resource identification should capture what the AI trust layer needs — model registries that support signing, agent platforms that support workload identity and revocation, key stores/HSMs for signing keys — and vendor assessment should test whether candidate AI platforms can meet the organization's identity, integrity, provenance, and logging requirements rather than assuming they can. Availability of AI identity and signing capability should be treated as a dependency the organization must secure, and resources should be reviewed as the AI estate grows.
+        As with the PKI layer, an organization can reach strong internal governance yet be blocked by a critical AI platform that cannot sign models, issue workload identities, or emit the tamper-evident logs the AI Act expects.
+        Persona split: for deployers, vendor capability assessment is the central sourcing control — procured AI platforms and models must demonstrably support signing, attestations, workload identity, and Article 12 logging. Providers additionally source the signing infrastructure itself — HSMs, signing services, and registries that preserve attestations.
+      assessment: |
+        Key Probes:
+          - Are the resources needed for AI trust (people, tooling, vendors) identified and documented?
+          - Does vendor assessment test AI platforms for identity, integrity, provenance, and logging capability?
+          - Is availability of AI identity and signing capability secured as a dependency?
+          - Are AI-trust resources reviewed as the estate grows?
+
+        Warning Signs:
+          - AI platforms procured without checking identity/provenance/logging capability
+          - No named resources for AI trust
+          - Signing or workload-identity capability assumed but unavailable
+          - AI-trust resourcing not revisited as the estate grows
+
+        Evidence Examples by Level:
+          - Level 2: Informal awareness of AI-trust resource needs
+          - Level 3: Documented AI-trust resource needs; vendor assessment covering AI trust capabilities; availability treated as a dependency
+          - Level 4: AI-trust resources reviewed regularly; vendor capability verified in practice
+          - Level 5: AI-trust resourcing anticipates estate growth; vendor roadmaps steered toward required capabilities
+      references:
+      - iso-27001
+      - nist-ai-rmf
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - Resources needed for AI trust are not identified
+          - Vendor assessment does not consider AI identity, provenance, or logging
+          - Availability of AI signing/identity capability is not treated as a dependency
+          - AI-trust resourcing is not reviewed
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that AI trust needs specific resources and capable vendors
+          - Resource needs not yet documented
+          - Vendor assessment for AI trust capability is informal
+          - Availability of AI capability is assumed
+      - number: 3
+        name: Advanced
+        description: |
+          - AI-trust resource needs (people, tooling, vendors) are documented
+          - Vendor assessment tests AI platforms for identity, integrity, provenance, and logging capability
+          - Availability of AI identity and signing capability is secured as a dependency
+          - AI-trust resources are reviewed as the estate changes
+      - number: 4
+        name: Managed
+        description: |
+          - AI-trust resources are reviewed regularly against demand
+          - Vendor capability for AI trust is verified in practice, not assumed
+          - Resource gaps for the AI layer are tracked and closed
+      - number: 5
+        name: Optimized
+        description: |
+          - AI-trust resourcing anticipates estate growth and new AI trust patterns
+          - Vendor roadmaps are steered toward the identity, provenance, and logging capabilities required
+          - Sourcing practice for AI trust informs peers
+    - id: knowledge-and-training
+      weight: 3
+      guidance: |
+        AI system cryptographic governance spans disciplines that rarely sit together: PKI and cryptography, machine learning and model operations, and AI regulation. Training plans should build competence in AI identity, model signing and provenance, and the cryptographic obligations of the EU AI Act and DORA, for the specific roles that operate the AI trust layer. Responsible personnel — AI identity operators, model-signing authorities, ML engineers deploying signed models — should receive role-appropriate training, and security-awareness content should reflect AI-trust concerns. Knowledge should be reviewed as standards and regulation evolve.
+        Without this, the AI trust layer is operated by people fluent in one domain but not the others, which is a common root cause of ungoverned AI cryptography even where tooling exists.
+      assessment: |
+        Key Probes:
+          - Does the training plan cover AI identity, model signing/provenance, and AI-layer regulatory obligations?
+          - Do the roles operating the AI trust layer receive role-appropriate training?
+          - Does security-awareness content reflect AI-trust concerns?
+          - Is AI-trust knowledge reviewed as standards and regulation change?
+
+        Warning Signs:
+          - AI trust operated by staff trained in only one of PKI, ML, or AI regulation
+          - No role-specific training for AI identity operators or model-signing authorities
+          - Awareness content silent on AI-trust risks
+          - Knowledge not refreshed as the field moves
+
+        Evidence Examples by Level:
+          - Level 2: Ad hoc knowledge; no AI-trust training plan
+          - Level 3: Training plan covering AI identity, signing/provenance, and regulation; role-appropriate training delivered
+          - Level 4: Training effectiveness tracked; knowledge reviewed periodically
+          - Level 5: AI-trust competence sustained and deepened; knowledge shared internally and externally
+      references:
+      - nist-sp-800-16
+      - nist-sp-800-50
+      - ecsf
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - No training plan for AI system cryptographic governance
+          - Roles operating the AI trust layer receive no relevant training
+          - Security-awareness content does not address AI trust
+          - AI-trust knowledge is not reviewed
+      - number: 2
+        name: Foundational
+        description: |
+          - Awareness that AI trust requires cross-disciplinary competence
+          - Training is ad hoc, with no plan
+          - Role-specific AI-trust training is not established
+          - Awareness content does not yet reflect AI-trust concerns
+      - number: 3
+        name: Advanced
+        description: |
+          - Training plan covers AI identity, model signing and provenance, and the cryptographic obligations of the EU AI Act and DORA
+          - Responsible personnel receive role-appropriate AI-trust training
+          - Security-awareness content reflects AI-trust concerns
+          - AI-trust knowledge is reviewed as standards and regulation evolve
+      - number: 4
+        name: Managed
+        description: |
+          - Training effectiveness for AI trust is tracked
+          - Knowledge is reviewed periodically and kept current
+          - Cross-disciplinary competence (PKI, ML, regulation) is deliberately built
+      - number: 5
+        name: Optimized
+        description: |
+          - AI-trust competence is sustained, deepened, and refreshed continuously
+          - Knowledge is shared internally and with the wider community
+          - Training practice for AI trust informs peers and programs
+    - id: awareness
+      weight: 3
+      guidance: |
+        Beyond the specialists who operate it, the wider organization should be aware that AI systems are cryptographic actors and that using an unsigned model or an unidentified agent carries risk. An awareness plan should communicate, to developers and stakeholders who build with or deploy AI, what the organization's AI-trust posture requires — that models must be signed and their provenance verified, that agents must hold managed identities, and that AI-system actions are logged. Where relevant, the organization should be able to disclose its AI-trust posture to relying parties, and there should be a clear point of contact for AI-trust and AI-identity questions, with timely communication when posture or requirements change.
+        Awareness closes the gap between policy and behavior: developers who understand why model signing and agent identity matter are far more likely to build within the AI-trust controls rather than around them.
+      assessment: |
+        Key Probes:
+          - Does an awareness plan communicate AI-trust requirements to developers and stakeholders?
+          - Can the organization disclose its AI-trust posture to relying parties where relevant?
+          - Is there a clear point of contact for AI-trust and AI-identity questions?
+          - Are changes to AI-trust posture or requirements communicated in a timely way?
+
+        Warning Signs:
+          - Developers unaware that models must be signed or agents must hold managed identities
+          - No disclosure of AI-trust posture to relying parties
+          - No point of contact for AI-trust questions
+          - Changes to AI-trust requirements not communicated
+
+        Evidence Examples by Level:
+          - Level 2: Informal awareness among some teams
+          - Level 3: AI-trust awareness plan; disclosure of posture where relevant; named point of contact
+          - Level 4: Awareness measured; timely communication of changes established
+          - Level 5: Strong organization-wide AI-trust culture; proactive communication and disclosure
+      references:
+      - enisa-cyber-awareness
+      - nist-sp-800-50
+      levels:
+      - number: 1
+        name: Initial
+        description: |
+          - No awareness that AI systems are cryptographic actors
+          - AI-trust requirements are not communicated to developers or stakeholders
+          - No disclosure of AI-trust posture and no point of contact
+          - Changes to AI-trust requirements are not communicated
+      - number: 2
+        name: Foundational
+        description: |
+          - Informal awareness of AI-trust concerns among some teams
+          - No structured awareness plan
+          - Disclosure of posture is not established
+          - Point of contact for AI-trust questions is unclear
+      - number: 3
+        name: Advanced
+        description: |
+          - Awareness plan communicates AI-trust requirements to developers and stakeholders
+          - AI-trust posture can be disclosed to relying parties where relevant
+          - A clear point of contact exists for AI-trust and AI-identity questions
+          - Changes to AI-trust posture and requirements are communicated in a timely way
+      - number: 4
+        name: Managed
+        description: |
+          - Awareness of AI-trust requirements is measured across the organization
+          - Timely communication of AI-trust changes is established and reliable
+          - Awareness activities are reviewed and improved
+      - number: 5
+        name: Optimized
+        description: |
+          - A strong, organization-wide AI-trust culture is embedded
+          - Communication and disclosure of AI-trust posture are proactive
+          - Awareness practice for AI trust informs peers
+overlays:
+  modules:
+  - id: G
+    categories:
+    - id: strategy-and-vision
+      requirements:
+      - id: scope-and-drivers
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          AI systems as cryptographic actors, and the EU AI Act / DORA obligations that attach to them, are new business drivers absent from classical PKI scope. The AI layer must be explicitly in scope for the driver analysis, not assumed to be covered by PKI scope.
+      - id: architecture
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Base weight 1 (floor), yet the trust architecture for AI systems — agent identity model, model-signing topology, provenance chain, delegation design — is among the most consequential decisions for AI-layer governance. Large gap between base weight and AI-governance importance.
+    - id: policies-and-documentation
+      requirements:
+      - id: certificate-policy
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          The certificate/trust policy must be extended to cover agent credential profiles, owner/sponsor binding, delegation, and model-signing — new content the classical CP does not contain. Weight is already high, but the AI layer changes what the policy must define.
+      - id: policy-review
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          AI trust standards and regulation move quickly; policy review must cover the AI layer with a cadence that keeps agent profiles, provenance formats, and algorithm choices current.
+    - id: compliance
+      requirements:
+      - id: compliance-policies
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          The EU AI Act (Articles 12 and 15) and DORA-for-AI introduce a new compliance domain with cryptographic obligations distinct from PKI compliance. These are new obligations, not expanded existing ones.
+      - id: compliance-monitoring
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Monitoring scope expands to AI-layer conformance (Article 12 log integrity, provenance, agent identity coverage), but the core activity remains operating a compliance monitoring program.
+    - id: processes-and-procedures
+      requirements:
+      - id: process-documentation
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Agent onboarding/offboarding with cascade revocation, model-signing ceremonies, and provenance-verification gating are fundamentally new processes with no classical-PKI equivalent, not merely expanded documentation.
+      - id: process-evidence
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          New evidence categories arise for the AI layer: signing-ceremony records, cascade-revocation test results, provenance-verification logs. The evidence discipline is broader than for classical PKI operations.
+    - id: cryptography
+      requirements:
+      - id: crypto-visibility
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          The core gap the extension addresses. AI systems (models, agents, inference endpoints) must appear in the cryptographic inventory; without visibility into AI-layer cryptography, the AI systems remain ungoverned even with a mature PKI.
+      - id: crypto-agility
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Crypto-agility must reach the AI trust chain (model-signing algorithm, agent credential algorithm, inference transport). This is the capability that lets the AI layer track deprecation and the PQC transition without re-architecting.
+      - id: crypto-algorithms
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Approved-algorithm governance must extend to AI-specific uses (model signing, agent credentials, inference transport). Weight is already high, but coverage of AI uses is a substantive expansion.
+      - id: crypto-lifecycle
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Lifecycle and deprecation rules must apply to cryptography embedded in model-provenance chains and long-lived signed artifacts, which have different longevity considerations from classical certificates.
+  - id: M
+    categories:
+    - id: key-management
+      requirements:
+      - id: key-lifecycle
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Ephemeral, high-volume agent keys and high-value model-signing keys impose lifecycle demands (very short lifetimes on one end, strong dual-control hardware protection on the other) beyond classical key lifecycle.
+      - id: key-inventory
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          The key inventory must include AI-system keys (agent, model-signing, inference) and their backing stores, which are commonly omitted from classical key inventories.
+    - id: certificate-management
+      requirements:
+      - id: cert-lifecycle
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Agent credential lifecycle is high-volume, short-lived, continuously issued and renewed, and must support cascade revocation — a materially different and more demanding lifecycle than classical certificate management.
+      - id: cert-inventory
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          An inventory of issued AI-system credentials is essential so that no agent acts on organizational authority unaccounted for; this extends the classical issued-certificate inventory to a fast-changing agent population.
+      - id: cert-discovery
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Discovery must find agents and workloads holding identities across a dynamic estate; unknown agents holding credentials is a distinct AI-layer risk.
+      - id: cert-profiles
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          New credential profiles are required for AI systems (owner/sponsor binding, workload identity such as SPIFFE URI SAN), beyond classical certificate profiles.
+    - id: infrastructure-management
+      requirements:
+      - id: vulnerability-management
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Vulnerability management must extend to AI-serving components (model registries, inference gateways, agent runtimes), whose compromise can expose signing keys or admit tampered models.
+    - id: change-management-and-agility
+      requirements:
+      - id: agility-requirements
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Agility requirements must be identified explicitly for the AI trust chain (algorithms, credential profiles, revocation behavior, provenance formats) so AI-layer cryptographic change does not require re-architecting.
+  - id: O
+    categories:
+    - id: resilience
+      requirements:
+      - id: risk-assessment
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Risk assessment and BIA must incorporate AI-system cryptographic scenarios (model-signing key compromise, agent identity outage, tampered model in production), which are new impact pathways.
+      - id: future-proofing
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Technology future-proofing must carry the AI layer onto a quantum-safe path; confidential inference and long-lived signed provenance are exposed to harvest-now-decrypt-later, in step with the PKI.
+    - id: automation
+      requirements:
+      - id: automation-description
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Large, short-lived agent populations make automation of credential issuance, renewal, revocation, and provenance gating a necessity rather than an option; the automated AI-trust flows must be described and governed.
+    - id: interoperability
+      requirements:
+      - id: open-standards
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          Cross-domain AI trust depends on open standards (SPIFFE, RFC 8693, C2PA, SLSA/in-toto). Proprietary AI-identity or provenance mechanisms block federation and verifiable provenance across the ecosystem.
+    - id: monitoring-and-auditing
+      requirements:
+      - id: audit-trail
+        type: multiplier
+        multiplier: 2.0
+        rationale: |
+          EU AI Act Article 12 requires a reconstructable, tamper-evident record of what a high-risk AI system did; the audit trail must attribute actions to a specific agent and delegated authority across the action layer — a new and central AI-layer requirement.
+      - id: logging-requirements
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Logging requirements must define AI-system cryptographic events (agent identity, delegated authority, model version, credential, action-layer authorization) and tamper-evidence, expanding classical logging scope.
+      - id: event-monitoring
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Monitoring must detect AI credential anomalies and misuse across the agent population and action layer, a new detection surface beyond classical operational and security events.
+  - id: R
+    categories:
+    - id: sourcing
+      requirements:
+      - id: resource-identification
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Resource identification must capture AI-trust needs (signing-capable model registries, workload-identity-capable agent platforms, HSMs for signing keys) and vendor capability, which classical sourcing does not consider.
+    - id: knowledge-and-training
+      requirements:
+      - id: personnel-training
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Operating the AI trust layer requires cross-disciplinary competence (PKI, ML/model operations, AI regulation); role-appropriate training for AI identity operators and model-signing authorities is a new requirement.
+    - id: awareness
+      requirements:
+      - id: awareness-plan
+        type: multiplier
+        multiplier: 1.5
+        rationale: |
+          Developers and stakeholders must understand that models require signing and provenance verification and that agents require managed identities; the awareness plan must carry these AI-trust requirements to close the policy-to-behavior gap.
