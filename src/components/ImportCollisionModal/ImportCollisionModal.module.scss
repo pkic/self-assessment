@@ -1,0 +1,69 @@
+.pkimm-import-collision {
+  h2 {
+    margin: 0 0 0.75rem;
+  }
+
+  p {
+    margin: 0 0 0.75rem;
+  }
+}
+
+.pkimm-import-collision__hint {
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.9rem;
+}
+
+.pkimm-import-collision__merge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+
+  select {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 1px solid var(--pkimm-border-color);
+    border-radius: var(--pkimm-border-radius-sm);
+    padding: 0.4rem 0.6rem;
+    font: inherit;
+    color: var(--pkimm-text-color-dark);
+    background: var(--pkimm-surface-color);
+  }
+}
+
+.pkimm-import-collision__actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.pkimm-import-collision__primary,
+.pkimm-import-collision__secondary {
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.pkimm-import-collision__primary {
+  background: var(--pkimm-primary-color);
+  color: var(--pkimm-text-color-light);
+  border-color: var(--pkimm-primary-color);
+}
+
+.pkimm-import-collision__primary:hover {
+  background: var(--pkimm-primary-color-hover);
+  border-color: var(--pkimm-primary-color-hover);
+}
+
+.pkimm-import-collision__secondary {
+  background: var(--pkimm-surface-color);
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-import-collision__secondary:hover {
+  background: var(--pkimm-hover-bg-subtle);
+}

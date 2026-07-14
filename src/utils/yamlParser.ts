@@ -4,7 +4,6 @@ import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
 import {
   AssessmentData,
-  ConfigData,
   ExtensionData,
   ReferencesCatalog,
 } from "../types/types";
@@ -28,7 +27,7 @@ const validators = {
 
 export const yamlParser = (
   yamlText: string,
-): AssessmentData | ConfigData | ExtensionData | ReferencesCatalog => {
+): AssessmentData | ExtensionData | ReferencesCatalog => {
   const data = yaml.load(yamlText);
   if (typeof data !== "object" || data === null) {
     throw new Error("Invalid YAML format");
@@ -36,15 +35,13 @@ export const yamlParser = (
   if ("modules" in data) return data as AssessmentData;
   if ("extension" in data) return data as ExtensionData;
   if ("references" in data) return data as ReferencesCatalog;
-  if ("email" in data || "overview" in data) return data as ConfigData;
   throw new Error("Invalid YAML format");
 };
 
 /** Validate that the parsed data matches the schema declared by its
- *  `schemaVersion` field. Throws on mismatch. ConfigData has no
- *  schemaVersion and is skipped. */
+ *  `schemaVersion` field. Throws on mismatch. */
 export const validateSchema = (
-  data: AssessmentData | ConfigData | ExtensionData | ReferencesCatalog,
+  data: AssessmentData | ExtensionData | ReferencesCatalog,
 ): void => {
   const schemaVersion = (data as { schemaVersion?: string }).schemaVersion;
   if (typeof schemaVersion !== "string") return;

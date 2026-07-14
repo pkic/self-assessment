@@ -5,12 +5,14 @@ interface Props {
   message: string;
   onDownloadRaw: () => void;
   changelogUrl?: string;
+  downloadLabel?: string;
 }
 
 export const ForwardCompatRefusal: React.FC<Props> = ({
   message,
   onDownloadRaw,
   changelogUrl,
+  downloadLabel = "Download saved assessments",
 }) => (
   <div className="pkimm-forward-compat" role="alertdialog">
     <h2>Newer version of this widget is required</h2>
@@ -22,7 +24,7 @@ export const ForwardCompatRefusal: React.FC<Props> = ({
         className="pkimm-forward-compat__primary"
         onClick={onDownloadRaw}
       >
-        Download saved assessments
+        {downloadLabel}
       </button>
       {changelogUrl && (
         <a

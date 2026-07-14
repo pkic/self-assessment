@@ -1,17 +1,8 @@
-// Legacy data needs user attention — render with the danger color
-// language: red accent + light danger-bg tint. Surface stays readable
-// (not fully red-tinted) so the prompt invites action without shouting.
+.pkimm-legacy-prompt__banner {
+  margin: var(--pkimm-space-md);
+}
 
 .pkimm-legacy-prompt {
-  background-color: var(--pkimm-danger-bg);
-  border: 1px solid var(--pkimm-danger-border);
-  border-left: 4px solid var(--pkimm-danger-fg);
-  border-radius: var(--pkimm-border-radius-md);
-  box-shadow: var(--pkimm-shadow-sm);
-  padding: 1.25rem 1.5rem;
-  margin: 1rem;
-  color: var(--pkimm-text-color-dark);
-
   p {
     margin: 0 0 0.5rem 0;
     line-height: 1.5;

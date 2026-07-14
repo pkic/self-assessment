@@ -48,6 +48,14 @@ module.exports = {
         test: /\.svg$/,
         use: "file-loader",
       },
+      {
+        test: /\.ya?ml$/,
+        type: "asset/source",
+      },
+      {
+        test: /\.ttf$/,
+        type: "asset/inline",
+      },
     ],
   },
   devServer: {

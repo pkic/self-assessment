@@ -1,0 +1,48 @@
+.pkimm-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pkimm-space-2xs);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: var(--pkimm-border-radius-pill);
+  padding: var(--pkimm-space-3xs) var(--pkimm-space-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+
+  &:hover {
+    filter: brightness(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: 2px;
+  }
+}
+
+.pkimm-status-pill--success {
+  color: var(--pkimm-success-fg);
+  background-color: var(--pkimm-success-bg);
+  border-color: var(--pkimm-success-border);
+}
+
+.pkimm-status-pill--warning {
+  color: var(--pkimm-timing-warning-fg);
+  background-color: var(--pkimm-timing-warning-bg);
+  border-color: var(--pkimm-timing-warning-border);
+}
+
+.pkimm-status-pill--neutral {
+  color: var(--pkimm-text-color-muted);
+  background-color: var(--pkimm-surface-color-alt);
+  border-color: var(--pkimm-border-color);
+}
+
+.pkimm-status-pill:disabled {
+  cursor: not-allowed;
+  filter: none;
+  opacity: 0.55;
+}

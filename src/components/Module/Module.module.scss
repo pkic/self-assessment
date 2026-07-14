@@ -43,3 +43,11 @@
     margin-bottom: 0;
   }
 }
+
+.pkimm-module__intro {
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 72ch;
+  margin: 0 0 var(--pkimm-space-md);
+}

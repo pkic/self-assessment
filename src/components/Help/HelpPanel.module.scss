@@ -1,0 +1,201 @@
+.pkimm-help-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  // The drawer mounts outside .pkimm-assessment-container (HelpProvider
+  // renders it as a sibling), so the widget font must be re-applied here.
+  font-family: var(--pkimm-font-family);
+  animation: pkimm-help-panel-slide-in 0.2s ease-out;
+}
+
+@keyframes pkimm-help-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--pkimm-space-md));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pkimm-help-panel {
+    animation: none;
+  }
+}
+
+.pkimm-help-panel__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-2xs);
+  padding: var(--pkimm-space-md) var(--pkimm-space-md) var(--pkimm-space-sm);
+  border-bottom: 1px solid var(--pkimm-border-color);
+}
+
+.pkimm-help-panel__crumb {
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--pkimm-text-color-muted);
+}
+
+.pkimm-help-panel__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pkimm-space-sm);
+}
+
+.pkimm-help-panel__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.3;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-help-panel__chip {
+  flex-shrink: 0;
+  background: var(--pkimm-primary-color-lighter);
+  color: var(--pkimm-primary-color);
+  border: 1px solid
+    color-mix(in srgb, var(--pkimm-primary-color) 30%, transparent);
+  border-radius: var(--pkimm-border-radius-pill);
+  padding: var(--pkimm-space-3xs) var(--pkimm-space-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pkimm-help-panel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--pkimm-space-md) var(--pkimm-space-md) var(--pkimm-space-lg);
+}
+
+.pkimm-help-panel__section {
+  margin-bottom: var(--pkimm-space-lg);
+}
+
+.pkimm-help-panel__heading {
+  margin: 0 0 var(--pkimm-space-2xs);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-help-panel__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-help-panel__list {
+  margin: var(--pkimm-space-xs) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-xs);
+}
+
+.pkimm-help-panel__list li {
+  position: relative;
+  padding-left: var(--pkimm-space-md);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-help-panel__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pkimm-primary-color);
+  opacity: 0.55;
+}
+
+.pkimm-help-panel__levels {
+  margin: var(--pkimm-space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-xs);
+}
+
+.pkimm-help-panel__level-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--pkimm-space-sm);
+
+  .pkimm-level-badge {
+    flex-shrink: 0;
+  }
+}
+
+.pkimm-help-panel__level-desc {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-help-panel__toc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-3xs);
+  margin-top: var(--pkimm-space-lg);
+  padding-top: var(--pkimm-space-md);
+  border-top: 1px solid var(--pkimm-border-color);
+}
+
+.pkimm-help-panel__toc-label {
+  margin-bottom: var(--pkimm-space-2xs);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pkimm-text-color-muted);
+}
+
+.pkimm-help-panel__toc-item {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  gap: var(--pkimm-space-sm);
+}
+
+.pkimm-help-panel__toc-icon {
+  width: 1rem;
+  font-size: 0.9rem;
+}
+
+.pkimm-help-panel__toc-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.pkimm-help-panel__toc-chevron {
+  font-size: 0.65rem;
+  opacity: 0.45;
+}
+
+.pkimm-help-panel__privacy {
+  display: flex;
+  align-items: center;
+  gap: var(--pkimm-space-xs);
+  margin: var(--pkimm-space-lg) 0 0;
+  padding-top: var(--pkimm-space-md);
+  border-top: 1px solid var(--pkimm-border-color);
+  font-size: 0.8rem;
+  color: var(--pkimm-text-color-muted);
+
+  svg {
+    font-size: 0.8rem;
+  }
+}

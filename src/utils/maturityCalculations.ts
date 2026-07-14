@@ -6,8 +6,10 @@ import {
   ExtensionData,
   CategoryData,
 } from "../types/types";
+import { calculateEffectiveCategoryLevel } from "./effectiveLevel";
+import type { RequirementProgress } from "../types/types";
 
-const getWeightSum = (
+export const getWeightSum = (
   moduleId: string,
   category: CategoryData,
   extensions: ExtensionData[],
@@ -35,8 +37,8 @@ const getWeightSum = (
             } else if (extReq.addition !== undefined) {
               reqWeight += extReq.addition;
             }
-            // Add the difference to the weight sum
-            weightSum += reqWeight - coreReq.weight;
+            // Clamp the effective weight at zero, then add its delta from base.
+            weightSum += Math.max(0, reqWeight) - coreReq.weight;
           }
         });
       }
@@ -72,7 +74,7 @@ export const getEffectiveWeight = (
     }
   });
 
-  return weight;
+  return Math.max(0, weight);
 };
 
 const calculateWeightedScores = (
@@ -81,6 +83,7 @@ const calculateWeightedScores = (
   progress: Record<string, ProgressData>,
   extensions: ExtensionData[] = [],
   enabledExtensions: string[] = [],
+  requirementProgress?: Record<string, RequirementProgress>,
 ) => {
   // Per spec, baseline PKI MM maturity is computed from baseline Level_C
   // with the (optionally extension-overlay-adjusted) effective category
@@ -93,18 +96,20 @@ const calculateWeightedScores = (
   // extension-adjusted weights).
   return categories.reduce(
     (acc, category) => {
-      const key = `${moduleId}.${category.id}`;
-      const progressData = progress[key];
-      // Not Assessed (level 0) and Not Applicable (applicability false) are
-      // both excluded from the rollup. Including them as zeros would make a
-      // mostly-empty assessment look worse than it is; the visible per-axis
-      // value on the chart still reflects level 0 for unrated categories.
-      if (
-        progressData &&
-        progressData.applicability &&
-        progressData.level > 0
-      ) {
-        const level = progressData.level;
+      // Baseline context (no extension) — when requirementProgress is
+      // undefined this returns exactly the old self-declared integer level.
+      const eff = calculateEffectiveCategoryLevel(
+        moduleId,
+        category,
+        progress,
+        requirementProgress,
+      );
+      const categoryLevel = eff.raw;
+      // Not Assessed (level 0) and Not Applicable (raw -1) are both excluded
+      // from the rollup. Including them as zeros would make a mostly-empty
+      // assessment look worse than it is; the visible per-axis value on the
+      // chart still reflects level 0 for unrated categories.
+      if (categoryLevel > 0) {
         const weight = getEffectiveWeight(
           moduleId,
           category,
@@ -112,7 +117,7 @@ const calculateWeightedScores = (
           enabledExtensions,
         );
         acc.totalWeight += weight;
-        acc.totalWeightedScore += level * weight;
+        acc.totalWeightedScore += categoryLevel * weight;
       }
       return acc;
     },
@@ -120,11 +125,17 @@ const calculateWeightedScores = (
   );
 };
 
-export const calculateOverallMaturityLevel = (
+// UNFLOORED weighted average across all modules — the same
+// totalWeightedScoreSum/totalWeightSum that calculateOverallMaturityLevel
+// floors exactly once at the very end. Kept as a standalone function (rather
+// than floor-wrapping it below) so a later fractional progress bar can read
+// the raw value directly.
+export const calculateOverallMaturityRaw = (
   modules: ModuleData[],
   progress: Record<string, ProgressData>,
   extensions: ExtensionData[] = [],
   enabledExtensions: string[] = [],
+  requirementProgress?: Record<string, RequirementProgress>,
 ): number => {
   let totalWeightSum = 0;
   let totalWeightedScoreSum = 0;
@@ -136,22 +147,41 @@ export const calculateOverallMaturityLevel = (
       progress,
       extensions,
       enabledExtensions,
+      requirementProgress,
     );
     totalWeightSum += totalWeight;
     totalWeightedScoreSum += totalWeightedScore;
   });
 
-  return totalWeightSum
-    ? Math.floor(totalWeightedScoreSum / totalWeightSum)
-    : 0;
+  return totalWeightSum ? totalWeightedScoreSum / totalWeightSum : 0;
 };
 
-export const calculateModuleMaturityLevels = (
+export const calculateOverallMaturityLevel = (
   modules: ModuleData[],
   progress: Record<string, ProgressData>,
   extensions: ExtensionData[] = [],
   enabledExtensions: string[] = [],
-): { module: string; level: number }[] => {
+  requirementProgress?: Record<string, RequirementProgress>,
+): number =>
+  Math.floor(
+    calculateOverallMaturityRaw(
+      modules,
+      progress,
+      extensions,
+      enabledExtensions,
+      requirementProgress,
+    ),
+  );
+
+// UNFLOORED per-module weighted average — same source value that
+// calculateModuleMaturityLevels floors exactly once per module.
+export const calculateModuleMaturityRaw = (
+  modules: ModuleData[],
+  progress: Record<string, ProgressData>,
+  extensions: ExtensionData[] = [],
+  enabledExtensions: string[] = [],
+  requirementProgress?: Record<string, RequirementProgress>,
+): { module: string; raw: number }[] => {
   return modules.map((module) => {
     const { totalWeight, totalWeightedScore } = calculateWeightedScores(
       module.categories,
@@ -159,12 +189,27 @@ export const calculateModuleMaturityLevels = (
       progress,
       extensions,
       enabledExtensions,
+      requirementProgress,
     );
-    const moduleMaturityLevel = totalWeight
-      ? Math.floor(totalWeightedScore / totalWeight)
-      : 0;
-    return { module: module.name, level: moduleMaturityLevel };
+    const raw = totalWeight ? totalWeightedScore / totalWeight : 0;
+    return { module: module.name, raw };
   });
+};
+
+export const calculateModuleMaturityLevels = (
+  modules: ModuleData[],
+  progress: Record<string, ProgressData>,
+  extensions: ExtensionData[] = [],
+  enabledExtensions: string[] = [],
+  requirementProgress?: Record<string, RequirementProgress>,
+): { module: string; level: number }[] => {
+  return calculateModuleMaturityRaw(
+    modules,
+    progress,
+    extensions,
+    enabledExtensions,
+    requirementProgress,
+  ).map(({ module, raw }) => ({ module, level: Math.floor(raw) }));
 };
 
 export const calculateBlendedLevel = (
@@ -172,6 +217,7 @@ export const calculateBlendedLevel = (
   category: CategoryData,
   extension: ExtensionData,
   progress: Record<string, ProgressData>,
+  requirementProgress?: Record<string, RequirementProgress>,
 ): number => {
   const coreKey = `${moduleId}.${category.id}`;
   const coreProgressData = progress[coreKey];
@@ -184,13 +230,27 @@ export const calculateBlendedLevel = (
     return -1;
   }
 
-  const weightSum_C = getWeightSum(
+  // Extension context — requirement weights are adjusted by this
+  // extension's overlays when requirementProgress is present.
+  const eff = calculateEffectiveCategoryLevel(
     moduleId,
     category,
-    [extension],
-    [extension.extension.id],
+    progress,
+    requirementProgress,
+    { extension },
   );
-  const level_C = coreProgressData?.level ?? 0;
+  // Derived Not Applicable (all in-scope requirements individually scoped
+  // out) must behave exactly like an explicitly N/A category — otherwise a
+  // rated extension relevance would blend against Level_C = -1 and emit
+  // positive garbage that slips past downstream Not-Applicable exclusion
+  // checks.
+  if (eff.raw === -1) return -1;
+  const level_C = eff.raw;
+
+  const weightSum_C =
+    eff.source === "requirements"
+      ? eff.weightSum // in-scope, assessed, overlay-adjusted — the same denominator that produced level_C
+      : getWeightSum(moduleId, category, [extension], [extension.extension.id]);
 
   const extCat = extension.relevance.modules
     .find((m) => m.id === moduleId)
@@ -225,6 +285,7 @@ export const calculateExtensionMaturityLevels = (
   extensions: ExtensionData[],
   enabledExtensions: string[],
   progress: Record<string, ProgressData>,
+  requirementProgress?: Record<string, RequirementProgress>,
 ): { id: string; name: string; level: number }[] => {
   return extensions
     .filter((ext) => enabledExtensions.includes(ext.extension.id))
@@ -247,6 +308,7 @@ export const calculateExtensionMaturityLevels = (
             category,
             ext,
             progress,
+            requirementProgress,
           );
 
           // Skip Not Applicable (-1) and Not Assessed (0) — same exclusion
@@ -283,6 +345,7 @@ export const calculateExtensionFloorScore = (
   modules: ModuleData[],
   extension: ExtensionData,
   progress: Record<string, ProgressData>,
+  requirementProgress?: Record<string, RequirementProgress>,
 ): number | null => {
   if (extension.extension.floorScore !== true) return null;
 
@@ -304,6 +367,7 @@ export const calculateExtensionFloorScore = (
         category,
         extension,
         progress,
+        requirementProgress,
       );
 
       // Skip Not Applicable (-1) and Not Assessed (0) — the floor score is
@@ -335,6 +399,7 @@ export const calculateExtensionWeightedPKIMMScore = (
   modules: ModuleData[],
   progress: Record<string, ProgressData>,
   extension: ExtensionData,
+  requirementProgress?: Record<string, RequirementProgress>,
 ): number => {
   let totalWeight = 0;
   let totalWeightedScore = 0;
@@ -346,7 +411,15 @@ export const calculateExtensionWeightedPKIMMScore = (
       if (!coreProgressData || coreProgressData.applicability === false) {
         continue;
       }
-      const level_C = coreProgressData.level;
+      // Baseline context (no extension) — only the weight is
+      // extension-adjusted below via getEffectiveWeight.
+      const eff = calculateEffectiveCategoryLevel(
+        module.id,
+        category,
+        progress,
+        requirementProgress,
+      );
+      const level_C = eff.raw;
       if (level_C <= 0) continue; // Not Assessed — excluded, same as rollup rule
       const effectiveWeight = getEffectiveWeight(
         module.id,
@@ -359,6 +432,8 @@ export const calculateExtensionWeightedPKIMMScore = (
     }
   }
 
+  // Terminal display score — callers index LevelResult / getColorForLevel with
+  // it, so it floors here (the single display-flooring point for this score).
   return totalWeight ? Math.floor(totalWeightedScore / totalWeight) : 0;
 };
 

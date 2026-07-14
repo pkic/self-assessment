@@ -1,0 +1,32 @@
+.pkimm-resume-toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--pkimm-border-radius-md);
+  background-color: var(--pkimm-text-color-dark);
+  color: var(--pkimm-text-color-light);
+  box-shadow: var(--pkimm-shadow-md);
+  font-size: 0.85rem;
+  z-index: 1200;
+  max-width: calc(100vw - 2rem);
+
+  &__dismiss {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.75;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}

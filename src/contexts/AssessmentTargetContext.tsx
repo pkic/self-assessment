@@ -5,11 +5,15 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { ExtensionData, ModuleData, ProgressData } from "../types/types";
+import {
+  ExtensionData,
+  ModuleData,
+  ProgressData,
+  RequirementProgress,
+} from "../types/types";
 
 export type AssessmentTarget =
-  | { kind: "original" }
-  | { kind: "extension"; id: string };
+  { kind: "original" } | { kind: "extension"; id: string };
 
 interface AssessmentTargetContextType {
   target: AssessmentTarget;
@@ -19,6 +23,7 @@ interface AssessmentTargetContextType {
   isExtensionEnabled: (id: string) => boolean;
   getModules: () => ModuleData[];
   getProgress: () => Record<string, ProgressData>;
+  getRequirementProgress: () => Record<string, RequirementProgress>;
   getActiveExtension: () => ExtensionData | null;
   getCurrentTargetName: () => string;
 }
@@ -42,6 +47,7 @@ interface AssessmentTargetProviderProps {
   availableExtensions: ExtensionData[];
   coreModules: ModuleData[];
   progress: Record<string, ProgressData>;
+  requirementProgress: Record<string, RequirementProgress>;
   enabledExtensions: string[];
 }
 
@@ -52,6 +58,7 @@ export const AssessmentTargetProvider: React.FC<
   availableExtensions,
   coreModules,
   progress,
+  requirementProgress,
   enabledExtensions,
 }) => {
   const [target, setTarget] = useState<AssessmentTarget>({ kind: "original" });
@@ -65,6 +72,7 @@ export const AssessmentTargetProvider: React.FC<
       isExtensionEnabled: (id: string) => enabledExtensions.includes(id),
       getModules: () => coreModules,
       getProgress: () => progress,
+      getRequirementProgress: () => requirementProgress,
       getActiveExtension: () => {
         if (target.kind === "extension") {
           const ext =
@@ -86,7 +94,14 @@ export const AssessmentTargetProvider: React.FC<
         return ext?.extension.name || "Extension";
       },
     }),
-    [target, availableExtensions, enabledExtensions, coreModules, progress],
+    [
+      target,
+      availableExtensions,
+      enabledExtensions,
+      coreModules,
+      progress,
+      requirementProgress,
+    ],
   );
 
   return (

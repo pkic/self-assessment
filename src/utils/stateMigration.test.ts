@@ -186,6 +186,61 @@ const TARGET_EXTENSION: ExtensionData = {
 describe("migrate with extensions", () => {
   const target = yaml.load(TARGET_YAML) as AssessmentData;
 
+  it("derives the extension scope from byKey when extensionScopes is absent (production path)", () => {
+    // buildStructureSnapshot never populates extensionScopes, so a real
+    // assessment reaches migrate() without it. The extension key's core
+    // portion ("G.1") IS in byKey, so the scope is derivable.
+    const src = makeSource();
+    src.enabledExtensions = [{ id: "pqc", version: "0.2.0" }];
+    src.progress["pqc.G.1"] = {
+      level: 3,
+      result: "Advanced",
+      description: "x",
+      applicability: true,
+      notes: "N",
+      evidence: "E",
+      pocId: "poc-1",
+      artifactIds: ["a1"],
+    };
+    // Deliberately NO src.sourceStructure.extensionScopes.
+    const r = migrate(src, target, [TARGET_EXTENSION]);
+    const entry = r.migratedProgress["pqc.G.strategy-and-vision"];
+    expect(entry).toBeDefined();
+    expect(entry.level).toBe(3);
+    expect(entry.notes).toBe("N");
+    expect(entry.evidence).toBe("E");
+    expect(entry.pocId).toBe("poc-1");
+    expect(entry.artifactIds).toEqual(["a1"]);
+  });
+
+  it("does not reprocess a core key even when an extension id shadows a module letter", () => {
+    // Pathological: an enabled extension literally named "G". The core key
+    // "G.1" must still map exactly once (via the core loop) and never be
+    // preserved as a stray extension entry.
+    const src = makeSource();
+    src.enabledExtensions = [{ id: "G", version: "1.0.0" }];
+    const r = migrate(src, target, [TARGET_EXTENSION]);
+    expect(r.migratedProgress["G.strategy-and-vision"]).toBeDefined();
+    expect(r.migratedProgress["G.1"]).toBeUndefined();
+  });
+
+  it("preserves an unresolvable extension entry under its original key instead of dropping it", () => {
+    // Enabled extension entry whose core category is not in byKey and whose
+    // extension is not loaded: must survive migration (preserved), never drop.
+    const src = makeSource();
+    src.enabledExtensions = [{ id: "ghost", version: "1.0.0" }];
+    src.progress["ghost.G.unknown"] = {
+      level: 2,
+      result: "Foundational",
+      description: "x",
+      applicability: true,
+      evidence: "keep me",
+    };
+    const r = migrate(src, target, [TARGET_EXTENSION]);
+    expect(r.migratedProgress["ghost.G.unknown"]).toBeDefined();
+    expect(r.migratedProgress["ghost.G.unknown"].evidence).toBe("keep me");
+  });
+
   it("preserves extension progress by extension id when version matches", () => {
     const src = makeSource();
     src.enabledExtensions = [{ id: "pqc", version: "0.2.0" }];
@@ -205,6 +260,38 @@ describe("migrate with extensions", () => {
     };
     const r = migrate(src, target, [TARGET_EXTENSION]);
     expect(r.migratedProgress["pqc.G.strategy-and-vision"]).toBeDefined();
+  });
+
+  it("preserves category-grain notes/evidence/workspace fields on an extension entry", () => {
+    const src = makeSource();
+    src.enabledExtensions = [{ id: "pqc", version: "0.2.0" }];
+    src.progress["pqc.G.strategy-and-vision"] = {
+      level: 3,
+      result: "Advanced",
+      description: "x",
+      applicability: true,
+      notes: "N",
+      evidence: "E",
+      pocId: "poc-1",
+      interviewDate: "2026-02-02",
+      artifactIds: ["a1", "a2"],
+    };
+    src.sourceStructure.extensionScopes = {
+      "pqc.G.strategy-and-vision": {
+        extensionId: "pqc",
+        extensionVersion: "0.2.0",
+        moduleId: "G",
+        categoryName: "Strategy and Vision",
+      },
+    };
+    const r = migrate(src, target, [TARGET_EXTENSION]);
+    const entry = r.migratedProgress["pqc.G.strategy-and-vision"];
+    expect(entry).toBeDefined();
+    expect(entry.notes).toBe("N");
+    expect(entry.evidence).toBe("E");
+    expect(entry.pocId).toBe("poc-1");
+    expect(entry.interviewDate).toBe("2026-02-02");
+    expect(entry.artifactIds).toEqual(["a1", "a2"]);
   });
 
   it("maps extension progress across an extension version bump by name", () => {
