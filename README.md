@@ -75,7 +75,7 @@ The full token list lives in [`src/index.module.scss`](src/index.module.scss); p
 
 ## Development
 
-Node version is pinned via `.node-version` (22.x).
+Node version is pinned via `.node-version` (24.x).
 
 ```bash
 npm install          # install deps

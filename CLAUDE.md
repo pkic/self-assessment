@@ -10,7 +10,7 @@ Because it is embedded in arbitrary host pages, design decisions revolve around 
 
 ## Commands
 
-Node version is pinned via `.node-version` (currently 22.x).
+Node version is pinned via `.node-version` (currently 24.x; jest 30 needs Node ≥24.9 to load the ESM `@react-pdf/renderer` in the real-render PDF tests).
 
 ```bash
 npm install          # install deps
