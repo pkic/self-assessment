@@ -212,6 +212,61 @@ test("All req out in an expanded category fires onSetCategoryRequirements(catKey
   expect(onSetCategoryRequirements).toHaveBeenCalledWith("G.c1", false);
 });
 
+test("under an explicitly excluded category, requirements read Excluded and the bulk buttons are disabled", () => {
+  renderScope(
+    {},
+    {
+      "G.c1": {
+        level: 0,
+        result: "Not Applicable",
+        description: "",
+        applicability: false,
+      },
+    },
+    {},
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Cat One" }));
+  // Requirement pills read "Excluded" (inherited), never "In scope, greyed".
+  const reqOne = screen.getByRole("button", {
+    name: /Req One/i,
+  }) as HTMLButtonElement;
+  expect(reqOne.disabled).toBe(true);
+  expect(reqOne.textContent).toContain("Excluded");
+  expect(reqOne.textContent).not.toContain("In scope");
+  // Bulk buttons act on overridden flags, so they are disabled too.
+  expect(
+    (screen.getByRole("button", { name: "All req in" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+  expect(
+    (screen.getByRole("button", { name: "All req out" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(true);
+});
+
+test("under an in-scope category, requirement pills reflect their own state and the bulk buttons are enabled", () => {
+  renderScope({}, {}, { "G.c1.r2": rp(false) });
+  fireEvent.click(screen.getByRole("button", { name: "Cat One" }));
+  const reqOne = screen.getByRole("button", {
+    name: /Req One/i,
+  }) as HTMLButtonElement;
+  const reqTwo = screen.getByRole("button", {
+    name: /Req Two/i,
+  }) as HTMLButtonElement;
+  expect(reqOne.disabled).toBe(false);
+  expect(reqOne.textContent).toContain("In scope");
+  // r2 is out of scope on its own — it reads "Excluded" while r1 stays in.
+  expect(reqTwo.textContent).toContain("Excluded");
+  expect(
+    (screen.getByRole("button", { name: "All req in" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+  expect(
+    (screen.getByRole("button", { name: "All req out" }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
+});
+
 test("an explicitly out-of-scope category reveals its reason textarea", () => {
   renderScope();
   expect(screen.getByLabelText(/Reason .*Cat Two/i)).toBeInTheDocument();

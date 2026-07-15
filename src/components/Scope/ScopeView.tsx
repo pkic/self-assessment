@@ -147,36 +147,43 @@ export const ScopeView: React.FC<ScopeViewProps> = ({
     setExpandedCats(new Set());
   };
 
-  const renderReq = (c: ScopeCatNode, r: ScopeReqNode) => (
-    <div key={r.key} className="pkimm-scope__req">
-      <div className="pkimm-scope__req-row">
-        <span
-          className={`pkimm-scope__name${r.inScope ? "" : " pkimm-scope__name--excluded"}`}
-        >
-          {r.description}
-        </span>
-        <StatusPill
-          tone={r.inScope ? "success" : "neutral"}
-          disabled={c.explicitOut}
-          className="pkimm-scope__pill"
-          onClick={() => onSetRequirement(r.key, !r.inScope)}
-        >
-          {!r.inScope && <ExcludedMark />}
-          {r.inScope ? "In scope" : "Excluded"}
-          <span className="pkimm-visually-hidden"> — {r.description}</span>
-        </StatusPill>
+  const renderReq = (c: ScopeCatNode, r: ScopeReqNode) => {
+    // When the category is explicitly excluded, its requirements read as
+    // "Excluded" (inherited) — never "In scope, greyed" — so both exclusion
+    // paths look identical. The stored r.inScope flag is untouched, so
+    // re-including the category restores each requirement's real state.
+    const shownInScope = r.inScope && !c.explicitOut;
+    return (
+      <div key={r.key} className="pkimm-scope__req">
+        <div className="pkimm-scope__req-row">
+          <span
+            className={`pkimm-scope__name${shownInScope ? "" : " pkimm-scope__name--excluded"}`}
+          >
+            {r.description}
+          </span>
+          <StatusPill
+            tone={shownInScope ? "success" : "neutral"}
+            disabled={c.explicitOut}
+            className="pkimm-scope__pill"
+            onClick={() => onSetRequirement(r.key, !r.inScope)}
+          >
+            {!shownInScope && <ExcludedMark />}
+            {shownInScope ? "In scope" : "Excluded"}
+            <span className="pkimm-visually-hidden"> — {r.description}</span>
+          </StatusPill>
+        </div>
+        {!r.inScope && !c.explicitOut && (
+          <TextArea
+            className="pkimm-scope__reason"
+            aria-label={`Reason ${r.description} not applicable`}
+            placeholder="e.g. no external CAs are operated, so this does not apply"
+            value={r.reason}
+            onChange={(e) => onRequirementReason(r.key, e.target.value)}
+          />
+        )}
       </div>
-      {!r.inScope && !c.explicitOut && (
-        <TextArea
-          className="pkimm-scope__reason"
-          aria-label={`Reason ${r.description} not applicable`}
-          placeholder="e.g. no external CAs are operated, so this does not apply"
-          value={r.reason}
-          onChange={(e) => onRequirementReason(r.key, e.target.value)}
-        />
-      )}
-    </div>
-  );
+    );
+  };
 
   const renderCat = (c: ScopeCatNode) => {
     const { tone, label } = catStatus(c);
@@ -239,6 +246,7 @@ export const ScopeView: React.FC<ScopeViewProps> = ({
               <Button
                 variant="secondary"
                 size="sm"
+                disabled={c.explicitOut}
                 onClick={() => onSetCategoryRequirements(c.key, true)}
               >
                 All req in
@@ -246,6 +254,7 @@ export const ScopeView: React.FC<ScopeViewProps> = ({
               <Button
                 variant="secondary"
                 size="sm"
+                disabled={c.explicitOut}
                 onClick={() => onSetCategoryRequirements(c.key, false)}
               >
                 All req out

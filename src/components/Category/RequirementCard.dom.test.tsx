@@ -37,6 +37,30 @@ test("renders name, weight, and a text-labelled status chip without any ordinal"
   expect(screen.queryByText(/#\d/)).toBeNull(); // no positional ordinal anywhere in the header
 });
 
+test("the requirement description renders as the card's prominent title element", () => {
+  const { container } = render(
+    <RequirementCard view={view()} onLevelChange={noop} {...baseProps} />,
+  );
+  const title = container.querySelector(".pkimm-requirement-card__title");
+  expect(title).not.toBeNull();
+  expect(title).toHaveTextContent("Key ceremony");
+  // It stays a non-heading element (no broken heading outline).
+  expect(title?.tagName).not.toMatch(/^H[1-6]$/);
+});
+
+test("the card root carries a status-level class for the accent bar", () => {
+  const { container } = render(
+    <RequirementCard
+      view={view({ level: 3, applicability: true })}
+      onLevelChange={noop}
+      {...baseProps}
+    />,
+  );
+  expect(
+    container.querySelector(".pkimm-requirement-card.level-3"),
+  ).not.toBeNull();
+});
+
 test("level radiogroup: clicking a level fires onLevelChange", () => {
   const onLevelChange = jest.fn();
   render(

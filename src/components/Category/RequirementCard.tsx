@@ -123,15 +123,13 @@ export const RequirementCard: React.FC<RequirementCardProps> = ({
   return (
     <div
       data-testid={`requirement-card-${view.key}`}
-      className="pkimm-requirement-card"
+      className={`pkimm-requirement-card level-${chipLevel}`}
       tabIndex={0}
       onKeyDown={handleKey}
       onFocus={onCardFocus}
     >
-      <div className="pkimm-requirement-card__header">
-        <span className="pkimm-requirement-card__description">
-          {view.description}
-        </span>
+      <div className="pkimm-requirement-card__title">{view.description}</div>
+      <div className="pkimm-requirement-card__meta">
         <span className="pkimm-requirement-card__weight">
           weight {view.weight}
         </span>
