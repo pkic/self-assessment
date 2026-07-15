@@ -12,6 +12,11 @@ import {
   type ReportFixture,
 } from "../../test-utils/reportFixtures";
 
+// Real @react-pdf renders of whole multi-page documents — especially the
+// Detailed tier against the long "abuse" fixture — take several seconds on
+// slower CI runners, past jest's 5s default. Give the audit generous headroom.
+jest.setTimeout(60000);
+
 // The rendered-quality audit: every tier preset (and a Custom pick) is
 // rendered through the REAL @react-pdf pipeline across empty/partial/full
 // data states, and the resulting pages' positioned text runs are checked for
