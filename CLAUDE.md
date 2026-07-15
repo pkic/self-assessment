@@ -10,7 +10,7 @@ Because it is embedded in arbitrary host pages, design decisions revolve around 
 
 ## Commands
 
-Node version is pinned via `.node-version` (currently 24.x; jest 30 needs Node ≥24.9 to load the ESM `@react-pdf/renderer` in the real-render PDF tests).
+Node version is pinned via `.node-version` to an **exact** patch (currently 24.15.0). Two constraints drive it: jest 30 needs Node ≥24.9 to load the ESM `@react-pdf/renderer` in the real-render PDF tests, but the test harness's `pdf-parse` (2017-era bundled pdf.js) throws at module init on 24.18.0 — so the patch is pinned to a validated version rather than a floating `24`. Bump it deliberately, re-running the full suite.
 
 ```bash
 npm install          # install deps
