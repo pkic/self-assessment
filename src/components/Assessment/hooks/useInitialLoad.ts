@@ -118,9 +118,17 @@ export const useInitialLoad = (input: {
 
       let initialData: AssessmentData | null = null;
       if (src) {
-        const response = await fetch(src);
-        const yamlText = await response.text();
-        initialData = yamlParser(yamlText) as AssessmentData;
+        try {
+          const response = await fetch(src);
+          const yamlText = await response.text();
+          initialData = yamlParser(yamlText) as AssessmentData;
+        } catch (error) {
+          // A failed override fetch must not strand the app in an infinite
+          // loading state — fall back to the bundled model.
+          console.error(`Error loading model from ${src}:`, error);
+          const bundled = getBundledModelYaml(DEFAULT_MODEL_VERSION);
+          if (bundled) initialData = yamlParser(bundled) as AssessmentData;
+        }
       } else {
         const bundled = getBundledModelYaml(DEFAULT_MODEL_VERSION);
         if (bundled) initialData = yamlParser(bundled) as AssessmentData;

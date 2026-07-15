@@ -44,10 +44,20 @@ export const RequirementFinder: React.FC<RequirementFinderProps> = ({
     onFilterChange({ ...filter, statuses: next });
   };
 
-  const matches = module.categories.flatMap((category) =>
-    buildRequirementViews(module.id, category, requirementProgress)
-      .filter((view) => matchesFilter(view, filter))
-      .map((view) => ({ view, categoryName: category.name })),
+  // Build the flat view list once per module/progress change; re-filter only
+  // when the filter changes, so typing in the search box stays responsive.
+  const allViews = React.useMemo(
+    () =>
+      module.categories.flatMap((category) =>
+        buildRequirementViews(module.id, category, requirementProgress).map(
+          (view) => ({ view, categoryName: category.name }),
+        ),
+      ),
+    [module, requirementProgress],
+  );
+  const matches = React.useMemo(
+    () => allViews.filter(({ view }) => matchesFilter(view, filter)),
+    [allViews, filter],
   );
 
   return (

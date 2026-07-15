@@ -212,12 +212,18 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
   // Overall PKI maturity is the baseline (spec): Σ(Level_C × category.weight)
   // / Σ(category.weight). Extension activation does not change this view —
   // extension-specific scores are shown alongside as separate widgets.
-  const reportData = buildReportData({
-    modules,
-    progress,
-    activeExtension: activeExtension ?? null,
-    requirementProgress,
-  });
+  // Memoized so typing in the report's metadata inputs (which re-render this
+  // component every keystroke) doesn't rebuild the whole report data set.
+  const reportData = React.useMemo(
+    () =>
+      buildReportData({
+        modules,
+        progress,
+        activeExtension: activeExtension ?? null,
+        requirementProgress,
+      }),
+    [modules, progress, activeExtension, requirementProgress],
+  );
 
   const overallMaturityLevel = reportData.scores.overall;
   const extensionScore = reportData.scores.extension;

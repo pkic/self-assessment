@@ -600,25 +600,29 @@ export const ActionPlansView: React.FC<ActionPlansViewProps> = ({
   }, [pendingFocusKey]);
 
   // Resolve every category once: key -> { moduleId, category, currentDisplay }.
-  const catByKey = new Map<
-    string,
-    { moduleId: string; category: CategoryData; currentDisplay: number }
-  >();
-  for (const m of modules) {
-    for (const c of m.categories) {
-      const currentDisplay = calculateEffectiveCategoryLevel(
-        m.id,
-        c,
-        progress,
-        requirementProgress,
-      ).display;
-      catByKey.set(`${m.id}.${c.id}`, {
-        moduleId: m.id,
-        category: c,
-        currentDisplay,
-      });
+  // Memoized so it isn't recomputed on every keystroke/task toggle re-render.
+  const catByKey = React.useMemo(() => {
+    const map = new Map<
+      string,
+      { moduleId: string; category: CategoryData; currentDisplay: number }
+    >();
+    for (const m of modules) {
+      for (const c of m.categories) {
+        const currentDisplay = calculateEffectiveCategoryLevel(
+          m.id,
+          c,
+          progress,
+          requirementProgress,
+        ).display;
+        map.set(`${m.id}.${c.id}`, {
+          moduleId: m.id,
+          category: c,
+          currentDisplay,
+        });
+      }
     }
-  }
+    return map;
+  }, [modules, progress, requirementProgress]);
   // In-scope (display !== -1, i.e. not explicit/derived N/A) AND not already planned.
   const pickable = [...catByKey.entries()].filter(
     ([key, v]) => v.currentDisplay !== -1 && !planned[key],

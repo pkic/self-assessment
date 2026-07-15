@@ -87,28 +87,28 @@ export const EvaluationView: React.FC = () => {
   const progress = getProgress();
   const requirementProgress = getRequirementProgress();
 
-  const scores = buildReportScores(
-    modules,
-    progress,
-    null,
-    requirementProgress,
+  // These builders are pure over (modules, progress, requirementProgress);
+  // memoize so re-renders (e.g. a parent state change) don't recompute them.
+  const scores = React.useMemo(
+    () => buildReportScores(modules, progress, null, requirementProgress),
+    [modules, progress, requirementProgress],
   );
-  const completeness = buildReportCompleteness(
-    modules,
-    progress,
-    requirementProgress,
+  const completeness = React.useMemo(
+    () => buildReportCompleteness(modules, progress, requirementProgress),
+    [modules, progress, requirementProgress],
   );
-  const distribution = buildLevelDistribution({
-    modules,
-    progress,
-    requirementProgress,
-  });
-  const coverage = buildScopeCoverage({
-    modules,
-    progress,
-    requirementProgress,
-  });
-  const gap = buildGapToNextLevel({ modules, progress, requirementProgress });
+  const distribution = React.useMemo(
+    () => buildLevelDistribution({ modules, progress, requirementProgress }),
+    [modules, progress, requirementProgress],
+  );
+  const coverage = React.useMemo(
+    () => buildScopeCoverage({ modules, progress, requirementProgress }),
+    [modules, progress, requirementProgress],
+  );
+  const gap = React.useMemo(
+    () => buildGapToNextLevel({ modules, progress, requirementProgress }),
+    [modules, progress, requirementProgress],
+  );
 
   return (
     <div className="pkimm-evaluation">

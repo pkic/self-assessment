@@ -116,12 +116,14 @@ export const ScopeView: React.FC<ScopeViewProps> = ({
   const modules = getModules();
   const progress = getProgress();
   const requirementProgress = getRequirementProgress();
-  const tree = buildScopeTree({ modules, progress, requirementProgress });
-  const coverage = buildScopeCoverage({
-    modules,
-    progress,
-    requirementProgress,
-  });
+  const tree = React.useMemo(
+    () => buildScopeTree({ modules, progress, requirementProgress }),
+    [modules, progress, requirementProgress],
+  );
+  const coverage = React.useMemo(
+    () => buildScopeCoverage({ modules, progress, requirementProgress }),
+    [modules, progress, requirementProgress],
+  );
   const [selectedTemplate, setSelectedTemplate] = React.useState("");
   const [expandedModules, setExpandedModules] = React.useState<Set<string>>(
     () => new Set(modules.map((m) => m.id)),
