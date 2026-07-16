@@ -150,7 +150,7 @@ modules:
     requirements:
     - id: policy-scope
       weight: 2
-      description: he scope of policies is defined and documented
+      description: The scope of policies is defined and documented
       guidance: |
         Each PKI implementation and use case is different, therefore it requires different care. The scope of policies that are applicable for the implementation should be defined and documented. When the proper description of the policies scope is provided, it helps all parties involved to understand the purpose of the policies and their applicability.
 

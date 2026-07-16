@@ -6,12 +6,10 @@
     <title>Self-Assessment Component</title>
   </head>
   <body>
-    <self-assessment
-      dataUrl="pkimm-model-2.0.0.yaml"
-      configUrl="config.yaml"
-      extensionsUrl="pqc-extension.yaml,ai-extension.yaml"
-      referencesUrl="pkimm-references.yaml"
-    ></self-assessment>
+    <!-- Zero-config: the model + references are bundled into the widget.
+         To override, add e.g.
+         dataUrl="pkimm-model-2.0.0.yaml" referencesUrl="pkimm-references.yaml" -->
+    <self-assessment></self-assessment>
     <script src="self-assessment.js"></script>
   </body>
 </html>
