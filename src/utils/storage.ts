@@ -1,13 +1,27 @@
 import yaml from "js-yaml";
 import type {
+  ActionPlans,
   Assessment,
   AssessmentData,
   EnabledExtension,
+  PkiEnvironment,
   ProgressData,
-  SavedState,
+  RequirementProgress,
   StructureSnapshot,
+  Workspace,
 } from "../types/types";
 import { PKIMM_1_0_0_NAMES } from "../legacy/pkimm-model-1.0.0-names";
+import {
+  assertSupportedStateSchemaVersion,
+  ForwardCompatError,
+  hasV2Content,
+} from "./stateSchema";
+import { normalizeAssessmentActionPlans } from "./actionPlans";
+export { WIDGET_MAX_STATE_SCHEMA_VERSION } from "./stateSchema";
+
+export type ParseResult =
+  | { ok: true; assessment: Assessment; stateSchemaVersion: number }
+  | { ok: false; error: string; forwardIncompatible?: boolean };
 
 export const buildStructureSnapshot = (
   data: AssessmentData,
@@ -32,7 +46,6 @@ export const newId = (): string => crypto.randomUUID();
 
 export const STORAGE_KEY = "pkimm-sa";
 export const LEGACY_KEY = "assessmentData";
-export const WIDGET_MAX_STATE_SCHEMA_VERSION = 1;
 
 export interface LegacyAssessmentData {
   progress: Record<string, ProgressData>;
@@ -41,22 +54,6 @@ export interface LegacyAssessmentData {
   useCaseDescription?: string;
   enabledExtensions?: string[];
 }
-
-export const readSavedState = (): SavedState | null => {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  const parsed = JSON.parse(raw) as SavedState;
-  if (parsed.stateSchemaVersion > WIDGET_MAX_STATE_SCHEMA_VERSION) {
-    throw new Error(
-      `Saved state uses stateSchemaVersion ${parsed.stateSchemaVersion}; widget supports up to ${WIDGET_MAX_STATE_SCHEMA_VERSION}.`,
-    );
-  }
-  return parsed;
-};
-
-export const writeSavedState = (state: SavedState): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-};
 
 /** Reads the legacy "assessmentData" key directly, without the first-load
  *  guard. Use from the assessment-manager UI where the user explicitly
@@ -122,6 +119,30 @@ interface NewExportShape {
   assessorName: string;
   useCaseDescription: string;
   sourceStructure: StructureSnapshot;
+  id?: string;
+  meta?: {
+    createdAt: string;
+    updatedAt: string;
+    importedFromId?: string;
+  };
+  lastView?: "self" | "full";
+  lastPosition?: {
+    view: string;
+    tab: string;
+    categoryKey?: string;
+    requirementKey?: string;
+  };
+  requirementProgress?: Record<string, RequirementProgress>;
+  organizationName?: string;
+  assessorPosition?: "internal" | "external";
+  assessorCompany?: string;
+  assessmentType?: "self" | "formal" | "third-party";
+  startDate?: string;
+  targetDate?: string;
+  finishDate?: string;
+  pkiEnvironment?: PkiEnvironment;
+  workspace?: Workspace;
+  actionPlans?: ActionPlans;
 }
 
 const isNewExportShape = (
@@ -132,33 +153,91 @@ const isNewExportShape = (
   "dataVersion" in parsed &&
   typeof (parsed as { dataVersion?: unknown }).dataVersion === "string";
 
+const isJsonEnvelope = (parsed: unknown): boolean =>
+  typeof parsed === "object" &&
+  parsed !== null &&
+  ((parsed as { kind?: unknown }).kind === "pkimm-assessment" ||
+    "formatVersion" in (parsed as object));
+
 export const importYAMLFile = (text: string): Assessment => {
   const parsed = yaml.load(text);
   const now = new Date().toISOString();
+  if (isJsonEnvelope(parsed)) {
+    throw new Error(
+      "This looks like an older JSON assessment file, which is no longer supported. Re-export the assessment as YAML.",
+    );
+  }
   if (isNewExportShape(parsed)) {
-    const p = parsed;
-    if (
-      typeof p.stateSchemaVersion === "number" &&
-      p.stateSchemaVersion > WIDGET_MAX_STATE_SCHEMA_VERSION
-    ) {
-      throw new Error(
-        `Imported file uses stateSchemaVersion ${p.stateSchemaVersion}; widget supports up to ${WIDGET_MAX_STATE_SCHEMA_VERSION}.`,
-      );
+    const p = parsed as Partial<NewExportShape> & { dataVersion: string };
+    if (typeof p.stateSchemaVersion === "number") {
+      assertSupportedStateSchemaVersion(p.stateSchemaVersion, "Imported file");
     }
-    return {
-      id: newId(),
-      name: p.name || p.assessmentName || "Imported assessment",
+    const assessment: Assessment = {
+      id: p.id ?? newId(),
+      // Nullish (NOT `||`) so a valid exported empty `name: ""` round-trips as
+      // "" instead of falling through to the "Imported assessment" fallback,
+      // which is only for a file that has no `name` field at all.
+      name: p.name ?? p.assessmentName ?? "Imported assessment",
       dataVersion: p.dataVersion,
       progress: p.progress ?? {},
       enabledExtensions: p.enabledExtensions ?? [],
       assessmentName: p.assessmentName ?? "",
       assessorName: p.assessorName ?? "",
       useCaseDescription: p.useCaseDescription ?? "",
+      requirementProgress: p.requirementProgress,
+      organizationName: p.organizationName,
+      assessorPosition: p.assessorPosition,
+      assessorCompany: p.assessorCompany,
+      assessmentType: p.assessmentType,
+      startDate: p.startDate,
+      targetDate: p.targetDate,
+      finishDate: p.finishDate,
+      pkiEnvironment: p.pkiEnvironment,
+      workspace: p.workspace,
+      actionPlans: p.actionPlans,
+      lastView: p.lastView,
+      lastPosition: p.lastPosition,
       sourceStructure: p.sourceStructure ?? { byKey: {} },
-      meta: { createdAt: now, updatedAt: now },
+      meta: {
+        createdAt: p.meta?.createdAt ?? now,
+        updatedAt: p.meta?.updatedAt ?? now,
+        ...(p.meta?.importedFromId
+          ? { importedFromId: p.meta.importedFromId }
+          : {}),
+      },
     };
+    return normalizeAssessmentActionPlans(assessment);
   }
   return importLegacyData(parsed as LegacyAssessmentData);
+};
+
+/** The single import entry point: parses a YAML export (new-shape or
+ *  legacy 1.0.0) via `importYAMLFile`, which preserves `assessment.id` for
+ *  a new-shape export — required so a re-import of a previously-exported
+ *  file can be matched against its local counterpart for the collision
+ *  chooser. A legacy 1.0.0 payload always mints a fresh id via `newId()`
+ *  (no stable id to collide on).
+ *
+ *  Never throws: `importYAMLFile` can throw (malformed YAML, an
+ *  unsupported `.pkimm.json` envelope, or a forward-incompatible
+ *  `stateSchemaVersion`) — all are caught here and surfaced via
+ *  `ParseResult` so callers only ever branch on it. */
+export const importAssessmentFile = (text: string): ParseResult => {
+  try {
+    const assessment = importYAMLFile(text);
+    return {
+      ok: true,
+      assessment,
+      stateSchemaVersion: hasV2Content(assessment) ? 2 : 1,
+    };
+  } catch (err) {
+    const message = (err as Error).message || "Could not import file.";
+    return {
+      ok: false,
+      error: message,
+      forwardIncompatible: err instanceof ForwardCompatError,
+    };
+  }
 };
 
 const seedProgressFromSnapshot = (

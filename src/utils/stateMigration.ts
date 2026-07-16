@@ -1,4 +1,5 @@
 import type {
+  ActionPlans,
   Assessment,
   AssessmentData,
   EnabledExtension,
@@ -6,6 +7,7 @@ import type {
   MigrationResult,
   MigrationSummary,
   ProgressData,
+  RequirementProgress,
   StructureSnapshot,
 } from "../types/types";
 
@@ -112,8 +114,51 @@ export const migrate = (
 
   // --- Extensions: progress entries scoped to an extension --------------
   for (const [oldKey, progress] of Object.entries(source.progress)) {
-    const extSnap = source.sourceStructure.extensionScopes?.[oldKey];
-    if (!extSnap) continue;
+    const explicit = source.sourceStructure.extensionScopes?.[oldKey];
+
+    // A core category/requirement key is already handled by the loop above
+    // and is present in byKey; never reprocess it here. This also guards
+    // against a pathological extension id that shadows a core key (e.g. an
+    // extension literally named "G"). An explicit extension scope still wins.
+    if (!explicit && source.sourceStructure.byKey[oldKey]) continue;
+
+    // An extension progress key is `${extId}.${coreCategoryKey}`. Match
+    // against the assessment's own enabledExtensions, preferring the LONGEST
+    // matching id so a dotted or prefix extension id can't misclassify the key.
+    const owner = source.enabledExtensions
+      .filter((e) => oldKey.startsWith(`${e.id}.`))
+      .sort((a, b) => b.id.length - a.id.length)[0];
+
+    // Prefer an explicit scope snapshot; otherwise derive it from data we
+    // already have. extensionScopes is never populated by
+    // buildStructureSnapshot, so real assessments arrive without it — but the
+    // extension key's core portion (e.g. "G.1") is in byKey, giving us the
+    // {moduleId, categoryName} the name-match below needs.
+    let extSnap = explicit;
+    if (!extSnap && owner) {
+      const coreKey = oldKey.slice(owner.id.length + 1);
+      const coreSnap = source.sourceStructure.byKey[coreKey];
+      if (coreSnap) {
+        extSnap = {
+          extensionId: owner.id,
+          extensionVersion: owner.version,
+          moduleId: coreSnap.moduleId,
+          categoryName: coreSnap.categoryName,
+        };
+      }
+    }
+
+    if (!extSnap) {
+      // Not an extension entry (core entries are handled by the loop above),
+      // or an extension entry we can't resolve to a target category. An
+      // identifiable-but-unresolvable extension entry is preserved under its
+      // original key so migration never silently drops assessed data.
+      if (owner) {
+        migratedProgress[oldKey] = progress;
+        mappedNewKeys.add(oldKey);
+      }
+      continue;
+    }
 
     const loaded = loadedExtensions.find(
       (e) => e.extension.id === extSnap.extensionId,
@@ -165,11 +210,63 @@ export const migrate = (
     }
   }
 
+  // --- Full-assessment: requirement progress by category+requirement name -
+  const migratedRequirementProgress: Record<string, RequirementProgress> = {};
+  const orphanedEntries: NonNullable<MigrationResult["orphanedEntries"]> = [];
+  let requirementsMapped = 0;
+  let requirementsUnmapped = 0;
+  for (const [oldKey, rp] of Object.entries(source.requirementProgress ?? {})) {
+    const snap = source.sourceStructure.byKey[oldKey];
+    const catEntry = snap
+      ? targetIndex.get(`${snap.moduleId}|${normalize(snap.categoryName)}`)
+      : undefined;
+    const reqEntry =
+      catEntry && snap?.requirementName
+        ? catEntry.requirements.get(normalize(snap.requirementName))
+        : undefined;
+    if (reqEntry) {
+      migratedRequirementProgress[reqEntry.newKey] = rp;
+      requirementsMapped += 1;
+    } else {
+      const hasContent = !!(rp.notes || rp.evidence || rp.applicabilityReason);
+      if (hasContent) {
+        orphanedEntries.push({
+          originalKey: oldKey,
+          requirementName: snap?.requirementName,
+          payload: rp,
+        });
+      }
+      requirementsUnmapped += 1;
+    }
+  }
+
+  // --- Full-assessment: action-plan category keys remapped by name --------
+  let actionPlansRemapped = 0;
+  let migratedActionPlans: ActionPlans | undefined;
+  if (source.actionPlans?.categories) {
+    const cats: NonNullable<ActionPlans["categories"]> = {};
+    for (const [oldCatKey, plan] of Object.entries(
+      source.actionPlans.categories,
+    )) {
+      const snap = source.sourceStructure.byKey[oldCatKey];
+      const catEntry = snap
+        ? targetIndex.get(`${snap.moduleId}|${normalize(snap.categoryName)}`)
+        : undefined;
+      const mappedKey = catEntry ? catEntry.newKey : oldCatKey;
+      cats[mappedKey] = plan;
+      if (catEntry) actionPlansRemapped += 1;
+    }
+    migratedActionPlans = { categories: cats };
+  }
+
   const summary: MigrationSummary = {
     mapped,
     addedInTarget,
     unmappedFromSource: Array.from(unmappedSet),
     reclassifiedLevel1ToZero: 0,
+    requirementsMapped,
+    requirementsUnmapped,
+    actionPlansRemapped,
   };
 
   // --- enabledExtensions: bump version to loaded; preserve unloaded -----
@@ -188,6 +285,11 @@ export const migrate = (
 
   return {
     migratedProgress,
+    ...(Object.keys(migratedRequirementProgress).length > 0
+      ? { migratedRequirementProgress }
+      : {}),
+    ...(migratedActionPlans ? { migratedActionPlans } : {}),
+    ...(orphanedEntries.length > 0 ? { orphanedEntries } : {}),
     migratedEnabledExtensions,
     newSourceStructure: buildSnapshotFromTarget(target),
     summary,

@@ -1,0 +1,51 @@
+.pkimm-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pkimm-space-2xs);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: var(--pkimm-border-radius-pill);
+  padding: var(--pkimm-space-3xs) var(--pkimm-space-sm);
+  white-space: nowrap;
+}
+
+// Neutral treatment for Not Applicable (-1) and Not Assessed (0) — the
+// label text ("Not Applicable" / "Not Assessed") already carries the
+// meaning, so no maturity colour is applied.
+.pkimm-level-badge---1,
+.pkimm-level-badge--0 {
+  color: var(--pkimm-text-color-muted);
+  background-color: var(--pkimm-surface-color-alt);
+  border-color: var(--pkimm-border-color);
+}
+
+@for $i from 1 through 5 {
+  .pkimm-level-badge--#{$i} {
+    &.pkimm-level-badge--text {
+      color: var(--pkimm-maturity-level-#{$i});
+      background-color: transparent;
+    }
+
+    &.pkimm-level-badge--soft {
+      color: var(--pkimm-maturity-level-#{$i});
+      background-color: color-mix(
+        in srgb,
+        var(--pkimm-maturity-level-#{$i}) 16%,
+        transparent
+      );
+      border-color: color-mix(
+        in srgb,
+        var(--pkimm-maturity-level-#{$i}) 40%,
+        transparent
+      );
+    }
+
+    &.pkimm-level-badge--solid {
+      color: var(--pkimm-text-color-light);
+      background-color: var(--pkimm-maturity-level-#{$i});
+      border-color: var(--pkimm-maturity-level-#{$i});
+    }
+  }
+}

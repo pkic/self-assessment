@@ -1,0 +1,85 @@
+.pkimm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pkimm-space-2xs);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--pkimm-border-radius-md);
+  transition: all 0.2s ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.pkimm-btn__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pkimm-btn--sm {
+  padding: var(--pkimm-space-2xs) var(--pkimm-space-sm);
+  font-size: 0.85rem;
+}
+
+.pkimm-btn--md {
+  padding: var(--pkimm-space-xs) var(--pkimm-space-md);
+  font-size: 1rem;
+}
+
+.pkimm-btn--primary {
+  background-color: var(--pkimm-primary-color);
+  color: var(--pkimm-text-color-light);
+  border-color: var(--pkimm-primary-color);
+  box-shadow: var(--pkimm-shadow-sm);
+
+  &:hover:not(:disabled) {
+    background-color: var(--pkimm-primary-color-hover);
+    border-color: var(--pkimm-primary-color-hover);
+    box-shadow: var(--pkimm-shadow-md);
+  }
+}
+
+.pkimm-btn--secondary {
+  background-color: var(--pkimm-surface-color);
+  color: var(--pkimm-text-color-dark);
+  border-color: var(--pkimm-border-color);
+
+  &:hover:not(:disabled) {
+    background-color: var(--pkimm-primary-color-lighter);
+    border-color: var(--pkimm-primary-color);
+    color: var(--pkimm-primary-color);
+  }
+}
+
+.pkimm-btn--danger {
+  background-color: var(--pkimm-surface-color);
+  color: var(--pkimm-danger-fg);
+  border-color: var(--pkimm-danger-border);
+
+  &:hover:not(:disabled) {
+    background-color: var(--pkimm-danger-bg);
+    color: var(--pkimm-danger-fg);
+    border-color: var(--pkimm-danger-border);
+  }
+}
+
+.pkimm-btn--ghost {
+  background-color: transparent;
+  color: var(--pkimm-text-color-muted);
+  border-color: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: var(--pkimm-hover-bg-subtle);
+    color: var(--pkimm-primary-color);
+  }
+}

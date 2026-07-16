@@ -10,12 +10,19 @@ import {
   Legend,
   Title,
 } from "chart.js";
-import { ModuleData, ProgressData, ExtensionData } from "../../types/types";
+import {
+  ModuleData,
+  ProgressData,
+  ExtensionData,
+  RequirementProgress,
+} from "../../types/types";
 import {
   calculateOverallMaturityLevel,
   calculateExtensionMaturityLevels,
   calculateBlendedLevel,
 } from "../../utils/maturityCalculations";
+import { calculateEffectiveCategoryLevel } from "../../utils/effectiveLevel";
+import { buildRadarAxes } from "../../utils/radarAxes";
 import LevelResult from "../../enums/LevelResult";
 
 ChartJS.register(
@@ -33,12 +40,17 @@ interface SpiderChartProps {
   progress: Record<string, ProgressData>;
   /** Storage keys, e.g. `G.strategy-and-vision`. Used to read progress. */
   chartLabels: string[];
-  /** Optional per-axis display names parallel to chartLabels, used in
-   *  tooltips. Defaults to a "Module · Category" string built from modules. */
-  axisDisplayNames?: string[];
   extensions?: ExtensionData[];
   enabledExtensions?: string[];
   animate?: boolean;
+  /** Requirement-grain progress. When present, full-mode categories derive
+   *  their level from requirements instead of the category-level rating. */
+  requirementProgress?: Record<string, RequirementProgress>;
+  /** Optional baseline progress for a translucent comparison overlay series.
+   *  Plotted on the SAME axisKeys as the current assessment; absent by
+   *  default so the chart stays byte-identical to today. */
+  baselineProgress?: Record<string, ProgressData>;
+  baselineRequirementProgress?: Record<string, RequirementProgress>;
 }
 
 // Function to determine color based on the level
@@ -95,32 +107,75 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   modules,
   progress,
   chartLabels,
-  axisDisplayNames,
   extensions = [],
   enabledExtensions = [],
   animate = true,
+  requirementProgress,
+  baselineProgress,
+  baselineRequirementProgress,
 }) => {
-  // chartLabels are storage keys (G.kebab-id). Build display labels
+  // Not-Applicable categories (baseline display === -1) are removed from the
+  // radar axes entirely rather than plotted as 0 — plotting N/A at the
+  // origin misreads as "assessed at the bottom". Bind the filtered axis list
+  // ONCE here and derive every dataset (display labels, the achieved-level
+  // series, and each extension series below) from this single array so they
+  // can never drift out of alignment with each other.
+  const axisKeys = buildRadarAxes(
+    modules,
+    chartLabels,
+    progress,
+    requirementProgress,
+  );
+
+  // axisKeys are storage keys (G.kebab-id). Build display labels
   // ("Governance · Strategy and vision") parallel to the storage keys so
   // tooltips can show a human-readable category name without exposing the
   // kebab id on the chart axes.
-  const displayLabels =
-    axisDisplayNames ??
-    chartLabels.map((key) => {
-      const [moduleId, categoryId] = key.split(".");
-      const moduleData = modules.find((m) => m.id === moduleId);
-      const category = moduleData?.categories.find((c) => c.id === categoryId);
-      return moduleData && category
-        ? `${moduleData.name} · ${category.name}`
-        : key;
-    });
+  const displayLabels = axisKeys.map((key) => {
+    const [moduleId, categoryId] = key.split(".");
+    const moduleData = modules.find((m) => m.id === moduleId);
+    const category = moduleData?.categories.find((c) => c.id === categoryId);
+    return moduleData && category
+      ? `${moduleData.name} · ${category.name}`
+      : key;
+  });
 
-  const userData = chartLabels.map((label) => {
+  const userData = axisKeys.map((label) => {
+    const [moduleId, categoryId] = label.split(".");
+    const module = modules.find((m) => m.id === moduleId);
+    const category = module?.categories.find((c) => c.id === categoryId);
+    if (module && category) {
+      const eff = calculateEffectiveCategoryLevel(
+        moduleId,
+        category,
+        progress,
+        requirementProgress,
+      );
+      return eff.display === -1 ? 0 : eff.display;
+    }
+    // Fallback preserves prior behavior for any non-standard label.
     if (progress[label] && !progress[label].applicability) {
       return 0;
     }
     return progress[label]?.level || 0;
   });
+
+  const baselineData = baselineProgress
+    ? axisKeys.map((label) => {
+        const [moduleId, categoryId] = label.split(".");
+        const category = modules
+          .find((m) => m.id === moduleId)
+          ?.categories.find((c) => c.id === categoryId);
+        if (!category) return 0;
+        const eff = calculateEffectiveCategoryLevel(
+          moduleId,
+          category,
+          baselineProgress,
+          baselineRequirementProgress,
+        );
+        return eff.display === -1 ? 0 : eff.display;
+      })
+    : null;
 
   const maxLevel = 5; // Each question can have a level from 1 to 5
 
@@ -129,6 +184,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     progress,
     [],
     [],
+    requirementProgress,
   );
   const { background, border } = getColorForLevel(overallMaturityLevel);
 
@@ -137,6 +193,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     extensions,
     enabledExtensions,
     progress,
+    requirementProgress,
   );
 
   const datasets = [
@@ -147,11 +204,23 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
       borderColor: border,
       borderWidth: 1,
     },
+    ...(baselineData
+      ? [
+          {
+            label: "Baseline",
+            data: baselineData,
+            backgroundColor: "rgba(120,120,120,0.15)",
+            borderColor: "rgba(120,120,120,0.9)",
+            borderDash: [4, 4],
+            pointRadius: 2,
+          },
+        ]
+      : []),
   ];
 
   extensions.forEach((ext, index) => {
     if (enabledExtensions.includes(ext.extension.id)) {
-      const extData = chartLabels.map((label) => {
+      const extData = axisKeys.map((label) => {
         const [moduleId, categoryId] = label.split(".");
         const module = modules.find((m) => m.id === moduleId);
         const category = module?.categories.find((c) => c.id === categoryId);
@@ -162,6 +231,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
             category,
             ext,
             progress,
+            requirementProgress,
           );
           return blendedLevel === -1 ? 0 : Math.floor(blendedLevel);
         }

@@ -140,14 +140,6 @@
 }
 
 .pkimm-incomplete-notice {
-  background: var(--pkimm-surface-color);
-  border: 1px solid var(--pkimm-border-color);
-  border-left: 4px solid var(--pkimm-primary-color);
-  border-radius: var(--pkimm-border-radius-md);
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.5rem;
-  color: var(--pkimm-text-color-dark);
-
   &__header {
     display: flex;
     justify-content: space-between;
@@ -189,12 +181,7 @@
 }
 
 .pkimm-report {
-  background-color: var(--pkimm-surface-color);
-  border: 1px solid var(--pkimm-border-color);
-  border-radius: var(--pkimm-border-radius-lg);
-  padding: 2.5rem;
   margin-bottom: 2rem;
-  box-shadow: var(--pkimm-shadow-sm);
   box-sizing: border-box;
   // Only break unbreakable runs (long URLs, long ids); never split a
   // normal word mid-character. `word-break: break-word` is too aggressive
@@ -234,7 +221,7 @@
     td {
       border-bottom: 1px solid var(--pkimm-border-color);
       border-right: 1px solid var(--pkimm-border-color);
-      padding: 1rem;
+      padding: var(--pkimm-space-sm) var(--pkimm-space-md);
       text-align: left;
 
       &:last-child {
@@ -360,82 +347,136 @@
   }
 }
 
+.pkimm-report-tier {
+  max-width: 24rem;
+  margin-top: var(--pkimm-space-lg);
+}
+
+.pkimm-report-custom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-md);
+  margin-top: var(--pkimm-space-lg);
+}
+
+.pkimm-report-custom__base {
+  max-width: 24rem;
+}
+
+.pkimm-report-custom__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--pkimm-space-xs) var(--pkimm-space-lg);
+}
+
+@media (min-width: 600px) {
+  .pkimm-report-custom__list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pkimm-report-custom__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-3xs);
+}
+
+.pkimm-report-custom__row-main {
+  display: flex;
+  align-items: center;
+  gap: var(--pkimm-space-xs);
+}
+
+.pkimm-report-custom__label {
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-report-custom__reason {
+  margin-left: calc(
+    var(--pkimm-space-md) + var(--pkimm-space-2xs) + var(--pkimm-space-xs)
+  );
+  font-size: 0.85rem;
+  color: var(--pkimm-text-color-muted);
+}
+
+.pkimm-report-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.pkimm-report-filter__field {
+  max-width: 24rem;
+}
+
+.pkimm-report-filter__statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pkimm-report-filter__status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pkimm-text-color-muted);
+  background-color: var(--pkimm-surface-color-alt);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-pill);
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--pkimm-primary-color);
+    color: var(--pkimm-primary-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: 1px;
+  }
+}
+
+.pkimm-report-filter__status--active {
+  color: var(--pkimm-text-color-light);
+  background-color: var(--pkimm-primary-color);
+  border-color: var(--pkimm-primary-color);
+}
+
 .pkimm-actions-container {
   display: flex;
-  gap: 1rem;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  margin-top: 2rem;
-
-  button {
-    background-color: var(--pkimm-primary-color);
-    color: var(--pkimm-text-color-light);
-    border: none;
-    padding: 0.75rem 1.5rem;
-    text-align: center;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: var(--pkimm-border-radius-md);
-    box-shadow: var(--pkimm-shadow-sm);
-
-    &:hover {
-      background-color: var(--pkimm-primary-color-hover);
-      box-shadow: var(--pkimm-shadow-md);
-    }
-  }
+  gap: var(--pkimm-space-sm);
+  align-items: center;
+  margin-top: var(--pkimm-space-xl);
 }
 
 .pkimm-user-inputs {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-  background-color: var(--pkimm-background-color);
-  padding: 1.5rem;
-  border-radius: var(--pkimm-border-radius-md);
-  border: 1px solid var(--pkimm-border-color);
+  gap: var(--pkimm-space-lg);
+  margin-bottom: var(--pkimm-space-2xl);
 
-  div {
-    display: flex;
-    flex-direction: column;
+  &__subheading {
+    margin: 0.5rem 0 -0.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--pkimm-text-color-dark);
+  }
 
-    label {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--pkimm-text-color-dark);
-      margin-bottom: 0.5rem;
-    }
-
-    input,
-    textarea {
-      padding: 0.75rem;
-      border: 1px solid var(--pkimm-border-color);
-      border-radius: var(--pkimm-border-radius-sm);
-      font-size: 1rem;
-      color: var(--pkimm-text-color-dark);
-      background-color: var(--pkimm-text-color-light);
-      transition: all 0.2s ease;
-
-      &:focus {
-        outline: none;
-        border-color: var(--pkimm-primary-color);
-        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-      }
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
+  &__help {
+    margin: 0.35rem 0 0;
+    font-size: 0.85rem;
+    color: var(--pkimm-text-color-muted);
   }
 }
 
 @media (max-width: 768px) {
   .pkimm-report {
-    padding: 1.5rem 1rem;
-
     h1 {
       font-size: 1.75rem;
       margin-bottom: 1.5rem;
@@ -447,17 +488,8 @@
     }
   }
 
-  .pkimm-actions-container {
-    justify-content: center;
-    flex-direction: column;
-
-    button {
-      width: 100%;
-    }
-  }
-
-  .pkimm-user-inputs {
-    padding: 1rem;
+  .pkimm-actions-container .pkimm-btn {
+    width: 100%;
   }
 
   .pkimm-report-content {
@@ -472,13 +504,10 @@
   }
 }
 
-// Very narrow viewports — reduce report padding further so the widgets
-// inside don't get squeezed by the report's own gutter.
+// Very narrow viewports — the outer Card already keeps a fixed padding at
+// this breakpoint; only the nested widgets need their own narrower padding
+// here.
 @media (max-width: 480px) {
-  .pkimm-report {
-    padding: 1rem 0.75rem;
-  }
-
   .pkimm-module-maturity-widget {
     padding: 0.75rem;
     font-size: 0.9rem;

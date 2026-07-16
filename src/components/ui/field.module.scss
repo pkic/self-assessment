@@ -1,0 +1,54 @@
+// Shared field chrome for TextField, TextArea, and Select — promoted from
+// the input/select styling in Report.module.scss (.pkimm-report-tier select,
+// .pkimm-report-filter input[type="text"]) so all three controls render
+// identical label/border/radius/padding/focus treatment.
+.pkimm-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-2xs);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pkimm-field__label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-field__control {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--pkimm-text-color-dark);
+  background-color: var(--pkimm-surface-color-alt);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+  padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
+  transition: all 0.2s ease;
+
+  &:is(textarea) {
+    resize: vertical;
+    min-height: 2.75rem;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.pkimm-field__hint {
+  font-size: 0.8rem;
+  color: var(--pkimm-text-color-muted);
+  line-height: 1.4;
+}

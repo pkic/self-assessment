@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "types": ["jest", "node"]
   },
-  "include": ["src", "src/styles.d.ts"]
+  "include": ["src", "src/styles.d.ts", "jest.setup.dom.ts"]
 }

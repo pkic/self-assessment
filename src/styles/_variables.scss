@@ -40,6 +40,15 @@ $danger-bg: #fff0f0;
 $danger-border: #f5b3b3;
 $danger-fg: #b00020;
 
+// Flag toggle (requirement card "revisit this" marker).
+$flag-color: #b00020;
+$flag-color-bg: #fff0f0;
+
+// Timing chip nearing/at its deadline (assessment target-date countdown).
+$timing-warning-bg: #fff7e6;
+$timing-warning-border: #f5d28b;
+$timing-warning-fg: #6b3a1e;
+
 $overlay-color: rgba(32, 33, 36, 0.6);
 $hover-bg-subtle: rgba(26, 115, 232, 0.04);
 $hover-bg: rgba(26, 115, 232, 0.08);

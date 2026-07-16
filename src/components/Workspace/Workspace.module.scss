@@ -1,0 +1,97 @@
+.pkimm-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-lg);
+}
+
+.pkimm-workspace__intro {
+  color: var(--pkimm-text-color-dark);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 72ch;
+  margin: 0 0 var(--pkimm-space-md);
+}
+
+.pkimm-workspace__hint {
+  color: var(--pkimm-text-color-muted);
+  margin: 0 0 var(--pkimm-space-xs);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 72ch;
+}
+
+.pkimm-workspace__link-note {
+  color: var(--pkimm-text-color-muted);
+  margin: 0 0 var(--pkimm-space-md);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 72ch;
+
+  svg {
+    margin-right: var(--pkimm-space-2xs);
+    color: var(--pkimm-primary-color);
+  }
+}
+
+.pkimm-workspace__section {
+  margin-bottom: var(--pkimm-space-md);
+
+  h3 {
+    margin: 0 0 var(--pkimm-space-3xs);
+  }
+}
+
+.pkimm-workspace__count {
+  display: block;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.85rem;
+  margin: 0 0 var(--pkimm-space-xs);
+}
+
+.pkimm-workspace__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pkimm-space-sm);
+  margin-top: var(--pkimm-space-sm);
+}
+
+.pkimm-workspace__checklist-count {
+  display: inline-block;
+  margin-bottom: var(--pkimm-space-sm);
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.9rem;
+}
+
+.pkimm-workspace__tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-2xs);
+}
+
+.pkimm-workspace__task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--pkimm-space-sm);
+  align-items: center;
+}
+
+.pkimm-workspace__task-label--done {
+  text-decoration: line-through;
+  color: var(--pkimm-text-color-muted);
+}
+
+.pkimm-workspace__orphan-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: var(--pkimm-space-sm);
+  align-items: center;
+  margin-bottom: var(--pkimm-space-sm);
+}
+
+.pkimm-workspace__orphan-label {
+  color: var(--pkimm-text-color-dark);
+}
+
+.pkimm-workspace__orphan-target-field {
+  max-width: 24rem;
+}

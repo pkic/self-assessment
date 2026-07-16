@@ -1,0 +1,60 @@
+// z-index sits above the app's own stacking chrome — the sticky header (1000),
+// the target dropdown (1001), and the resume toast (1200) — so a modal always
+// covers the page. The backdrop blur is part of the shared overlay recipe every
+// modal uses.
+.pkimm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--pkimm-overlay-color);
+  backdrop-filter: blur(4px);
+  padding: 1rem;
+}
+
+.pkimm-modal {
+  width: 100%;
+  max-width: 32rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  background-color: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-lg);
+  box-shadow: var(--pkimm-shadow-md);
+  padding: 1.25rem;
+  color: var(--pkimm-text-color-dark);
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.pkimm-modal__title {
+  margin: 0 0 0.75rem;
+}
+
+// The `--right` modifiers follow their base rules within this same file, so
+// they win by source order — no other stylesheet declares `.pkimm-modal-overlay`.
+.pkimm-modal-overlay--right {
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0;
+}
+
+.pkimm-modal--right {
+  max-width: 360px;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+  .pkimm-modal.pkimm-modal--right {
+    max-width: 100%;
+  }
+}

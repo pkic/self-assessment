@@ -1,0 +1,55 @@
+.pkimm-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  display: inline-block;
+  width: calc(var(--pkimm-space-md) + var(--pkimm-space-2xs));
+  height: calc(var(--pkimm-space-md) + var(--pkimm-space-2xs));
+  margin: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  background-color: var(--pkimm-surface-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:checked,
+  &:indeterminate {
+    background-color: var(--pkimm-primary-color);
+    border-color: var(--pkimm-primary-color);
+  }
+
+  &:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 47%;
+    width: 30%;
+    height: 55%;
+    border: solid var(--pkimm-text-color-light);
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  &:indeterminate::after {
+    content: "";
+    position: absolute;
+    left: 25%;
+    right: 25%;
+    top: 50%;
+    height: 2px;
+    transform: translateY(-50%);
+    background-color: var(--pkimm-text-color-light);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}

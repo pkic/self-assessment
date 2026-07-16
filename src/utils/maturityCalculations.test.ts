@@ -4,6 +4,9 @@ import {
   calculateExtensionWeightedPKIMMScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
+  calculateModuleMaturityLevels,
+  calculateOverallMaturityRaw,
+  calculateModuleMaturityRaw,
   getEffectiveWeight,
 } from "./maturityCalculations";
 import type {
@@ -11,6 +14,7 @@ import type {
   ExtensionData,
   ModuleData,
   ProgressData,
+  RequirementProgress,
 } from "../types/types";
 
 /**
@@ -470,5 +474,53 @@ describe("calculateOverallMaturityLevel — baseline PKIMM (no extension influen
       },
     };
     expect(calculateOverallMaturityLevel(modules, progress)).toBe(4);
+  });
+});
+
+describe("raw (unfloored) maturity siblings", () => {
+  const { modules } = buildSpecFixture();
+  const progress: Record<string, ProgressData> = {
+    "G.cat-a": { level: 4, result: "", description: "", applicability: true },
+    "G.cat-b": { level: 3, result: "", description: "", applicability: true },
+  };
+
+  it("calculateOverallMaturityRaw floors to the existing overall level", () => {
+    const raw = calculateOverallMaturityRaw(modules, progress);
+    const floored = calculateOverallMaturityLevel(modules, progress);
+    expect(Math.floor(raw)).toBe(floored);
+    expect(raw).toBeGreaterThanOrEqual(floored);
+    expect(raw).toBeLessThan(floored + 1);
+  });
+
+  it("calculateModuleMaturityRaw floors per-module to the existing module levels", () => {
+    const raws = calculateModuleMaturityRaw(modules, progress);
+    const floored = calculateModuleMaturityLevels(modules, progress);
+    for (const f of floored) {
+      const r = raws.find((x) => x.module === f.module);
+      expect(r).toBeDefined();
+      expect(Math.floor(r!.raw)).toBe(f.level);
+    }
+  });
+
+  it("returns 0 when nothing is assessed", () => {
+    expect(calculateOverallMaturityRaw(modules, {})).toBe(0);
+  });
+
+  it("requirement-derived raw floors to the floored-with-requirementProgress result (mixed mode)", () => {
+    // cat-a requirements rated so its effective level is fractional; cat-b stays self-declared.
+    const rp: Record<string, RequirementProgress> = {
+      "G.cat-a.r1": { level: 4, applicability: true, notes: "", evidence: "" },
+      "G.cat-a.r2": { level: 2, applicability: true, notes: "", evidence: "" },
+      "G.cat-a.r3": { level: 5, applicability: true, notes: "", evidence: "" },
+    };
+    const raw = calculateOverallMaturityRaw(modules, progress, [], [], rp);
+    const floored = calculateOverallMaturityLevel(
+      modules,
+      progress,
+      [],
+      [],
+      rp,
+    );
+    expect(Math.floor(raw)).toBe(floored);
   });
 });

@@ -1,0 +1,26 @@
+// Promoted from the repeated card recipe (Category.module.scss
+// .pkimm-category-card, Module.module.scss, Assessment.module.scss) so any
+// new surface can reuse the same border/radius/background/shadow treatment.
+.pkimm-card {
+  box-sizing: border-box;
+  background-color: var(--pkimm-surface-color);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-lg);
+  box-shadow: var(--pkimm-shadow-sm);
+}
+
+.pkimm-card--pad-sm {
+  padding: var(--pkimm-space-sm);
+}
+
+.pkimm-card--pad-md {
+  padding: var(--pkimm-space-md);
+}
+
+.pkimm-card--pad-lg {
+  padding: var(--pkimm-space-lg);
+}
+
+.pkimm-card--elevated {
+  box-shadow: var(--pkimm-shadow-md);
+}

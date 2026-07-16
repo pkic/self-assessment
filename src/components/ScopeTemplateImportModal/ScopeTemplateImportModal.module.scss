@@ -1,0 +1,15 @@
+.pkimm-scope-import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pkimm-space-sm);
+  max-width: 32rem;
+}
+.pkimm-scope-import__version--warn {
+  color: var(--pkimm-timing-warning-fg);
+}
+.pkimm-scope-import__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--pkimm-space-sm);
+  margin-top: var(--pkimm-space-md);
+}

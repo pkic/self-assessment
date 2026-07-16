@@ -8,20 +8,18 @@
   width: 100%;
 }
 
-.pkimm-active-assessment-mobile {
-  display: none;
-  align-items: baseline;
-  gap: 0.4rem;
-  padding: 0.4rem 1rem;
-  background-color: var(--pkimm-background-color);
-  border-top: 1px solid var(--pkimm-border-color);
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
+.pkimm-editing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 12rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--pkimm-border-radius-pill);
+  border: 1px solid var(--pkimm-border-color);
+  background: var(--pkimm-surface-color);
 
   &__caption {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--pkimm-text-color-muted);
@@ -30,66 +28,93 @@
   }
 
   &__name {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--pkimm-text-color-dark);
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1 1 auto;
     min-width: 0;
-  }
-}
-
-.pkimm-active-assessment-label {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.2;
-  max-width: 14rem;
-
-  &__caption {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--pkimm-text-color-muted);
-    font-weight: 600;
-  }
-
-  &__name {
-    font-size: 0.9rem;
-    color: var(--pkimm-text-color-dark);
-    font-weight: 600;
-    max-width: 14rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 }
 
 .pkimm-privacy-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.7rem;
+  padding: 0.3rem;
+  min-width: 1.75rem;
+  height: 1.75rem;
   border-radius: var(--pkimm-border-radius-pill);
   background: var(--pkimm-primary-color-lighter);
   color: var(--pkimm-primary-color);
   border: 1px solid var(--pkimm-primary-color);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   white-space: nowrap;
   user-select: none;
+  box-sizing: border-box;
+}
+
+.pkimm-view-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-pill);
+  overflow: hidden;
+  flex-wrap: wrap;
+
+  &__option {
+    appearance: none;
+    border: none;
+    background: var(--pkimm-surface-color);
+    color: var(--pkimm-text-color-muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.25rem 0.7rem;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:not(:last-child) {
+      border-right: 1px solid var(--pkimm-border-color);
+    }
+
+    &.active {
+      background: var(--pkimm-primary-color);
+      color: var(--pkimm-text-color-light);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+}
+
+.pkimm-tab-lock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--pkimm-border-radius-pill);
+  background: var(--pkimm-banner-bg);
+  border: 1px solid var(--pkimm-banner-border);
+  color: var(--pkimm-banner-fg);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.pkimm-hidden-ext-notice__margin {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1400px;
+  margin: var(--pkimm-space-md) auto;
 }
 
 .pkimm-hidden-ext-notice {
-  background: var(--pkimm-banner-bg, #fff7e6);
-  border: 1px solid var(--pkimm-banner-border, #f5d28b);
-  border-radius: var(--pkimm-border-radius-md, 6px);
-  padding: 0.75rem 1rem;
-  margin: 1rem;
   font-size: 0.95em;
-  color: var(--pkimm-text-color-dark, #222);
 
   details {
     margin-top: 0.5rem;
@@ -120,31 +145,17 @@
   flex: 1;
   min-width: 0; // Allow it to shrink
   padding: 1rem 0;
+  // Focusing the panel on a tab switch scrolls it into view; reserve the sticky
+  // header's height (plus a gap) so its top never lands hidden under the header.
+  scroll-margin-top: calc(
+    var(--pkimm-header-height) + var(--pkimm-space-md) +
+      var(--pkimm-sticky-top-offset)
+  );
 
-  .continue-button {
-    display: block;
-    margin: 2rem auto;
-    padding: 0.75rem 2rem;
-    background-color: var(--pkimm-primary-color);
-    color: var(--pkimm-text-color-light);
-    border: none;
-    border-radius: var(--pkimm-border-radius-md);
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    transition: all 0.2s ease;
-    box-shadow: var(--pkimm-shadow-sm);
-
-    &:hover {
-      background-color: var(--pkimm-primary-color-hover);
-      box-shadow: var(--pkimm-shadow-md);
-      transform: translateY(-1px);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
+  .pkimm-continue-cta {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--pkimm-space-lg);
   }
 }
 
@@ -156,9 +167,19 @@
   align-items: stretch;
   gap: 1rem;
   position: sticky;
-  top: calc(110px + var(--pkimm-sticky-top-offset));
+  // Pin below the sticky header with a gap so the two never sit flush.
+  top: calc(
+    var(--pkimm-header-height) + var(--pkimm-space-md) +
+      var(--pkimm-sticky-top-offset)
+  );
   height: fit-content;
-  max-height: calc(100vh - (110px + var(--pkimm-sticky-top-offset) + 2rem));
+  max-height: calc(
+    100vh -
+      (
+        var(--pkimm-header-height) + var(--pkimm-space-md) +
+          var(--pkimm-sticky-top-offset) + 2rem
+      )
+  );
   overflow-y: auto;
   background-color: var(--pkimm-surface-color);
   border: 1px solid var(--pkimm-border-color);
@@ -222,6 +243,15 @@
   flex-shrink: 0;
 }
 
+.pkimm-chart-progress__count {
+  color: var(--pkimm-text-color-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  font-size: 0.75rem;
+  opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .pkimm-chart-progress__row--overall {
   .pkimm-chart-progress__label {
     font-size: 0.95rem;
@@ -267,9 +297,11 @@
 }
 
 // Color the bar fill + the level text by the achieved maturity level so
-// the user can read the right-rail at a glance: bar length = completion,
-// bar/text color = maturity. Rows without a level (Not Assessed) keep
-// the neutral primary blue.
+// the user can read the right-rail at a glance: for Overall/module rows,
+// bar length is the fractional progress from the floored maturity level
+// toward the next one (e.g. raw 2.6 -> 60% full, colored as level 2);
+// bar/text color = the floored maturity level. Rows without a level
+// (Not Assessed) keep the neutral primary blue.
 @each $n in (1, 2, 3, 4, 5) {
   .pkimm-chart-progress__row--level-#{$n} {
     .pkimm-chart-progress__fill {
@@ -318,7 +350,18 @@
 .pkimm-header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.pkimm-tabs-scroller {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .pkimm-tabs {
@@ -327,12 +370,19 @@
   background-color: var(--pkimm-surface-color);
   padding: 0 1.5rem;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
-  justify-content: space-between;
   gap: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
   width: 100%;
+  max-width: none;
+  margin: 0;
   box-sizing: border-box;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   button {
     background: none;
@@ -383,7 +433,7 @@
 .pkimm-tabs__group--meta {
   border-left: 1px solid var(--pkimm-border-color);
   padding-left: 1rem;
-  margin-left: 1rem;
+  margin-left: auto;
 
   button {
     color: var(--pkimm-text-color-muted);
@@ -394,38 +444,51 @@
   }
 }
 
-.pkimm-burger-menu {
-  display: none;
-  flex-direction: column;
-  cursor: pointer;
-  padding: 8px;
-  z-index: 1100;
-  justify-content: center;
-  transition: all 0.3s ease;
-  border-radius: var(--pkimm-border-radius-sm);
+.pkimm-tabs-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 1;
 
-  &:hover {
-    background-color: var(--pkimm-hover-bg-subtle);
+  &[data-visible="true"] {
+    opacity: 1;
   }
 
-  div {
-    width: 22px;
-    height: 2px;
-    background-color: var(--pkimm-text-color-dark);
-    margin: 2px 0;
-    transition: 0.3s;
+  &.pkimm-tabs-fade--left {
+    left: 0;
+    background: linear-gradient(
+      to right,
+      var(--pkimm-surface-color),
+      transparent
+    );
   }
 
-  &.active {
-    .bar1 {
-      transform: rotate(-45deg) translate(-4px, 4px);
-    }
-    .bar2 {
-      opacity: 0;
-    }
-    .bar3 {
-      transform: rotate(45deg) translate(-4px, -4px);
-    }
+  &.pkimm-tabs-fade--right {
+    right: 0;
+    background: linear-gradient(
+      to left,
+      var(--pkimm-surface-color),
+      transparent
+    );
+  }
+}
+
+.pkimm-tabs-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+
+  &.pkimm-tabs-arrow--left {
+    left: 0;
+  }
+
+  &.pkimm-tabs-arrow--right {
+    right: 0;
   }
 }
 
@@ -557,6 +620,10 @@
 @media (max-width: 768px) {
   .pkimm-content-container {
     flex-direction: column;
+    // Stretch the column's children to the container width; the base
+    // align-items: flex-start would otherwise size them to their content's
+    // preferred width and overflow the viewport.
+    align-items: stretch;
     padding: 0 0.75rem;
   }
 
@@ -584,101 +651,18 @@
   }
 
   .pkimm-tabs {
-    display: none;
-    flex-direction: column;
-    background-color: var(--pkimm-surface-color);
-    width: 100%;
-    position: fixed;
-    top: 56px;
-    left: 0;
-    height: calc(100vh - 56px);
-    overflow-y: auto;
-    z-index: 1000;
-    box-shadow: var(--pkimm-shadow-md);
-    align-items: stretch;
-    padding: 0;
-    border-top: none;
-    gap: 0;
-
-    &.active {
-      display: flex;
-    }
-  }
-
-  // Both tab groups stack column-wise in the mobile dropdown. The meta
-  // group drops the desktop vertical divider/left padding and instead
-  // gets a top divider with a subtle label-style background so users can
-  // still tell content vs nav apart.
-  .pkimm-tabs__group {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    border-left: none !important;
-    padding-left: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  .pkimm-tabs__group--meta {
-    border-top: 1px solid var(--pkimm-border-color);
-    background-color: var(--pkimm-background-color);
-  }
-
-  .pkimm-tabs button {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--pkimm-border-color);
-    width: 100%;
-    justify-content: flex-start;
-    font-size: 0.95rem;
-
-    &:after {
-      left: 0;
-      right: auto;
-      width: 4px;
-      height: 100%;
-      top: 0;
-      transform: scaleY(0);
-      transform-origin: top;
-    }
-
-    &.active:after {
-      transform: scaleY(1);
-    }
-  }
-
-  .pkimm-tabs__group:last-child button:last-child {
-    border-bottom: none;
-  }
-
-  .pkimm-burger-menu {
-    display: flex;
-  }
-
-  .pkimm-active-assessment-mobile {
-    display: flex;
+    padding: 0 0.75rem;
+    gap: 0.5rem;
   }
 
   .pkimm-header-actions {
     gap: 0.5rem;
-
-    .pkimm-active-assessment-label {
-      display: none;
-    }
 
     .pkimm-target-badge {
       font-size: 0.75rem;
       padding: 4px 8px;
 
       .assessing-label {
-        display: none;
-      }
-    }
-
-    // Privacy chip eats horizontal space — collapse to the icon on mobile
-    // and rely on the title tooltip for the rest.
-    .pkimm-privacy-chip {
-      padding: 0.25rem 0.45rem;
-
-      span:last-child {
         display: none;
       }
     }

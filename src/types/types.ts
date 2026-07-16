@@ -42,21 +42,82 @@ export interface ProgressData {
   result: string;
   description: string;
   applicability: boolean;
+  /** Free-text reason captured when applicability === false (out of scope). */
+  applicabilityReason?: string;
+  /** Free-text notes captured in self-assessment mode; exported in YAML and the self PDF. */
+  notes?: string;
+  /** Free-text evidence captured at category grain (extension full view). */
+  evidence?: string;
+  /** Workspace links at category grain (extension full view); mirror RequirementProgress. */
+  pocId?: string;
+  interviewDate?: string;
+  artifactIds?: string[];
 }
 
-export interface EmailData {
-  enabled: boolean;
-  subject: string;
-  body: string;
+/** Per-requirement assessment state (full-assessment mode). Key in
+ *  Assessment.requirementProgress is `${moduleId}.${categoryId}.${requirementId}`,
+ *  a separate map from category-level `progress` to avoid colliding with
+ *  extension-scoped category keys `${extId}.${moduleId}.${categoryId}`. */
+export interface RequirementProgress {
+  level: number; // 0 = Not Assessed, 1–5
+  applicability: boolean; // requirement-level N/A when false
+  applicabilityReason?: string; // prompted (non-blocking) when applicability === false
+  notes: string; // rationale / notes
+  evidence: string; // text / links only
+  completed?: boolean; // workflow marker; no effect on scoring, counters, or gating
+  flagged?: boolean; // "revisit this"
+  flagNote?: string;
+  pocId?: string; // references Workspace.pocs[]
+  interviewDate?: string; // ISO date
+  artifactIds?: string[]; // references Workspace.artifacts[]
+  related?: string[]; // assessor-authored cross-links (requirement keys)
+  assessorReview?: { status: "agreed" | "adjusted"; note?: string };
+  updatedAt?: string; // per-entry timestamp; enables scoped merge later
 }
 
-export interface OverviewData {
-  data: string;
+export interface PkiEnvironment {
+  components?: string;
+  outOfScopeConsiderations?: string;
+  highLevelDesign?: string;
+  pointsOfInteraction?: string;
 }
 
-export interface ConfigData {
-  email: EmailData;
-  overview: OverviewData;
+export interface Workspace {
+  intake?: { questionId: string; question: string; answer: string }[];
+  intakeCatalogVersion?: string;
+  workingNotes?: string;
+  artifacts?: { id: string; title: string; locator: string; notes?: string }[];
+  pocs?: { id: string; name: string; role?: string; contact?: string }[];
+  checklist?: {
+    itemId: string;
+    label: string;
+    done: boolean;
+    group?: string;
+    notes?: string;
+    custom?: boolean;
+  }[];
+  orphanedEntries?: {
+    originalKey: string;
+    requirementName?: string;
+    payload: RequirementProgress;
+  }[];
+}
+
+export interface ActionPlans {
+  categories?: Record<
+    string,
+    {
+      targetLevel: number;
+      objectives?: { id: string; text: string }[];
+      responsibility?: string;
+      responsiblePocId?: string;
+      targetDate?: string;
+      resources?: string;
+      outputs?: { id: string; text: string }[];
+      tasks?: { itemId: string; label: string; done: boolean }[];
+      comments?: string;
+    }
+  >;
 }
 
 export interface ExtensionInfo {
@@ -178,6 +239,25 @@ export interface Assessment {
   assessmentName: string;
   assessorName: string;
   useCaseDescription: string;
+  // Full-assessment fields (all optional; absent on a quick assessment).
+  requirementProgress?: Record<string, RequirementProgress>;
+  organizationName?: string;
+  assessorPosition?: "internal" | "external";
+  assessorCompany?: string;
+  assessmentType?: "self" | "formal" | "third-party";
+  startDate?: string;
+  targetDate?: string;
+  finishDate?: string;
+  pkiEnvironment?: PkiEnvironment;
+  workspace?: Workspace;
+  actionPlans?: ActionPlans;
+  lastView?: "self" | "full";
+  lastPosition?: {
+    view: string;
+    tab: string;
+    categoryKey?: string;
+    requirementKey?: string;
+  };
   sourceStructure: StructureSnapshot;
   meta: {
     createdAt: string;
@@ -188,7 +268,7 @@ export interface Assessment {
 
 /** Top-level localStorage shape stored under key `pkimm-sa`. */
 export interface SavedState {
-  stateSchemaVersion: 1;
+  stateSchemaVersion: 1 | 2;
   activeId: string | null;
   assessments: Assessment[];
 }
@@ -198,10 +278,16 @@ export interface MigrationSummary {
   addedInTarget: string[];
   unmappedFromSource: string[];
   reclassifiedLevel1ToZero: number;
+  requirementsMapped?: number;
+  requirementsUnmapped?: number;
+  actionPlansRemapped?: number;
 }
 
 export interface MigrationResult {
   migratedProgress: Record<string, ProgressData>;
+  migratedRequirementProgress?: Record<string, RequirementProgress>;
+  migratedActionPlans?: ActionPlans;
+  orphanedEntries?: Workspace["orphanedEntries"];
   migratedEnabledExtensions: EnabledExtension[];
   newSourceStructure: StructureSnapshot;
   summary: MigrationSummary;

@@ -1,13 +1,8 @@
-.pkimm-migration-banner {
-  background-color: var(--pkimm-surface-color);
-  border: 1px solid var(--pkimm-border-color);
-  border-left: 4px solid var(--pkimm-banner-border);
-  border-radius: var(--pkimm-border-radius-md);
-  box-shadow: var(--pkimm-shadow-sm);
-  padding: 1.25rem 1.5rem;
-  margin: 1rem;
-  color: var(--pkimm-text-color-dark);
+.pkimm-migration-banner__margin {
+  margin: var(--pkimm-space-md);
+}
 
+.pkimm-migration-banner {
   p {
     margin: 0 0 0.5rem 0;
     line-height: 1.5;
