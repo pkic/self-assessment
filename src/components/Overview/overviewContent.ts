@@ -48,18 +48,13 @@ export const RESOURCES: { title: string; url: string; description: string }[] =
     },
     {
       title: "Categories description",
-      url: "https://pkic.org/wg/pkimm/categories/",
+      url: "https://pkic.org/wg/pkimm/model/categories/",
       description: "Requirements, guidance, and references.",
     },
     {
       title: "Assessment process",
-      url: "https://pkic.org/wg/pkimm/assessment/",
+      url: "https://pkic.org/wg/pkimm/model/assessment/",
       description: "How the assessment works.",
-    },
-    {
-      title: "Assessment tools",
-      url: "https://pkic.org/wg/pkimm/tools/",
-      description: "Tools for assessing your PKI.",
     },
     {
       title: "Extension framework",

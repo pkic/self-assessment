@@ -143,7 +143,7 @@ export const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://pkic.org/wg/pkimm/categories/"
+            src="https://pkic.org/wg/pkimm/model/categories/"
           >
             Categories description
           </Link>
@@ -161,7 +161,7 @@ export const UsefulResourcesTable: React.FC = () => (
         <Text style={styles.maturity_tableCell}>
           <Link
             style={{ color: primaryColor }}
-            src="https://pkic.org/wg/pkimm/assessment/"
+            src="https://pkic.org/wg/pkimm/model/assessment/"
           >
             PKI maturity assessment process
           </Link>
@@ -170,24 +170,6 @@ export const UsefulResourcesTable: React.FC = () => (
       <View style={[styles.maturity_tableCol, { width: "75%" }]}>
         <Text style={styles.maturity_tableCell}>
           Description of the assessment process
-        </Text>
-      </View>
-    </View>
-    <View style={[styles.maturity_tableRow, { borderBottomWidth: 0 }]}>
-      <View style={[styles.maturity_tableCol, { width: "25%" }]}>
-        <Text style={styles.maturity_tableCell}>
-          <Link
-            style={{ color: primaryColor }}
-            src="https://pkic.org/wg/pkimm/tools/"
-          >
-            PKI maturity assessment tools
-          </Link>
-        </Text>
-      </View>
-      <View style={[styles.maturity_tableCol, { width: "75%" }]}>
-        <Text style={styles.maturity_tableCell}>
-          Available tools for the assessment of the PKI implementation and use
-          case
         </Text>
       </View>
     </View>
