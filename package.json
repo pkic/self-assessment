@@ -7,13 +7,17 @@
   },
   "main": "dist/self-assessment.js",
   "scripts": {
+    "generate:validators": "node scripts/generate-validators.mjs",
+    "prestart": "npm run generate:validators",
     "start": "webpack serve --mode development",
+    "prebuild": "npm run generate:validators",
     "build": "webpack --mode production",
     "coverage-badge": "make-coverage-badge --output-path ./coverage_badge.svg",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "DEBUG=eslint:cli-engine eslint --fix .",
     "lint:check": "DEBUG=eslint:cli-engine eslint .",
+    "pretest": "npm run generate:validators",
     "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest"
   },
   "dependencies": {
