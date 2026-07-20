@@ -1,29 +1,33 @@
 import yaml from "js-yaml";
-import Ajv from "ajv";
-import Ajv2020 from "ajv/dist/2020";
-import addFormats from "ajv-formats";
+import type { ErrorObject } from "ajv";
 import {
   AssessmentData,
   ExtensionData,
   ReferencesCatalog,
 } from "../types/types";
 
-import schemaModel1 from "../public/pkimm-model.schema-1.0.0.json";
-import schemaModel2 from "../public/pkimm-model.schema-2.0.0.json";
-import schemaReferences1 from "../public/pkimm-references.schema-1.0.0.json";
-import schemaExt1 from "../public/extension.schema-1.0.0.json";
-
-const ajvDraft07 = new Ajv({ allErrors: true, strict: false });
-addFormats(ajvDraft07);
-const ajv2020 = new Ajv2020({ allErrors: true, strict: false });
-addFormats(ajv2020);
+// Validators are precompiled at build time (scripts/generate-validators.mjs).
+// Compiling schemas at runtime uses new Function(), which is blocked on pages
+// served with a CSP whose script-src lacks 'unsafe-eval' (e.g. pkic.org).
+import {
+  validateModel100,
+  validateModel200,
+  validateReferences100,
+} from "../generated/validators-draft07";
+import { validateExtension100 } from "../generated/validators-2020";
 
 const validators = {
-  "model:1.0.0": ajvDraft07.compile(schemaModel1),
-  "model:2.0.0": ajvDraft07.compile(schemaModel2),
-  "references:1.0.0": ajvDraft07.compile(schemaReferences1),
-  "extension:1.0.0": ajv2020.compile(schemaExt1),
+  "model:1.0.0": validateModel100,
+  "model:2.0.0": validateModel200,
+  "references:1.0.0": validateReferences100,
+  "extension:1.0.0": validateExtension100,
 };
+
+// Same output shape as Ajv's instance.errorsText().
+const errorsText = (errors: ErrorObject[] | null | undefined): string =>
+  (errors ?? [])
+    .map((e) => `data${e.instancePath} ${e.message ?? ""}`)
+    .join(", ") || "validation failed";
 
 export const yamlParser = (
   yamlText: string,
@@ -66,8 +70,8 @@ export const validateSchema = (
   }
   const ok = validator(data);
   if (!ok) {
-    const instance = isExtension ? ajv2020 : ajvDraft07;
-    const msg = instance.errorsText(validator.errors);
-    throw new Error(`Schema validation failed: ${msg}`);
+    throw new Error(
+      `Schema validation failed: ${errorsText(validator.errors)}`,
+    );
   }
 };

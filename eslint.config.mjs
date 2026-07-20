@@ -5,7 +5,7 @@ import path from "node:path";
 
 export default [
   {
-    ignores: ["dist/"],
+    ignores: ["dist/", "src/generated/"],
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
