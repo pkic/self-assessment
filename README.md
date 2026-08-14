@@ -1,6 +1,6 @@
 # PKI Maturity Model Self-Assessment Web Component
 
-A self-contained web component that embeds the [PKI Maturity Model (PKIMM)](https://pkic.org/wg/pkimm/) self-assessment into any HTML page via a `<self-assessment>` custom element. The model and references catalog are bundled into the component, so dropping one `<script>` tag and the `<self-assessment>` element is enough to get a working assessment — local-only data, no backend. A host can optionally point the component at a different data source.
+A self-contained web component that embeds assessments for the [PKI Maturity Model (PKIMM)](https://pkic.org/wg/pkimm/) and [PQC Maturity Model (PQCMM)](https://pkic.org/wg/pqc/pqcmm/) into any HTML page via a `<self-assessment>` custom element. The models are bundled into the component, so dropping one `<script>` tag and the `<self-assessment>` element is enough to get a working assessment — local-only data, no backend. A host can optionally point the component at a different data source.
 
 ## Quick start
 
@@ -28,7 +28,8 @@ Extensions are not configured by a host attribute — the user uploads and remov
 
 | Attribute       | Required | Description                                                                                                                                                                                                                                                                                                                    |
 | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `dataUrl`       | no       | Optional override. URL of the PKIMM model YAML (`pkimm-model-1.0.0.yaml` or `pkimm-model-2.0.0.yaml`). Defaults to the bundled latest model (2.0.0).                                                                                                                                                                           |
+| `model`         | no       | Assessment model to render: `pkimm` (default) or `pqcmm`.                                                                                                                                                                                                                                                                      |
+| `dataUrl`       | no       | Optional model YAML override. For PKIMM this defaults to the bundled 2.0.0 model; for PQCMM it defaults to the bundled 1.0.1 model.                                                                                                                                                                                            |
 | `referencesUrl` | no       | Optional override. URL of the shared references catalog (`pkimm-references.yaml`). Defaults to the bundled references catalog (so category cards + the PDF References appendix appear by default); set this to point at a different catalog.                                                                                   |
 | `modes`         | no       | Which assessment views are offered (comma-separated, case-insensitive): `self`, `full`, or `self,full`. Unset (default) offers both, opening in Self. `modes="self"` offers only the quick Self assessment; `modes="full"` opens in Full but keeps Self available. Self can never be disabled. See **Assessment modes** below. |
 
@@ -50,7 +51,25 @@ The model and references YAMLs are bundled into `dist/self-assessment.js`, so th
 - `pkimm-references.yaml` — shared references catalog (cited by both models). Schema: [`pkimm-references.schema-1.0.0.json`](src/public/pkimm-references.schema-1.0.0.json).
 - Extension YAMLs (any name) — must validate against [`extension.schema-1.0.0.json`](src/public/extension.schema-1.0.0.json).
 
-These files are bundled directly into the widget for zero-config use, and are also still served from gh-pages (alongside every release) for hosts that override `dataUrl`/`referencesUrl`. All schemas are also vendored in the bundle for validation at load time; the canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository.
+### PQCMM assessment
+
+Select the PQCMM route explicitly. It uses the bundled PQCMM 1.0.1 data when `dataUrl` is absent and the supplied versioned model URL when it is present:
+
+```html
+<self-assessment
+  model="pqcmm"
+  dataUrl="https://pkic.org/wg/pqc/pqcmm/data/pqcmm-model-1.0.1.yaml"
+></self-assessment>
+<script src="https://pkic.github.io/self-assessment/develop/self-assessment.js"></script>
+```
+
+PQCMM is product/service-centric and uses cumulative gates, not PKIMM's weighted category calculation. Level 0 is a self-declared baseline. For Levels 1 through 5, every criterion at the claimed level and every lower positive level must be marked met and supported by an evidence statement or file. Partial results remain gaps and never establish a level.
+
+PQCMM assessment records and uploaded evidence are stored in a separate IndexedDB database (`pqcmm-sa`). Portable JSON exports contain the evidence package for offline restore. Generated PDFs embed a machine-readable `pqcmm-assessment.json` manifest and the original evidence files, with SHA-256 digests recorded in the manifest.
+
+The canonical model source is maintained in the `pkic.org` repository. After an approved model release, update the bundled offline snapshot with `npm run sync:pqcmm` (or set `PQCMM_SITE_ROOT` when the site checkout is elsewhere). Do not edit the bundled YAML independently.
+
+The PKIMM and PQCMM release files are bundled directly into the widget for zero-config use and served from gh-pages for hosts that override `dataUrl` or `referencesUrl`. Their schemas are precompiled into CSP-safe validators. PKIMM's canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository; PQCMM's canonical copies live in the `pkic.org` repository as described above.
 
 ## Data storage
 
@@ -90,7 +109,10 @@ Local dev note: the webpack-dev-server serves the `dist/` directory. After `npm 
 
 ```bash
 cp src/public/index.html src/public/pkimm-model-1.0.0.yaml \
-   src/public/pkimm-model-2.0.0.yaml src/public/pkimm-references.yaml dist/
+   src/public/pkimm-model-2.0.0.yaml src/public/pkimm-references.yaml \
+   src/public/pqcmm.html src/public/pqcmm-model-1.0.1.yaml \
+   src/public/pqcmm-model.schema-1.0.0.json \
+   src/public/pqcmm-assessment.schema-1.0.0.json dist/
 ```
 
 The dev fixture (`src/public/index.html`) is attribute-free (zero-config) — it no longer sets `dataUrl`/`referencesUrl`. Per-category reference disclosures appear from the bundled references catalog without any copy step; the `cp` above is only needed to exercise the `dataUrl`/`referencesUrl` override path locally.

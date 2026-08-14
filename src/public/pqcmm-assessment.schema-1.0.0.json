@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pkic.org/wg/pqc/pqcmm/data/pqcmm-assessment.schema-1.0.0.json",
+  "title": "PQCMM assessment report",
+  "description": "Portable machine-readable form of a PQCMM assessment report.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "schemaVersion",
+    "model",
+    "assessment",
+    "result",
+    "criteria",
+    "questions",
+    "attachments"
+  ],
+  "properties": {
+    "format": { "const": "pkic-pqcmm-assessment" },
+    "schemaVersion": { "const": "1.0.0" },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "schemaVersion", "source"],
+      "properties": {
+        "id": { "const": "pqcmm" },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "schemaVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "source": { "type": "string", "format": "uri" }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "productName",
+        "productVersion",
+        "vendorName",
+        "deploymentScope",
+        "assessmentType",
+        "assessorName",
+        "assessorOrganization",
+        "assessmentDate",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "productName": { "type": "string" },
+        "productVersion": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "deploymentScope": { "type": "string" },
+        "assessmentType": { "enum": ["self", "third-party"] },
+        "assessorName": { "type": "string" },
+        "assessorOrganization": { "type": "string" },
+        "assessmentDate": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": [
+        "achievedLevel",
+        "nextLevel",
+        "criteriaMet",
+        "criteriaTotal",
+        "questionsAnswered",
+        "questionsTotal",
+        "evidenceFiles",
+        "levelResults"
+      ],
+      "properties": {
+        "achievedLevel": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 5
+        },
+        "nextLevel": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 5
+        },
+        "criteriaMet": { "type": "integer", "minimum": 0 },
+        "criteriaTotal": { "type": "integer", "minimum": 0 },
+        "questionsAnswered": { "type": "integer", "minimum": 0 },
+        "questionsTotal": { "type": "integer", "minimum": 0 },
+        "evidenceFiles": { "type": "integer", "minimum": 0 },
+        "levelResults": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "level",
+              "met",
+              "criteriaMet",
+              "criteriaTotal",
+              "blockers"
+            ],
+            "properties": {
+              "level": { "type": "integer", "minimum": 0, "maximum": 5 },
+              "met": { "type": "boolean" },
+              "criteriaMet": { "type": "integer", "minimum": 0 },
+              "criteriaTotal": { "type": "integer", "minimum": 0 },
+              "blockers": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "level",
+          "text",
+          "status",
+          "evidenceStatement",
+          "notes",
+          "evidenceIds"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "level": { "type": "integer", "minimum": 0, "maximum": 5 },
+          "text": { "type": "string" },
+          "status": { "enum": ["not-assessed", "met", "not-met", "partial"] },
+          "evidenceStatement": { "type": "string" },
+          "notes": { "type": "string" },
+          "evidenceIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "level",
+          "group",
+          "question",
+          "answer",
+          "evidenceIds"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "level": { "type": "integer", "minimum": 0, "maximum": 5 },
+          "group": { "type": "string" },
+          "question": { "type": "string" },
+          "answer": { "type": "string" },
+          "evidenceIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/attachment" }
+    }
+  },
+  "$defs": {
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "fileName",
+        "embeddedFileName",
+        "mediaType",
+        "size",
+        "sha256",
+        "addedAt"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "fileName": { "type": "string", "minLength": 1 },
+        "embeddedFileName": { "type": "string", "minLength": 1 },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "size": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "addedAt": { "type": "string", "format": "date-time" },
+        "dataBase64": { "type": "string" }
+      }
+    }
+  }
+}

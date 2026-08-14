@@ -64,8 +64,16 @@ emit(
 
 emit(
   Ajv2020,
-  { "extension-1.0.0": readSchema("extension.schema-1.0.0.json") },
-  { validateExtension100: "extension-1.0.0" },
+  {
+    "extension-1.0.0": readSchema("extension.schema-1.0.0.json"),
+    "pqcmm-model-1.0.0": readSchema("pqcmm-model.schema-1.0.0.json"),
+    "pqcmm-assessment-1.0.0": readSchema("pqcmm-assessment.schema-1.0.0.json"),
+  },
+  {
+    validateExtension100: "extension-1.0.0",
+    validatePqcmmModel100: "pqcmm-model-1.0.0",
+    validatePqcmmAssessment100: "pqcmm-assessment-1.0.0",
+  },
   "validators-2020",
 );
 

@@ -13,11 +13,17 @@ class SelfAssessmentComponent extends HTMLElement {
     const dataUrl = this.getAttribute("dataUrl");
     const referencesUrl = this.getAttribute("referencesUrl");
     const modes = this.getAttribute("modes");
+    const model = this.getAttribute("model");
     if (!this.root) {
       this.root = createRoot(this);
     }
     this.root.render(
-      <App dataUrl={dataUrl} referencesUrl={referencesUrl} modes={modes} />,
+      <App
+        dataUrl={dataUrl}
+        referencesUrl={referencesUrl}
+        modes={modes}
+        model={model}
+      />,
     );
   }
 
