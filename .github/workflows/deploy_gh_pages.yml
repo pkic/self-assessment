@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      destination_dir:
+        description: GitHub Pages directory for this build
+        required: true
+        default: develop
+
+permissions:
+  contents: write
 
 jobs:
   gh-deploy:
@@ -39,4 +47,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Build output to publish to the `gh-pages` branch:
           publish_dir: ./dist
-          destination_dir: develop
+          destination_dir: ${{ inputs.destination_dir || 'develop' }}
