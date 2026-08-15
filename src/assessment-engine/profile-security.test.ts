@@ -75,10 +75,44 @@ describe("assessment profile trust boundaries", () => {
     );
   });
 
+  it("rejects unsafe subject convenience references", () => {
+    const unknownDefault = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.subjectFields.find(
+        ({ key }) => key === "assessorOrganization",
+      )!.defaultFrom = "notDeclared";
+    });
+    expect(() => parseAssessmentProfile(unknownDefault)).toThrow(
+      "defaults from unknown field",
+    );
+
+    const unknownSuggestionSource = mutateProfile(
+      "pqcmm-self-assessment",
+      (profile) => {
+        profile.runtime.subjectFields.find(
+          ({ key }) => key === "cpe",
+        )!.suggestion!.vendorField = "notDeclared";
+      },
+    );
+    expect(() => parseAssessmentProfile(unknownSuggestionSource)).toThrow(
+      "suggestion references unknown field",
+    );
+  });
+
+  it("rejects a non-passing default baseline status", () => {
+    const source = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.methodology.parameters.defaultBaselineStatus =
+        "not-assessed";
+    });
+    expect(() => parseAssessmentProfile(source)).toThrow(
+      "Cumulative gate parameters must match",
+    );
+  });
+
   it("rejects evidence policies with unknown statuses or validators", () => {
     const unknownStatus = mutateProfile("pqcmm-self-assessment", (profile) => {
       profile.runtime.criterion!.evidence.requiredForStatuses = ["unknown"];
       profile.runtime.methodology.parameters.passingStatuses = ["unknown"];
+      profile.runtime.methodology.parameters.defaultBaselineStatus = "unknown";
     });
     expect(() => parseAssessmentProfile(unknownStatus)).toThrow(
       "Evidence policy references unknown criterion status",

@@ -9,6 +9,13 @@ export interface AssessmentSubjectField {
   rows?: number;
   hint?: string;
   format?: "cpe-2.3" | "package-url" | "uri";
+  defaultFrom?: string;
+  suggestion?: {
+    strategy: "cpe-2.3-application";
+    vendorField: string;
+    productField: string;
+    versionField: string;
+  };
 }
 
 export interface AssessmentSubjectRule {

@@ -17,6 +17,21 @@ const profile = parseAssessmentProfile(
 );
 
 describe("PQCMM machine-readable assessments", () => {
+  it("starts at the configured baseline without answering higher levels", () => {
+    const assessment = newEvidenceAssessment(model, profile);
+    expect(
+      model.levels[0].criteria.items.map(
+        ({ id }) => assessment.criterionProgress[id]?.status,
+      ),
+    ).toEqual(["met", "met"]);
+    expect(
+      model.levels
+        .slice(1)
+        .flatMap((level) => level.criteria.items)
+        .some(({ id }) => assessment.criterionProgress[id] !== undefined),
+    ).toBe(false);
+  });
+
   it("omits evidence bytes from the PDF manifest but retains attachment metadata", async () => {
     const assessment = completePqcmmSubject(
       newEvidenceAssessment(model, profile),

@@ -49,6 +49,28 @@ const subjectDefaults = (
     profile.runtime.subjectFields.map((field) => [field.key, ""]),
   );
 
+const initialCriterionProgress = (
+  model: EvidenceModelData,
+  profile: AssessmentProfileData,
+): EvidenceAssessmentRecord["criterionProgress"] => {
+  const { baselineLevel, defaultBaselineStatus } =
+    profile.runtime.methodology.parameters;
+  if (
+    typeof baselineLevel !== "number" ||
+    typeof defaultBaselineStatus !== "string"
+  ) {
+    return {};
+  }
+  const baseline = model.levels.find((level) => level.number === baselineLevel);
+  if (!baseline) return {};
+  return Object.fromEntries(
+    baseline.criteria.items.map((criterion) => [
+      criterion.id,
+      { ...emptyCriterionProgress(), status: defaultBaselineStatus },
+    ]),
+  );
+};
+
 export const subjectDisplayName = (
   profile: AssessmentProfileData,
   record: EvidenceAssessmentRecord,
@@ -82,7 +104,7 @@ export const newEvidenceAssessment = (
     dataVersion: model.model.version,
     subject,
     assuranceProfileId: profile.assurance.defaultProfile,
-    criterionProgress: {},
+    criterionProgress: initialCriterionProgress(model, profile),
     questionProgress: {},
     evidenceFiles: [],
     createdAt: now,

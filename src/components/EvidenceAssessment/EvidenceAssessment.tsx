@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getBundledAssessmentModelYaml } from "../../defaults/assessmentModels";
-import { Button, Card, Select, TextArea, TextField } from "../ui";
+import { Button, Card, Select, TextArea } from "../ui";
 import { evidenceCriterionPolicy } from "../../assessment-engine/profile";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { newAssessmentId } from "../../assessment-engine/id";
@@ -43,6 +43,8 @@ import { EvidenceAttachments } from "./EvidenceAttachments";
 import { ApprovalPolicyCard } from "./ApprovalPolicyCard";
 import { MaturityGateChart } from "./MaturityGateChart";
 import { QuestionResponseFields } from "./QuestionResponseFields";
+import { SubjectField } from "./SubjectField";
+import { updateSubjectWithDefaults } from "../../assessment-engine/subject-convenience";
 import {
   emptyQuestionProgress,
   questionResponseIssues,
@@ -191,7 +193,12 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   const updateSubjectField = (field: string, value: string) =>
     mutate((current) => ({
       ...current,
-      subject: { ...current.subject, [field]: value },
+      subject: updateSubjectWithDefaults(
+        profile,
+        current.subject,
+        field,
+        value,
+      ),
     }));
 
   const updateCriterion = (
@@ -522,28 +529,14 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             </div>
           </div>
           <div className="evidence-assessment-field-grid">
-            {profile.runtime.subjectFields.map((field) => {
-              const common = {
-                key: field.key,
-                label: field.label,
-                required: field.required,
-                hint: field.hint,
-                value: record.subject[field.key] ?? "",
-                onChange: (
-                  event: React.ChangeEvent<
-                    HTMLInputElement | HTMLTextAreaElement
-                  >,
-                ) => updateSubjectField(field.key, event.target.value),
-              };
-              return field.component === "textarea" ? (
-                <TextArea {...common} rows={field.rows ?? 3} />
-              ) : (
-                <TextField
-                  {...common}
-                  type={field.component === "date" ? "date" : "text"}
-                />
-              );
-            })}
+            {profile.runtime.subjectFields.map((field) => (
+              <SubjectField
+                key={field.key}
+                field={field}
+                subject={record.subject}
+                onChange={updateSubjectField}
+              />
+            ))}
           </div>
           {subjectIssues.length > 0 ? (
             <div role="alert">

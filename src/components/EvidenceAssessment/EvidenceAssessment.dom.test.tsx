@@ -15,7 +15,7 @@ import { EvidenceAssessment } from "./EvidenceAssessment";
 jest.mock("./pdf", () => ({ downloadEvidenceAssessmentPdf: jest.fn() }));
 
 describe("EvidenceAssessment", () => {
-  it("renders accessibly and establishes Level 0 only after both declarations", async () => {
+  it("starts at Level 0 and enables export after the basic information", async () => {
     const { container } = render(
       <EvidenceAssessment
         src={null}
@@ -25,7 +25,9 @@ describe("EvidenceAssessment", () => {
       />,
     );
     await screen.findByRole("heading", { name: "PQCMM Assessment" });
-    await screen.findByText("No level established");
+    expect(
+      container.querySelector(".evidence-assessment-header__result"),
+    ).toHaveTextContent("Level 0");
     expect(screen.getByLabelText("Target date for Level 1")).toHaveAttribute(
       "type",
       "date",
@@ -40,7 +42,7 @@ describe("EvidenceAssessment", () => {
       screen.getByRole("progressbar", {
         name: /level 0.*criteria completion/i,
       }),
-    ).toHaveAttribute("value", "0");
+    ).toHaveAttribute("value", "100");
     expect(screen.getByText("Next gate")).toBeInTheDocument();
 
     const criteria = container.querySelectorAll(
@@ -48,24 +50,38 @@ describe("EvidenceAssessment", () => {
     );
     expect(criteria).toHaveLength(2);
     for (const criterion of criteria) {
-      fireEvent.click(
+      expect(
         within(criterion as HTMLElement).getByRole("radio", {
           name: "Met",
         }),
-      );
+      ).toBeChecked();
     }
+    expect(screen.getByText("Established")).toBeInTheDocument();
 
+    expect(
+      screen.getByRole("button", { name: "Download PDF report" }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Product or service"), {
+      target: { value: "Secure Gateway" },
+    });
+    fireEvent.change(screen.getByLabelText("Product version or release"), {
+      target: { value: "2.0" },
+    });
+    fireEvent.change(screen.getByLabelText("Vendor"), {
+      target: { value: "Example Corp" },
+    });
+    expect(screen.getByLabelText("Assessor organization")).toHaveValue(
+      "Example Corp",
+    );
+    expect(screen.getByText(/suggested cpe:/i)).toHaveTextContent(
+      "cpe:2.3:a:example_corp:secure_gateway:2.0:*:*:*:*:*:*:*",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Use suggested CPE" }));
     await waitFor(() =>
       expect(
-        container.querySelector(".evidence-assessment-header__result"),
-      ).toHaveTextContent("Level 0"),
+        screen.getByRole("button", { name: "Download PDF report" }),
+      ).toBeEnabled(),
     );
-    expect(
-      screen.getByRole("progressbar", {
-        name: /level 0.*criteria completion/i,
-      }),
-    ).toHaveAttribute("value", "100");
-    expect(screen.getByText("Established")).toBeInTheDocument();
 
     expect(
       screen.getByText(/external signing flow establishes each actual signer/i),

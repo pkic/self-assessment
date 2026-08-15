@@ -13,6 +13,38 @@ const validateSubjectPolicy = (profile: AssessmentProfileData): void => {
   const fieldKeys = fields.map(({ key }) => key);
   assertUnique(fieldKeys, "Assessment subject field keys must be unique.");
   const knownFields = new Set(fieldKeys);
+  for (const field of fields) {
+    if (field.defaultFrom) {
+      if (!knownFields.has(field.defaultFrom)) {
+        throw new Error(
+          `Subject field ${field.key} defaults from unknown field: ${field.defaultFrom}`,
+        );
+      }
+      if (field.defaultFrom === field.key) {
+        throw new Error(
+          `Subject field ${field.key} cannot default from itself.`,
+        );
+      }
+    }
+    if (field.suggestion) {
+      if (field.format !== "cpe-2.3") {
+        throw new Error(
+          `Subject field ${field.key} uses a CPE suggestion without the cpe-2.3 format.`,
+        );
+      }
+      for (const sourceField of [
+        field.suggestion.vendorField,
+        field.suggestion.productField,
+        field.suggestion.versionField,
+      ]) {
+        if (!knownFields.has(sourceField)) {
+          throw new Error(
+            `Subject field ${field.key} suggestion references unknown field: ${sourceField}`,
+          );
+        }
+      }
+    }
+  }
   for (const rule of profile.runtime.subjectRules ?? []) {
     for (const field of rule.fields) {
       if (!knownFields.has(field)) {
@@ -144,6 +176,7 @@ const validateGatedExperience = (profile: AssessmentProfileData): void => {
   }
   const parameters = profile.runtime.methodology.parameters;
   const passingStatuses = parameters.passingStatuses;
+  const defaultBaselineStatus = parameters.defaultBaselineStatus;
   const passingQuestionFindings = parameters.passingQuestionFindings;
   const questionFindingValues =
     profile.runtime.questions?.findings.map(({ value }) => value) ?? [];
@@ -169,6 +202,9 @@ const validateGatedExperience = (profile: AssessmentProfileData): void => {
         typeof status === "string" &&
         criterion.evidence.requiredForStatuses.includes(status),
     ) &&
+    (defaultBaselineStatus === undefined ||
+      (typeof defaultBaselineStatus === "string" &&
+        passingStatuses.includes(defaultBaselineStatus))) &&
     questionParametersMatch;
   if (!parametersMatch) {
     throw new Error(

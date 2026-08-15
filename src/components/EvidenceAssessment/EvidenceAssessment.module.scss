@@ -120,6 +120,24 @@
   align-items: start;
 }
 
+.evidence-assessment-subject-field {
+  min-width: 0;
+}
+
+.evidence-assessment-subject-suggestion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--pkimm-space-xs);
+  margin-top: var(--pkimm-space-xs);
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.8rem;
+
+  code {
+    overflow-wrap: anywhere;
+  }
+}
+
 .evidence-assessment-score-card {
   display: flex;
   align-items: center;
