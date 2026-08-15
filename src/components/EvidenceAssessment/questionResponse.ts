@@ -6,6 +6,7 @@ import {
 import type {
   AssessmentEvidenceFile,
   EvidenceQuestion,
+  EvidenceQuestionField,
   EvidenceQuestionGroup,
   EvidenceQuestionProgress,
   EvidenceQuestionResponse,
@@ -36,6 +37,83 @@ export const responseDefinition = (
   };
 };
 
+const fieldIssue = (
+  field: EvidenceQuestionField,
+  value: string | string[] | undefined,
+): string | undefined => {
+  if (field.required && !hasQuestionValue(value)) {
+    return `${field.label} is required.`;
+  }
+  if (!hasQuestionValue(value)) return undefined;
+  if (validQuestionFieldValue(field, value!)) return undefined;
+  if (field.type === "date") return `${field.label} must be a valid date.`;
+  if (field.type === "url") {
+    return `${field.label} must be an HTTP or HTTPS URL.`;
+  }
+  if (field.type === "cpe-2.3") {
+    return `${field.label} must be a valid CPE 2.3 name.`;
+  }
+  if (field.type === "package-url") {
+    return `${field.label} must be a valid package URL.`;
+  }
+  if (field.type === "boolean") return `${field.label} must be Yes or No.`;
+  return `${field.label} contains an unknown option.`;
+};
+
+const responseValueIssues = (
+  definition: EvidenceQuestionResponse,
+  progress: EvidenceQuestionProgress,
+): string[] =>
+  definition.fields.flatMap((field) => {
+    const issue = fieldIssue(field, progress.values[field.key]);
+    return issue ? [issue] : [];
+  });
+
+const responseRuleIssues = (
+  definition: EvidenceQuestionResponse,
+  progress: EvidenceQuestionProgress,
+): string[] =>
+  (definition.rules ?? []).flatMap((rule) =>
+    rule.fields.some((field) => hasQuestionValue(progress.values[field]))
+      ? []
+      : [rule.message],
+  );
+
+const attachedEvidence = (
+  progress: EvidenceQuestionProgress,
+  evidenceFiles: AssessmentEvidenceFile[],
+): AssessmentEvidenceFile[] =>
+  progress.evidenceIds
+    .map((id) => evidenceFiles.find((file) => file.id === id))
+    .filter((file): file is AssessmentEvidenceFile => Boolean(file));
+
+const evidenceIssues = (
+  definition: EvidenceQuestionResponse,
+  progress: EvidenceQuestionProgress,
+  evidenceFiles: AssessmentEvidenceFile[],
+): string[] => {
+  const request = definition.evidence;
+  if (!request) return [];
+  const attached = attachedEvidence(progress, evidenceFiles);
+  const issues: string[] = [];
+  if (request.required && attached.length === 0) {
+    issues.push(`${request.label} is required.`);
+  }
+  if (attached.length > request.maxFiles) {
+    issues.push(
+      `${request.label} accepts at most ${request.maxFiles} file${request.maxFiles === 1 ? "" : "s"}.`,
+    );
+  }
+  const acceptsAll = request.acceptedMediaTypes.includes("*/*");
+  const unsupported = attached.some(
+    (file) => !request.acceptedMediaTypes.includes(file.mediaType),
+  );
+  if (!acceptsAll && unsupported) {
+    issues.push(`${request.label} contains an unsupported file type.`);
+  }
+  return issues;
+};
+
 export const questionResponseIssues = (
   question: EvidenceQuestion,
   kind: EvidenceQuestionGroup["kind"],
@@ -44,79 +122,16 @@ export const questionResponseIssues = (
   evidenceFiles: AssessmentEvidenceFile[],
 ): string[] => {
   const definition = responseDefinition(question, kind, profile);
-  const issues: string[] = [];
+  const issues = [
+    ...responseValueIssues(definition, progress),
+    ...responseRuleIssues(definition, progress),
+    ...evidenceIssues(definition, progress, evidenceFiles),
+  ];
   if (
     profile.runtime.questions?.requiredForKinds.includes(kind) &&
     progress.finding === "not-assessed"
   ) {
-    issues.push("Select an assessment finding.");
-  }
-  for (const field of definition.fields) {
-    const value = progress.values[field.key];
-    if (field.required && !hasQuestionValue(value)) {
-      issues.push(`${field.label} is required.`);
-      continue;
-    }
-    if (!hasQuestionValue(value)) continue;
-    if (field.type === "date" && !validQuestionFieldValue(field, value!)) {
-      issues.push(`${field.label} must be a valid date.`);
-    } else if (
-      field.type === "url" &&
-      !validQuestionFieldValue(field, value!)
-    ) {
-      issues.push(`${field.label} must be an HTTP or HTTPS URL.`);
-    } else if (
-      field.type === "cpe-2.3" &&
-      !validQuestionFieldValue(field, value!)
-    ) {
-      issues.push(`${field.label} must be a valid CPE 2.3 name.`);
-    } else if (
-      field.type === "package-url" &&
-      !validQuestionFieldValue(field, value!)
-    ) {
-      issues.push(`${field.label} must be a valid package URL.`);
-    } else if (
-      field.type === "boolean" &&
-      !validQuestionFieldValue(field, value!)
-    ) {
-      issues.push(`${field.label} must be Yes or No.`);
-    } else if (
-      ["select", "multiselect"].includes(field.type) &&
-      !validQuestionFieldValue(field, value!)
-    ) {
-      issues.push(`${field.label} contains an unknown option.`);
-    }
-  }
-  for (const rule of definition.rules ?? []) {
-    if (
-      rule.kind === "at-least-one" &&
-      !rule.fields.some((field) => hasQuestionValue(progress.values[field]))
-    ) {
-      issues.push(rule.message);
-    }
-  }
-  const attached = progress.evidenceIds
-    .map((id) => evidenceFiles.find((file) => file.id === id))
-    .filter((file): file is AssessmentEvidenceFile => Boolean(file));
-  if (definition.evidence?.required && attached.length === 0) {
-    issues.push(`${definition.evidence.label} is required.`);
-  }
-  if (definition.evidence && attached.length > definition.evidence.maxFiles) {
-    issues.push(
-      `${definition.evidence.label} accepts at most ${definition.evidence.maxFiles} file${definition.evidence.maxFiles === 1 ? "" : "s"}.`,
-    );
-  }
-  if (
-    definition.evidence &&
-    !definition.evidence.acceptedMediaTypes.includes("*/*") &&
-    attached.some(
-      (file) =>
-        !definition.evidence?.acceptedMediaTypes.includes(file.mediaType),
-    )
-  ) {
-    issues.push(
-      `${definition.evidence.label} contains an unsupported file type.`,
-    );
+    issues.unshift("Select an assessment finding.");
   }
   return issues;
 };

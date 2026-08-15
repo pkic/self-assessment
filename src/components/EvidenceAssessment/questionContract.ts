@@ -4,9 +4,8 @@ import type {
   EvidenceQuestionResponse,
 } from "./types";
 
-const CPE_PATTERN = "^cpe:2\\.3:(?:(?:\\\\.|[^:])*:){10}(?:\\\\.|[^:])*$";
-const PURL_PATTERN =
-  "^pkg:[a-z][a-z0-9.+-]*/[^\\s/]+(?:/[^\\s/]+)*(?:@[^\\s?#]+)?(?:\\?[^\\s#]+)?(?:#[^\\s]+)?$";
+const CPE_PATTERN = String.raw`^cpe:2\.3:(?:(?:\\.|[^:])*:){10}(?:\\.|[^:])*$`;
+const PURL_PATTERN = String.raw`^pkg:[a-z][a-z0-9.+-]*/[^\s/]+(?:/[^\s/]+)*(?:@[^\s?#]+)?(?:\?[^\s#]+)?(?:#[^\s]+)?$`;
 const FIELD_TYPES = new Set<EvidenceQuestionFieldType>([
   "text",
   "textarea",
