@@ -20,14 +20,18 @@ const record = (): Pick<
   "criterionProgress" | "questionProgress" | "evidenceFiles"
 > => ({ criterionProgress: {}, questionProgress: {}, evidenceFiles: [] });
 
-const answerForField = (type: string): string => {
-  if (type === "date") return "2027-06-30";
-  if (type === "url") return "https://example.com/evidence";
-  if (type === "cpe-2.3") {
+const answerForField = (field: {
+  type: string;
+  options?: { value: string }[];
+}): string => {
+  if (field.type === "date") return "2027-06-30";
+  if (field.type === "url") return "https://example.com/evidence";
+  if (field.type === "cpe-2.3") {
     return "cpe:2.3:a:example:gateway:4.2:*:*:*:*:*:*:*";
   }
-  if (type === "package-url") return "pkg:generic/example/gateway@4.2";
-  if (type === "boolean") return "yes";
+  if (field.type === "package-url") return "pkg:generic/example/gateway@4.2";
+  if (field.type === "boolean") return "yes";
+  if (field.type === "select") return field.options?.[0]?.value ?? "";
   return "Test response";
 };
 
@@ -56,13 +60,13 @@ const setLevel = (
           ]
         )
           .filter((field) => field.required)
-          .map((field) => [field.key, answerForField(field.type)]),
+          .map((field) => [field.key, answerForField(field)]),
       );
       for (const rule of question.response?.rules ?? []) {
         const field = question.response?.fields.find(
           (candidate) => candidate.key === rule.fields[0],
         );
-        values[rule.fields[0]] = answerForField(field?.type ?? "text");
+        values[rule.fields[0]] = answerForField(field ?? { type: "text" });
       }
       target.questionProgress[questionId] = {
         finding: "supports",

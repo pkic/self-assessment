@@ -60,6 +60,36 @@ describe("PQCMM model data", () => {
     ).toBe("1.0.1");
   });
 
+  it("names each requested assessment artifact and its accepted formats", () => {
+    const model = parseEvidenceModel(modelYaml);
+    const questions = new Map(
+      model.levels
+        .flatMap((level) => level.assessment.groups)
+        .flatMap((group) => group.questions)
+        .map((question) => [question.id, question]),
+    );
+    const expectedLabels = {
+      "1.5.2": "Implementation validation artifact",
+      "2.3.2": "Standards conformance record",
+      "2.3.3": "Interoperability test results",
+      "3.2.1": "Version-specific cryptographic inventory",
+      "3.2.3": "Current and previous cryptographic inventories",
+      "3.3.3": "Redacted or anonymized SBOM or CBOM",
+      "3.4.1": "SPDX or CycloneDX SBOM for the assessed release",
+      "3.4.3": "Current and previous release SBOMs",
+      "3.7.1": "HNDL exposure register",
+      "4.2.1": "Machine-readable CBOM for the assessed release",
+      "5.3.1": "Quantum-safe performance benchmark report",
+      "5.4.2": "Analyzed CBOM and cross-reference results",
+      "5.5.4": "Third-party cryptographic audit report",
+    };
+    for (const [questionId, label] of Object.entries(expectedLabels)) {
+      const evidence = questions.get(questionId)?.response?.evidence;
+      expect(evidence).toMatchObject({ label });
+      expect(evidence?.acceptedMediaTypes.length).toBeGreaterThan(0);
+    }
+  });
+
   it("does not bind the experience parser to one model-specific scoring label", () => {
     const model = parseEvidenceModel(
       modelYaml.replace(
