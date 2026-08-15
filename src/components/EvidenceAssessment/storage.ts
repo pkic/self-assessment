@@ -18,7 +18,7 @@ const DB_VERSION = 1;
 let databasePromise: Promise<IDBPDatabase<EvidenceAssessmentDatabase>> | null =
   null;
 
-const normalizeRecord = (
+export const migrateStoredEvidenceRecord = (
   record: EvidenceAssessmentRecord,
 ): EvidenceAssessmentRecord => {
   const legacy = record as unknown as EvidenceAssessmentRecord & {
@@ -34,16 +34,44 @@ const normalizeRecord = (
     executiveTitle?: string;
     executiveOrganization?: string;
   };
+  const legacyVersion = (record as unknown as { stateSchemaVersion?: number })
+    .stateSchemaVersion;
   const withoutDeprecatedSignerFields = { ...legacy };
   delete withoutDeprecatedSignerFields.executiveName;
   delete withoutDeprecatedSignerFields.executiveTitle;
   delete withoutDeprecatedSignerFields.executiveOrganization;
-  if (record.stateSchemaVersion === 2 && record.subject) {
+  if (legacyVersion === 3 && record.subject) {
     return withoutDeprecatedSignerFields;
+  }
+  const legacyQuestionProgress = legacy.questionProgress as unknown as Record<
+    string,
+    { answer?: string; evidenceIds?: string[] }
+  >;
+  const migratedQuestionProgress = Object.fromEntries(
+    Object.entries(legacyQuestionProgress ?? {}).map(([id, progress]) => {
+      const values: Record<string, string | string[]> = progress.answer
+        ? { response: progress.answer }
+        : {};
+      return [
+        id,
+        {
+          finding: "not-assessed",
+          values,
+          evidenceIds: progress.evidenceIds ?? [],
+        },
+      ];
+    }),
+  );
+  if (legacyVersion === 2 && record.subject) {
+    return {
+      ...withoutDeprecatedSignerFields,
+      stateSchemaVersion: 3,
+      questionProgress: migratedQuestionProgress,
+    };
   }
   return {
     ...withoutDeprecatedSignerFields,
-    stateSchemaVersion: 2,
+    stateSchemaVersion: 3,
     subject: {
       productName: legacy.productName ?? "",
       productVersion: legacy.productVersion ?? "",
@@ -54,6 +82,7 @@ const normalizeRecord = (
       assessmentDate: legacy.assessmentDate ?? "",
     },
     assuranceProfileId: "self",
+    questionProgress: migratedQuestionProgress,
   };
 };
 
@@ -76,7 +105,7 @@ export const listEvidenceAssessments = async (): Promise<
   const db = await database();
   const records = await db.getAllFromIndex("assessments", "by-updated");
   return records
-    .map(normalizeRecord)
+    .map(migrateStoredEvidenceRecord)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 };
 
@@ -86,7 +115,7 @@ export const loadActiveEvidenceAssessment = async (): Promise<
   const db = await database();
   const activeId = await db.get("meta", "activeId");
   const record = activeId ? await db.get("assessments", activeId) : undefined;
-  return record ? normalizeRecord(record) : undefined;
+  return record ? migrateStoredEvidenceRecord(record) : undefined;
 };
 
 export const saveEvidenceAssessment = async (

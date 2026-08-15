@@ -67,18 +67,28 @@ emit(
   {
     "extension-1.0.0": readSchema("extension.schema-1.0.0.json"),
     "pqcmm-model-1.0.0": readSchema("pqcmm-model.schema-1.0.0.json"),
+    "pqcmm-model-1.1.0": readSchema("pqcmm-model.schema-1.1.0.json"),
     "assessment-package-1.0.0": readSchema(
       "assessment-package.schema-1.0.0.json",
     ),
+    "assessment-package-1.1.0": readSchema(
+      "assessment-package.schema-1.1.0.json",
+    ),
     "assessment-profile-1.0.0": readSchema(
       "assessment-profile.schema-1.0.0.json",
+    ),
+    "assessment-profile-1.1.0": readSchema(
+      "assessment-profile.schema-1.1.0.json",
     ),
   },
   {
     validateExtension100: "extension-1.0.0",
     validatePqcmmModel100: "pqcmm-model-1.0.0",
+    validatePqcmmModel110: "pqcmm-model-1.1.0",
     validateAssessmentPackage100: "assessment-package-1.0.0",
+    validateAssessmentPackage110: "assessment-package-1.1.0",
     validateAssessmentProfile100: "assessment-profile-1.0.0",
+    validateAssessmentProfile110: "assessment-profile-1.1.0",
   },
   "validators-2020",
 );

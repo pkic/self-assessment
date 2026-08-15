@@ -58,6 +58,11 @@ describe("PQCMM machine-readable assessments", () => {
       notes: "",
       evidenceIds: ["evidence-1"],
     };
+    assessment.questionProgress["0.2.1"] = {
+      finding: "not-assessed",
+      values: { targetDate: "2027-06-30" },
+      evidenceIds: [],
+    };
     assessment.evidenceFiles = [
       {
         id: "evidence-1",
@@ -85,6 +90,17 @@ describe("PQCMM machine-readable assessments", () => {
     expect(restored.criterionProgress["1.1.1"]).toEqual(
       assessment.criterionProgress["1.1.1"],
     );
+    expect(restored.questionProgress["0.2.1"]).toEqual(
+      assessment.questionProgress["0.2.1"],
+    );
+    expect(
+      exported.credential.credentialSubject.responses.find(
+        (response) => response.id === "0.2.1",
+      ),
+    ).toMatchObject({
+      finding: "not-assessed",
+      values: { targetDate: "2027-06-30" },
+    });
     expect(restored.evidenceFiles).toEqual(assessment.evidenceFiles);
   });
 

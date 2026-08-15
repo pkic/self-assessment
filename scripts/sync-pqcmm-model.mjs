@@ -8,15 +8,15 @@ const pqcmmRoot = resolve(
 );
 const targetDirectory = join(repositoryRoot, "src", "public");
 const files = [
-  ["model/pqcmm-model-1.0.1.yaml", "pqcmm-model-1.0.1.yaml"],
-  ["schemas/pqcmm-model.schema-1.0.0.json", "pqcmm-model.schema-1.0.0.json"],
+  ["model/pqcmm-model-1.1.0.yaml", "pqcmm-model-1.1.0.yaml"],
+  ["schemas/pqcmm-model.schema-1.1.0.json", "pqcmm-model.schema-1.1.0.json"],
   [
-    "profiles/pqcmm-self-assessment-profile-1.0.0.yaml",
-    "pqcmm-self-assessment-profile-1.0.0.yaml",
+    "profiles/pqcmm-self-assessment-profile-1.1.0.yaml",
+    "pqcmm-self-assessment-profile-1.1.0.yaml",
   ],
   [
-    "schemas/assessment-profile.schema-1.0.0.json",
-    "assessment-profile.schema-1.0.0.json",
+    "schemas/assessment-profile.schema-1.1.0.json",
+    "assessment-profile.schema-1.1.0.json",
   ],
 ];
 

@@ -1,5 +1,5 @@
 import pkimmProfile from "../public/pkimm-self-assessment-profile-1.0.0.yaml";
-import pqcmmProfile from "../public/pqcmm-self-assessment-profile-1.0.0.yaml";
+import pqcmmProfile from "../public/pqcmm-self-assessment-profile-1.1.0.yaml";
 
 export const DEFAULT_ASSESSMENT_PROFILE = "pkimm-self-assessment";
 

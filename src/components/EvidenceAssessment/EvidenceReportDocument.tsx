@@ -66,7 +66,12 @@ export const EvidenceReportDocument: React.FC<Props> = ({
         levels={model.levels}
       />
       {model.levels.map((level) => (
-        <EvidenceLevelPage key={level.number} level={level} record={record} />
+        <EvidenceLevelPage
+          key={level.number}
+          level={level}
+          profile={profile}
+          record={record}
+        />
       ))}
       {profile.report.includeEvidenceManifest ? (
         <EvidenceManifestPage profile={profile} record={record} />

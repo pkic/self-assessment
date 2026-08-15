@@ -17,17 +17,17 @@ const hasUnescapedSeparatorCount = (
   return separatorCount === expected;
 };
 
-const validCpe23 = (value: string): boolean =>
+export const validCpe23 = (value: string): boolean =>
   value.toLowerCase().startsWith("cpe:2.3:") &&
   hasUnescapedSeparatorCount(value, 12);
 
-const validPackageUrl = (value: string): boolean => {
+export const validPackageUrl = (value: string): boolean => {
   if (!value.startsWith("pkg:")) return false;
   const slash = value.indexOf("/", 4);
   return slash > 4 && slash < value.length - 1 && !/\s/.test(value);
 };
 
-const validUri = (value: string): boolean => {
+export const validUri = (value: string): boolean => {
   try {
     return Boolean(new URL(value));
   } catch {
@@ -35,7 +35,10 @@ const validUri = (value: string): boolean => {
   }
 };
 
-const validFormat = (format: string | undefined, value: string): boolean => {
+export const validAssessmentFormat = (
+  format: string | undefined,
+  value: string,
+): boolean => {
   if (!format || !value) return true;
   if (format === "cpe-2.3") return validCpe23(value);
   if (format === "package-url") return validPackageUrl(value);
@@ -50,7 +53,7 @@ export const assessmentSubjectIssues = (
   const issues = profile.runtime.subjectFields.flatMap((field) => {
     const value = subject[field.key]?.trim() ?? "";
     if (field.required && !value) return [`${field.label} is required.`];
-    if (!validFormat(field.format, value)) {
+    if (!validAssessmentFormat(field.format, value)) {
       return [`${field.label} is not a valid ${field.format}.`];
     }
     return [];

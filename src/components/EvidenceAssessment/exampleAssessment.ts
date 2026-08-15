@@ -3,6 +3,7 @@ import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { bytesToBase64 } from "./encoding";
 import { newEvidenceAssessment } from "./machine";
 import type { EvidenceAssessmentRecord, EvidenceModelData } from "./types";
+import { responseDefinition } from "./questionResponse";
 
 export const buildExampleAssessment = async (
   model: EvidenceModelData,
@@ -50,6 +51,26 @@ export const buildExampleAssessment = async (
         notes: "Synthetic example; not an independently verified claim.",
         evidenceIds: level.number === 0 ? [] : ["example-release-notes"],
       };
+      for (const questionId of criterion.assessmentQuestionIds ?? []) {
+        const group = level.assessment.groups.find((candidate) =>
+          candidate.questions.some((question) => question.id === questionId),
+        )!;
+        const question = group.questions.find(
+          (candidate) => candidate.id === questionId,
+        )!;
+        record.questionProgress[questionId] = {
+          finding: "supports",
+          values: Object.fromEntries(
+            responseDefinition(question, group.kind, profile)
+              .fields.filter((field) => field.required)
+              .map((field) => [
+                field.key,
+                `Example response for ${questionId}`,
+              ]),
+          ),
+          evidenceIds: ["example-release-notes"],
+        };
+      }
     }
   }
   return record;

@@ -1,4 +1,7 @@
-import { validateAssessmentPackage100 } from "../../generated/validators-2020";
+import {
+  validateAssessmentPackage100,
+  validateAssessmentPackage110,
+} from "../../generated/validators-2020";
 import { currentAssuranceProfile } from "../../assessment-engine/assurance-policy";
 import {
   assessmentPayloadSha256,
@@ -30,6 +33,11 @@ import type {
   EvidenceAssessmentRecord,
   EvidenceModelData,
 } from "./types";
+import {
+  emptyQuestionProgress,
+  questionResponseSummary,
+  responseDefinition,
+} from "./questionResponse";
 
 export const embeddedEvidenceName = (file: AssessmentEvidenceFile): string =>
   `evidence-${safeFileName(file.id)}-${safeFileName(file.name)}`;
@@ -67,7 +75,7 @@ export const newEvidenceAssessment = (
   const subject = subjectDefaults(profile);
   if ("assessmentDate" in subject) subject.assessmentDate = now.slice(0, 10);
   return {
-    stateSchemaVersion: 2,
+    stateSchemaVersion: 3,
     id: newAssessmentId(),
     name: profile.profile.title,
     modelId: model.model.id,
@@ -86,12 +94,13 @@ export const evidenceFromFile = async (
   file: File,
   existingFiles: AssessmentEvidenceFile[],
   profile: AssessmentProfileData,
+  acceptedMediaTypes?: string[],
 ): Promise<AssessmentEvidenceFile> => {
   const policy = evidenceCriterionPolicy(profile).evidence;
   return buildEvidenceFromFile(file, existingFiles, {
     maxFileBytes: policy.maxFileBytes,
     maxPackageBytes: policy.maxPackageBytes,
-    acceptedMediaTypes: policy.acceptedMediaTypes,
+    acceptedMediaTypes: acceptedMediaTypes ?? policy.acceptedMediaTypes,
   });
 };
 
@@ -309,10 +318,7 @@ export const normalizeEvidenceRecord = (
       level.assessment.groups.flatMap((group) =>
         group.questions.map((question) => [
           question.id,
-          record.questionProgress[question.id] ?? {
-            answer: "",
-            evidenceIds: [],
-          },
+          record.questionProgress[question.id] ?? emptyQuestionProgress(),
         ]),
       ),
     ),
@@ -401,20 +407,26 @@ export const buildAssessmentPackage = async (
       ...model.levels.flatMap((level) =>
         level.assessment.groups.flatMap((group) =>
           group.questions.map((question) => {
-            const progress = record.questionProgress[question.id] ?? {
-              answer: "",
-              evidenceIds: [],
-            };
+            const progress =
+              record.questionProgress[question.id] ?? emptyQuestionProgress();
+            const definition = responseDefinition(
+              question,
+              group.kind,
+              profile,
+            );
+            const summary = questionResponseSummary(definition, progress);
             return {
               id: question.id,
               kind: "question" as const,
               level: level.number,
               group: group.name,
               prompt: question.question,
-              value: progress.answer,
+              finding: progress.finding,
+              value: summary,
+              values: progress.values,
               evidenceIds: progress.evidenceIds,
               evidenceReviewStatus: evidenceReviewStatus(
-                progress.answer,
+                summary,
                 progress.evidenceIds,
               ),
             };
@@ -427,7 +439,7 @@ export const buildAssessmentPackage = async (
     record.subject.assessorOrganization?.trim() || "Self-assessed organization";
   return {
     format: "pkic-assessment-package",
-    schemaVersion: "1.0.0",
+    schemaVersion: "1.1.0",
     credential: {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -441,7 +453,7 @@ export const buildAssessmentPackage = async (
       },
       validFrom: record.updatedAt,
       credentialSchema: {
-        id: "https://pkic.org/assessment-package.schema-1.0.0.json#/$defs/subject",
+        id: "https://pkic.org/assessment-package.schema-1.1.0.json#/$defs/subject",
         type: "JsonSchema",
       },
       credentialSubject: subject,
@@ -473,7 +485,15 @@ export const parseAssessmentPackage = async (
     throw new Error("The selected assessment package is too large.");
   }
   const parsed: unknown = JSON.parse(text);
-  if (!validateAssessmentPackage100(parsed)) {
+  const schemaVersion =
+    typeof parsed === "object" && parsed !== null && "schemaVersion" in parsed
+      ? parsed.schemaVersion
+      : undefined;
+  const validator =
+    schemaVersion === "1.1.0"
+      ? validateAssessmentPackage110
+      : validateAssessmentPackage100;
+  if (!validator(parsed)) {
     throw new Error("The selected file is not a valid assessment package.");
   }
   const data = parsed as AssessmentPackage<AssessmentCredentialSubject>;
@@ -516,7 +536,11 @@ export const parseAssessmentPackage = async (
       .filter((response) => response.kind === "question")
       .map((response) => [
         response.id,
-        { answer: response.value, evidenceIds: response.evidenceIds },
+        {
+          finding: response.finding ?? "not-assessed",
+          values: response.values ?? { response: response.value },
+          evidenceIds: response.evidenceIds,
+        },
       ]),
   );
   const evidenceFiles: AssessmentEvidenceFile[] = [];
@@ -535,7 +559,7 @@ export const parseAssessmentPackage = async (
   }
 
   const restored: EvidenceAssessmentRecord = {
-    stateSchemaVersion: 2,
+    stateSchemaVersion: 3,
     id: subject.assessment.id,
     name: subject.assessment.name,
     modelId: subject.model.id,

@@ -403,6 +403,9 @@
 .evidence-assessment-status-not-met {
   border-left-color: var(--pkimm-danger-border);
 }
+.evidence-assessment-status-blocked {
+  border-left-color: var(--pkimm-danger-border);
+}
 
 .evidence-assessment-item-title {
   display: flex;
@@ -458,6 +461,7 @@
 }
 
 .evidence-assessment-evidence-required {
+  display: block;
   margin: var(--pkimm-space-xs) 0;
   padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
   color: var(--pkimm-danger-fg);
@@ -490,6 +494,11 @@
 .evidence-assessment-evidence-attachments__empty {
   margin: var(--pkimm-space-xs) 0 0;
   color: var(--pkimm-text-color-muted);
+}
+.evidence-assessment-evidence-attachments__description {
+  margin: var(--pkimm-space-xs) 0 0;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.9rem;
 }
 .evidence-assessment-evidence-attachments__list {
   list-style: none;
@@ -527,6 +536,40 @@
 }
 .evidence-assessment-question details {
   margin-bottom: var(--pkimm-space-md);
+}
+.evidence-assessment-question__response {
+  display: grid;
+  gap: var(--pkimm-space-sm);
+}
+.evidence-assessment-question__multi-select {
+  display: grid;
+  gap: var(--pkimm-space-xs);
+  margin: 0;
+  padding: var(--pkimm-space-sm);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-sm);
+  legend {
+    padding: 0 var(--pkimm-space-xs);
+    font-weight: 600;
+  }
+  label {
+    display: flex;
+    align-items: center;
+    gap: var(--pkimm-space-xs);
+  }
+}
+.evidence-assessment-question__issues {
+  margin: var(--pkimm-space-sm) 0 0;
+  padding: var(--pkimm-space-xs) var(--pkimm-space-sm) var(--pkimm-space-xs)
+    calc(var(--pkimm-space-lg) + var(--pkimm-space-xs));
+  color: var(--pkimm-danger-fg);
+  background: var(--pkimm-danger-bg);
+  border-radius: var(--pkimm-border-radius-sm);
+}
+.evidence-assessment-criterion__question-links {
+  margin: 0 0 var(--pkimm-space-md);
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.9rem;
 }
 .evidence-assessment-question summary {
   cursor: pointer;

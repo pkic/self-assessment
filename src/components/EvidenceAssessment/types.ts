@@ -1,6 +1,45 @@
 export interface EvidenceCriterion {
   id: string;
   text: string;
+  assessmentQuestionIds?: string[];
+}
+
+export type EvidenceQuestionFieldType =
+  | "text"
+  | "textarea"
+  | "date"
+  | "url"
+  | "boolean"
+  | "select"
+  | "multiselect"
+  | "cpe-2.3"
+  | "package-url";
+
+export interface EvidenceQuestionField {
+  key: string;
+  label: string;
+  type: EvidenceQuestionFieldType;
+  required: boolean;
+  hint?: string;
+  rows?: number;
+  pattern?: string;
+  options?: { value: string; label: string }[];
+}
+
+export interface EvidenceQuestionResponse {
+  fields: EvidenceQuestionField[];
+  rules?: {
+    kind: "at-least-one";
+    fields: string[];
+    message: string;
+  }[];
+  evidence?: {
+    label: string;
+    description: string;
+    required: boolean;
+    acceptedMediaTypes: string[];
+    maxFiles: number;
+  };
 }
 
 export interface EvidenceQuestion {
@@ -9,6 +48,7 @@ export interface EvidenceQuestion {
   guidance?: string;
   expectedInput?: string;
   purpose?: string;
+  response?: EvidenceQuestionResponse;
 }
 
 export interface EvidenceQuestionGroup {
@@ -72,12 +112,13 @@ export interface EvidenceCriterionProgress {
 }
 
 export interface EvidenceQuestionProgress {
-  answer: string;
+  finding: string;
+  values: Record<string, string | string[]>;
   evidenceIds: string[];
 }
 
 export interface EvidenceAssessmentRecord {
-  stateSchemaVersion: 2;
+  stateSchemaVersion: 3;
   id: string;
   name: string;
   modelId: string;
@@ -129,7 +170,9 @@ export interface AssessmentCredentialSubject {
     group?: string;
     prompt: string;
     status?: string;
+    finding?: string;
     value: string;
+    values?: Record<string, string | string[]>;
     notes?: string;
     evidenceIds: string[];
     evidenceReviewStatus: EvidenceReviewStatus;

@@ -30,7 +30,7 @@ Extensions are not configured by a host attribute — the user uploads and remov
 | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `profile`       | no       | Bundled assessment profile id. Defaults to `pkimm-self-assessment`.                                                                                                                                                                                                                                                            |
 | `profileUrl`    | no       | URL of an assessment profile YAML. The profile selects the experience and methodology.                                                                                                                                                                                                                                         |
-| `dataUrl`       | no       | Optional model YAML override. For PKIMM this defaults to the bundled 2.0.0 model; for PQCMM it defaults to the bundled 1.0.1 model.                                                                                                                                                                                            |
+| `dataUrl`       | no       | Optional model YAML override. For PKIMM this defaults to the bundled 2.0.0 model; for PQCMM it defaults to the bundled 1.1.0 model.                                                                                                                                                                                            |
 | `referencesUrl` | no       | Optional override. URL of the shared references catalog (`pkimm-references.yaml`). Defaults to the bundled references catalog (so category cards + the PDF References appendix appear by default); set this to point at a different catalog.                                                                                   |
 | `modes`         | no       | Which assessment views are offered (comma-separated, case-insensitive): `self`, `full`, or `self,full`. Unset (default) offers both, opening in Self. `modes="self"` offers only the quick Self assessment; `modes="full"` opens in Full but keeps Self available. Self can never be disabled. See **Assessment modes** below. |
 
@@ -54,12 +54,12 @@ The model and references YAMLs are bundled into `dist/self-assessment.js`, so th
 
 ### Profile-selected assessments
 
-Select PQCMM by profile on the same component and route. It uses the bundled PQCMM 1.0.1 data when `dataUrl` is absent and the supplied versioned model URL when it is present:
+Select PQCMM by profile on the same component and route. It uses the bundled PQCMM 1.1.0 data when `dataUrl` is absent and the supplied versioned model URL when it is present:
 
 ```html
 <self-assessment
   profile="pqcmm-self-assessment"
-  dataUrl="https://pkic.org/wg/pqc/pqcmm/data/pqcmm-model-1.0.1.yaml"
+  dataUrl="https://pkic.org/wg/pqc/pqcmm/data/pqcmm-model-1.1.0.yaml"
 ></self-assessment>
 <script src="https://pkic.github.io/self-assessment/develop/self-assessment.js"></script>
 ```
@@ -67,7 +67,7 @@ Select PQCMM by profile on the same component and route. It uses the bundled PQC
 The standalone preview exposes the same selection on one URL:
 
 - `/?profile=pkimm-self-assessment` loads bundled PKIMM 2.0.0.
-- `/?profile=pqcmm-self-assessment` loads bundled PQCMM 1.0.1.
+- `/?profile=pqcmm-self-assessment` loads bundled PQCMM 1.1.0.
 - `/?profileUrl=<url>&dataUrl=<url>` loads another schema-compatible profile
   and model. The external server must permit browser access with CORS, and the
   model id and version must match the profile.

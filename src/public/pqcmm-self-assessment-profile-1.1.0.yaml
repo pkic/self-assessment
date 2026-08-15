@@ -1,0 +1,210 @@
+schemaVersion: 1.1.0
+profile:
+  id: pqcmm-self-assessment
+  version: 1.1.0
+  family: maturity
+  model:
+    id: pqcmm
+    version: 1.1.0
+  title: PQCMM Assessment
+  description: Product and service evidence assessment. Data never leaves this browser unless the user exports it.
+runtime:
+  experience: evidence-gated-maturity
+  methodology:
+    strategy: cumulative-gates
+    version: 1.0.0
+    parameters:
+      baselineLevel: 0
+      minimumLevel: 0
+      maximumLevel: 5
+      passingStatuses: [met]
+      evidenceRequiredFromLevel: 1
+      passingQuestionFindings: [supports]
+  subjectFields:
+    - { key: name, label: Assessment name, component: text, required: false }
+    - {
+        key: productName,
+        label: Product or service,
+        component: text,
+        required: true,
+      }
+    - {
+        key: productVersion,
+        label: Product version or release,
+        component: text,
+        required: true,
+      }
+    - { key: vendorName, label: Vendor, component: text, required: false }
+    - key: cpe
+      label: CPE 2.3 name
+      component: text
+      required: false
+      format: cpe-2.3
+      hint: Canonical formatted CPE 2.3 name, for example cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*.
+    - key: purl
+      label: Package URL (pURL)
+      component: text
+      required: false
+      format: package-url
+      hint: Canonical package URL beginning with pkg:, for example pkg:maven/org.example/product@1.2.3.
+    - key: deploymentScope
+      label: Deployment scope and configurations
+      component: textarea
+      rows: 3
+      required: false
+    - {
+        key: assessorName,
+        label: Person completing the assessment,
+        component: text,
+        required: false,
+      }
+    - {
+        key: assessorOrganization,
+        label: Assessor organization,
+        component: text,
+        required: false,
+      }
+    - {
+        key: assessmentDate,
+        label: Assessment date,
+        component: date,
+        required: true,
+      }
+  subjectRules:
+    - kind: at-least-one
+      fields: [cpe, purl]
+      message: Provide at least one canonical CPE 2.3 name or package URL (pURL) so the assessed solution can be matched in inventories.
+  questions:
+    findings:
+      - { value: not-assessed, label: Not assessed }
+      - { value: supports, label: Supports the assessment conclusion }
+      - {
+          value: partially-supports,
+          label: Partially supports the assessment conclusion,
+        }
+      - {
+          value: does-not-support,
+          label: Does not support the assessment conclusion,
+        }
+      - { value: not-applicable, label: Not applicable }
+    requiredForKinds: [assessment]
+    defaults:
+      assessment:
+        fieldKey: details
+        fieldLabel: Assessment details
+        fieldType: textarea
+        required: true
+        evidenceLabel: Supporting evidence for this question
+        evidenceDescription: Attach the specific records, screenshots, test results, or documents cited in the assessment details.
+      intake:
+        fieldKey: response
+        fieldLabel: Response
+        fieldType: textarea
+        required: true
+        evidenceLabel: Supporting document for this intake question
+        evidenceDescription: Attach only the document requested by the question, when applicable.
+  criterion:
+    statuses:
+      - { value: not-assessed, label: Not assessed }
+      - { value: met, label: Met }
+      - { value: partial, label: Partial }
+      - { value: not-met, label: Not met }
+    evidence:
+      requiredForStatuses: [met]
+      requiredFromLevel: 1
+      statementLabel: Evidence statement or references
+      statementHint: Required when marked Met. Cite URLs, document references, test results, and the assessed product version.
+      maxFileBytes: 26214400
+      maxPackageBytes: 104857600
+      acceptedMediaTypes: ["*/*"]
+      validators: [sha256-integrity, reference-presence]
+assurance:
+  defaultProfile: self
+  profiles:
+    - id: self
+      label: Self-assessment
+      reportLabel: Self-assessment — not independently verified — not PKI Consortium certified
+      availability: browser
+      independentVerification: false
+      certification: false
+      requiredFacets: []
+      notice: The claimed maturity level is based on answers supplied by the organization. Evidence is packaged and integrity-protected, but its relevance and truthfulness have not been independently verified.
+      attestation:
+        enabled: true
+        signerRole: Accountable executive
+        method: external-digital-signature
+        declaration: I am an executive accountable for the assessed product or service. I accept accountability for this self-assessment and declare that, to the best of my knowledge, it was completed honestly, accurately, and without knowingly omitting material facts.
+    - id: qualified-third-party
+      label: Qualified third-party assessment
+      reportLabel: Qualified third-party assessment
+      availability: external-workflow
+      independentVerification: true
+      certification: false
+      requiredFacets:
+        [
+          identity,
+          organization-binding,
+          role-authority,
+          document-signature,
+          trusted-time,
+          evidence-review,
+          assessor-qualification,
+        ]
+      notice: Qualification and assessor signature must be verified by the PKI Consortium service before this assurance label can be issued.
+      attestation:
+        enabled: true
+        signerRole: Qualified assessor
+        method: external-digital-signature
+        declaration: I performed this assessment independently and attest that the report accurately records the evidence reviewed and conclusions reached.
+    - id: pkic-certified
+      label: PKI Consortium certified
+      reportLabel: PKI Consortium certified assessment
+      availability: external-workflow
+      independentVerification: true
+      certification: true
+      requiredFacets:
+        [
+          identity,
+          organization-binding,
+          role-authority,
+          document-signature,
+          trusted-time,
+          evidence-review,
+          assessor-qualification,
+          certification-issuance,
+        ]
+      notice: This status can only be issued by the future PKI Consortium review, signing, publication, and status service.
+report:
+  title: PQCMM Self-Assessment Report
+  claimLabel: Claimed maturity level
+  machineAttachmentName: pqcmm-assessment-package.json
+  includeEvidenceAttachments: true
+  includeEvidenceManifest: true
+  includeAttestation: true
+  signing:
+    format: PAdES
+    fields:
+      - name: ExecutiveApproval
+        label: Executive approval signature
+        role: CEO or accountable executive
+        required: false
+      - name: SecurityExecutiveApproval
+        label: Security executive approval signature
+        role: CISO or security executive
+        required: false
+    allowAdditionalSignatures: true
+    targetLevel: B-LTA
+    trustedTime: signature-or-document-timestamp
+    acceptedAuthorityEvidence:
+      [vlei-oor, vlei-ecr, eudi-wallet-credential, manually-verified-authority]
+futureServices:
+  pkicSubmission:
+    implemented: false
+    processingMayRequirePayment: true
+    covers:
+      - intake and validation
+      - qualified assessor verification
+      - human and AI-assisted evidence review
+      - formal digital signatures
+      - publication and status registry
+      - long-term report and evidence storage

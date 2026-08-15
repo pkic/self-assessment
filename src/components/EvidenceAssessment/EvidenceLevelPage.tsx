@@ -1,17 +1,28 @@
 import React from "react";
 import { Page, Text, View } from "@react-pdf/renderer";
 import { emptyCriterionProgress } from "../../assessment-engine/methodologies/cumulativeGates";
+import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { ReportPageNumber } from "./ReportPageNumber";
 import { evidenceNames, plainReportText } from "./reportFormatting";
 import { reportStyles as styles } from "./reportStyles";
 import type { EvidenceAssessmentRecord, EvidenceLevel } from "./types";
+import {
+  emptyQuestionProgress,
+  questionResponseSummary,
+  responseDefinition,
+} from "./questionResponse";
 
 interface Props {
   level: EvidenceLevel;
+  profile: AssessmentProfileData;
   record: EvidenceAssessmentRecord;
 }
 
-export const EvidenceLevelPage: React.FC<Props> = ({ level, record }) => (
+export const EvidenceLevelPage: React.FC<Props> = ({
+  level,
+  profile,
+  record,
+}) => (
   <Page size="A4" style={styles.page}>
     <Text style={styles.heading}>
       Level {level.number}: {level.name}
@@ -32,6 +43,11 @@ export const EvidenceLevelPage: React.FC<Props> = ({ level, record }) => (
             </Text>
           </View>
           <Text style={styles.status}>Status: {progress.status}</Text>
+          {criterion.assessmentQuestionIds?.length ? (
+            <Text style={styles.detail}>
+              Assessment questions: {criterion.assessmentQuestionIds.join(", ")}
+            </Text>
+          ) : null}
           <Text style={styles.detail}>
             Evidence statement: {progress.evidenceStatement || "Not provided"}
           </Text>
@@ -51,7 +67,15 @@ export const EvidenceLevelPage: React.FC<Props> = ({ level, record }) => (
     </Text>
     {level.assessment.groups.flatMap((group) =>
       group.questions.map((question) => {
-        const progress = record.questionProgress[question.id];
+        const progress =
+          record.questionProgress[question.id] ?? emptyQuestionProgress();
+        const response = questionResponseSummary(
+          responseDefinition(question, group.kind, profile),
+          progress,
+        );
+        const finding = profile.runtime.questions?.findings.find(
+          (item) => item.value === progress.finding,
+        )?.label;
         return (
           <View key={question.id} style={styles.item} wrap={false}>
             <View style={styles.itemHeader}>
@@ -60,12 +84,14 @@ export const EvidenceLevelPage: React.FC<Props> = ({ level, record }) => (
                 {plainReportText(question.question)}
               </Text>
             </View>
+            {finding ? (
+              <Text style={styles.status}>Finding: {finding}</Text>
+            ) : null}
             <Text style={styles.detail}>
-              Response: {progress?.answer || "Not answered"}
+              Response: {response || "Not answered"}
             </Text>
             <Text style={styles.detail}>
-              Evidence files:{" "}
-              {evidenceNames(progress?.evidenceIds ?? [], record)}
+              Evidence files: {evidenceNames(progress.evidenceIds, record)}
             </Text>
           </View>
         );

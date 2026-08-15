@@ -1,5 +1,11 @@
 import type { EvidenceFile } from "../types";
 import { registerScoringStrategy, scoreWithStrategy } from "../scoring";
+import {
+  countQuestionFindings,
+  questionResponseComplete,
+  type GatedQuestion,
+  type GatedQuestionProgress,
+} from "./questionGates";
 
 export interface GatedCriterionProgress {
   status: string;
@@ -8,17 +14,17 @@ export interface GatedCriterionProgress {
   evidenceIds: string[];
 }
 
-export interface GatedQuestionProgress {
-  answer: string;
-  evidenceIds: string[];
-}
-
 export interface GatedMaturityModel {
   scoring: { minimumLevel: number; maximumLevel: number };
   levels: {
     number: number;
-    criteria: { items: { id: string }[] };
-    assessment: { groups: { questions: { id: string }[] }[] };
+    criteria: { items: { id: string; assessmentQuestionIds?: string[] }[] };
+    assessment: {
+      groups: {
+        kind?: "assessment" | "intake";
+        questions: GatedQuestion[];
+      }[];
+    };
   }[];
 }
 
@@ -35,6 +41,7 @@ export interface GatedMaturityScore {
   criteriaTotal: number;
   questionsAnswered: number;
   questionsTotal: number;
+  questionFindingCounts: Record<string, number>;
   evidenceFiles: number;
   levelResults: {
     level: number;
@@ -51,6 +58,7 @@ export interface CumulativeGateParameters extends Record<string, unknown> {
   maximumLevel?: number;
   passingStatuses?: string[];
   evidenceRequiredFromLevel?: number;
+  passingQuestionFindings?: string[];
 }
 
 export const emptyCriterionProgress = (): GatedCriterionProgress => ({
@@ -81,7 +89,26 @@ const cumulativeGates = (
   const maximumLevel = parameters.maximumLevel ?? model.scoring.maximumLevel;
   const evidenceRequiredFromLevel = parameters.evidenceRequiredFromLevel ?? 1;
   const passingStatuses = new Set(parameters.passingStatuses ?? ["met"]);
+  const passingQuestionFindings = new Set(
+    parameters.passingQuestionFindings ?? [],
+  );
   const orderedLevels = [...model.levels].sort((a, b) => a.number - b.number);
+  const questions = orderedLevels.flatMap((level) =>
+    level.assessment.groups.flatMap((group) => group.questions),
+  );
+  const assessmentQuestions = orderedLevels.flatMap((level) =>
+    level.assessment.groups
+      .filter((group) => group.kind !== "intake")
+      .flatMap((group) => group.questions),
+  );
+  const questionsById = new Map(
+    questions.map((question) => [question.id, question]),
+  );
+  const responseComplete = (questionId: string): boolean => {
+    const question = questionsById.get(questionId);
+    const progress = record.questionProgress[questionId];
+    return questionResponseComplete(question, progress, record.evidenceFiles);
+  };
   let achievedPositiveLevel = baselineLevel;
   let criteriaMet = 0;
   let criteriaTotal = 0;
@@ -98,11 +125,22 @@ const cumulativeGates = (
       const needsEvidence = level.number >= evidenceRequiredFromLevel;
       const evidencePasses =
         !needsEvidence || criterionHasEvidence(progress, record.evidenceFiles);
-      if (statusPasses && evidencePasses) {
+      const questionBlockers = (criterion.assessmentQuestionIds ?? []).filter(
+        (questionId) =>
+          !passingQuestionFindings.has(
+            record.questionProgress[questionId]?.finding ?? "not-assessed",
+          ) || !responseComplete(questionId),
+      );
+      const questionsPass = questionBlockers.length === 0;
+      if (statusPasses && evidencePasses && questionsPass) {
         criteriaMet += 1;
         levelMet += 1;
       } else if (statusPasses && !evidencePasses) {
         blockers.push(`${criterion.id}: evidence is required`);
+      } else if (statusPasses && !questionsPass) {
+        blockers.push(
+          `${criterion.id}: assessment questions ${questionBlockers.join(", ")} do not support the criterion`,
+        );
       } else {
         blockers.push(`${criterion.id}: ${progress?.status ?? "not-assessed"}`);
       }
@@ -135,20 +173,20 @@ const cumulativeGates = (
   if (achievedLevel !== null) {
     nextLevel = achievedLevel < maximumLevel ? achievedLevel + 1 : null;
   }
-  const questions = orderedLevels.flatMap((level) =>
-    level.assessment.groups.flatMap((group) => group.questions),
-  );
-
   return {
     achievedLevel,
     nextLevel,
     criteriaMet,
     criteriaTotal,
-    questionsAnswered: questions.filter(
-      (question) =>
-        record.questionProgress[question.id]?.answer.trim().length > 0,
-    ).length,
+    questionsAnswered: questions.filter((question) => {
+      const progress = record.questionProgress[question.id];
+      return Boolean(progress && responseComplete(question.id));
+    }).length,
     questionsTotal: questions.length,
+    questionFindingCounts: countQuestionFindings(
+      assessmentQuestions,
+      record.questionProgress,
+    ),
     evidenceFiles: record.evidenceFiles.length,
     levelResults,
   };

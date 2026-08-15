@@ -45,7 +45,7 @@ export const EvidenceSummaryPage: React.FC<Props> = ({
           ],
           [
             `${score.questionsAnswered}/${score.questionsTotal}`,
-            "Questions answered",
+            "Questions completed",
           ],
           [score.evidenceFiles, "Evidence files"],
         ].map(([value, label]) => (
@@ -55,6 +55,19 @@ export const EvidenceSummaryPage: React.FC<Props> = ({
           </View>
         ))}
       </View>
+      {profile.runtime.questions ? (
+        <>
+          <Text style={styles.subheading}>Question findings</Text>
+          {profile.runtime.questions.findings.map((finding) => (
+            <View key={finding.value} style={styles.metadataRow}>
+              <Text style={styles.metadataLabel}>{finding.label}</Text>
+              <Text style={styles.metadataValue}>
+                {score.questionFindingCounts[finding.value] ?? 0}
+              </Text>
+            </View>
+          ))}
+        </>
+      ) : null}
       <Text style={styles.subheading}>Maturity path</Text>
       <Text style={styles.muted}>
         Levels are cumulative. Completing a later level's own criteria does not

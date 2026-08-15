@@ -1,5 +1,6 @@
 import yaml from "js-yaml";
 import { MAX_MODEL_YAML_BYTES } from "../../assessment-engine/fetch";
+import { isQuestionResponse } from "./questionContract";
 import type { EvidenceModelData } from "./types";
 
 const MAX_GRAPH_DEPTH = 32;
@@ -134,7 +135,16 @@ const isEvidenceModel = (value: unknown): value is EvidenceModelData => {
     if (
       !criteria.items.every(
         (item) =>
-          isRecord(item) && addIdentifier(item.id) && hasString(item, "text"),
+          isRecord(item) &&
+          addIdentifier(item.id) &&
+          hasString(item, "text") &&
+          (item.assessmentQuestionIds === undefined ||
+            (Array.isArray(item.assessmentQuestionIds) &&
+              item.assessmentQuestionIds.every(
+                (id) => typeof id === "string" && id.length > 0,
+              ) &&
+              new Set(item.assessmentQuestionIds).size ===
+                item.assessmentQuestionIds.length)),
       ) ||
       !assessment.groups.every(
         (group) =>
@@ -151,7 +161,9 @@ const isEvidenceModel = (value: unknown): value is EvidenceModelData => {
               hasString(question, "question") &&
               optionalString(question, "guidance") &&
               optionalString(question, "expectedInput") &&
-              optionalString(question, "purpose"),
+              optionalString(question, "purpose") &&
+              (question.response === undefined ||
+                isQuestionResponse(question.response)),
           ),
       ) ||
       !checklist.items.every(
@@ -164,6 +176,28 @@ const isEvidenceModel = (value: unknown): value is EvidenceModelData => {
     return true;
   });
   if (!levelsValid) return false;
+  const typedLevels = value.levels as EvidenceModelData["levels"];
+  const questionsByLevel = new Map<number, Set<string>>(
+    typedLevels.map((level) => [
+      level.number,
+      new Set(
+        level.assessment.groups.flatMap((group) =>
+          group.questions.map((question) => question.id),
+        ),
+      ),
+    ]),
+  );
+  if (
+    typedLevels.some((level) =>
+      level.criteria.items.some((criterion) =>
+        (criterion.assessmentQuestionIds ?? []).some(
+          (questionId) => !questionsByLevel.get(level.number)?.has(questionId),
+        ),
+      ),
+    )
+  ) {
+    return false;
+  }
   for (
     let level = scoring.minimumLevel as number;
     level <= (scoring.maximumLevel as number);

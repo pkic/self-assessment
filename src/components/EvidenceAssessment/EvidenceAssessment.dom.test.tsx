@@ -26,6 +26,16 @@ describe("EvidenceAssessment", () => {
     );
     await screen.findByRole("heading", { name: "PQCMM Assessment" });
     await screen.findByText("No level established");
+    expect(screen.getByLabelText("Target date for Level 1")).toHaveAttribute(
+      "type",
+      "date",
+    );
+    expect(screen.getByLabelText("SBOM or CBOM available")).toHaveRole(
+      "combobox",
+    );
+    expect(
+      screen.getByRole("button", { name: "Add SBOM or CBOM file" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("progressbar", {
         name: /level 0.*criteria completion/i,

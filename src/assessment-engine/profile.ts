@@ -1,6 +1,9 @@
 import yaml from "js-yaml";
 import type { ErrorObject } from "ajv";
-import { validateAssessmentProfile100 } from "../generated/validators-2020";
+import {
+  validateAssessmentProfile100,
+  validateAssessmentProfile110,
+} from "../generated/validators-2020";
 import type { AssessmentProfileData } from "./types";
 import { validateAssessmentProfileSemantics } from "./profile-semantics";
 
@@ -13,9 +16,17 @@ export const parseAssessmentProfile = (
   yamlText: string,
 ): AssessmentProfileData => {
   const parsed = yaml.load(yamlText);
-  if (!validateAssessmentProfile100(parsed)) {
+  const schemaVersion =
+    typeof parsed === "object" && parsed !== null && "schemaVersion" in parsed
+      ? parsed.schemaVersion
+      : undefined;
+  const validator =
+    schemaVersion === "1.1.0"
+      ? validateAssessmentProfile110
+      : validateAssessmentProfile100;
+  if (!validator(parsed)) {
     throw new Error(
-      `Assessment profile schema validation failed: ${errorsText(validateAssessmentProfile100.errors)}`,
+      `Assessment profile schema validation failed: ${errorsText(validator.errors)}`,
     );
   }
   const profile = parsed as AssessmentProfileData;

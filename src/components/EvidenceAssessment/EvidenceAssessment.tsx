@@ -30,7 +30,6 @@ import {
 import { downloadEvidenceAssessmentPdf } from "./pdf";
 import {
   calculateGatedMaturityScore,
-  criterionHasEvidence,
   emptyCriterionProgress,
 } from "../../assessment-engine/methodologies/cumulativeGates";
 import type {
@@ -43,6 +42,12 @@ import type {
 import { EvidenceAttachments } from "./EvidenceAttachments";
 import { ApprovalPolicyCard } from "./ApprovalPolicyCard";
 import { MaturityGateChart } from "./MaturityGateChart";
+import { QuestionResponseFields } from "./QuestionResponseFields";
+import {
+  emptyQuestionProgress,
+  questionResponseIssues,
+  responseDefinition,
+} from "./questionResponse";
 import "./EvidenceAssessment.module.scss";
 
 interface Props {
@@ -50,7 +55,12 @@ interface Props {
   profile: AssessmentProfileData;
 }
 
-type EvidenceOwner = { kind: "criterion" | "question"; id: string };
+type EvidenceOwner = {
+  kind: "criterion" | "question";
+  id: string;
+  acceptedMediaTypes?: string[];
+  maxFiles?: number;
+};
 const compatibleRecord = (
   record: EvidenceAssessmentRecord | undefined,
   model: EvidenceModelData,
@@ -59,6 +69,9 @@ const compatibleRecord = (
     record?.modelId === model.model.id &&
     record?.dataVersion === model.model.version,
   );
+
+const criterionStatusClass = (status: string, blocked: boolean): string =>
+  `evidence-assessment-status-${status === "met" && blocked ? "blocked" : status}`;
 
 export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   const cryptographyAvailable = secureCryptographyAvailable();
@@ -201,10 +214,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
     update: Partial<EvidenceQuestionProgress>,
   ) =>
     mutate((current) => {
-      const progress = current.questionProgress[id] ?? {
-        answer: "",
-        evidenceIds: [],
-      };
+      const progress = current.questionProgress[id] ?? emptyQuestionProgress();
       return {
         ...current,
         questionProgress: {
@@ -212,6 +222,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
           [id]: {
             ...progress,
             ...update,
+            values: update.values
+              ? { ...progress.values, ...update.values }
+              : progress.values,
           },
         },
       };
@@ -220,10 +233,27 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   const addEvidence = async (owner: EvidenceOwner, files: FileList) => {
     if (!record) return;
     try {
+      const existingOwnerCount =
+        owner.kind === "question"
+          ? (record.questionProgress[owner.id]?.evidenceIds.length ?? 0)
+          : (record.criterionProgress[owner.id]?.evidenceIds.length ?? 0);
+      if (
+        owner.maxFiles !== undefined &&
+        existingOwnerCount + files.length > owner.maxFiles
+      ) {
+        throw new Error(
+          `This evidence request accepts at most ${owner.maxFiles} file${owner.maxFiles === 1 ? "" : "s"}.`,
+        );
+      }
       const added: AssessmentEvidenceFile[] = [];
       let packageFiles = [...record.evidenceFiles];
       for (const file of Array.from(files)) {
-        const evidence = await evidenceFromFile(file, packageFiles, profile!);
+        const evidence = await evidenceFromFile(
+          file,
+          packageFiles,
+          profile,
+          owner.acceptedMediaTypes,
+        );
         added.push(evidence);
         packageFiles = [...packageFiles, evidence];
       }
@@ -244,10 +274,8 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             },
           };
         }
-        const progress = current.questionProgress[owner.id] ?? {
-          answer: "",
-          evidenceIds: [],
-        };
+        const progress =
+          current.questionProgress[owner.id] ?? emptyQuestionProgress();
         return {
           ...current,
           evidenceFiles: [...current.evidenceFiles, ...added],
@@ -565,6 +593,14 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
               <dt>Evidence files</dt>
               <dd>{score.evidenceFiles}</dd>
             </div>
+            {profile.runtime.questions?.findings
+              .filter(({ value }) => value !== "not-assessed")
+              .map((finding) => (
+                <div key={finding.value}>
+                  <dt>{finding.label}</dt>
+                  <dd>{score.questionFindingCounts[finding.value] ?? 0}</dd>
+                </div>
+              ))}
           </dl>
           <p>{model.scoring.rule}</p>
         </Card>
@@ -632,16 +668,20 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
               const progress =
                 record.criterionProgress[criterion.id] ??
                 emptyCriterionProgress();
-              const missingEvidence =
-                level.number > 0 &&
-                progress.status === "met" &&
-                !criterionHasEvidence(progress, record.evidenceFiles);
+              const gateBlocker = score.levelResults
+                .find((result) => result.level === level.number)
+                ?.blockers.find((blocker) =>
+                  blocker.startsWith(`${criterion.id}:`),
+                );
               return (
                 <Card
                   key={criterion.id}
                   as="article"
                   padding="lg"
-                  className={`evidence-assessment-criterion evidence-assessment-status-${progress.status}`}
+                  className={`evidence-assessment-criterion ${criterionStatusClass(
+                    progress.status,
+                    Boolean(gateBlocker),
+                  )}`}
                 >
                   <div className="evidence-assessment-item-title">
                     <span>{criterion.id}</span>
@@ -668,6 +708,12 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                       </label>
                     ))}
                   </fieldset>
+                  {criterion.assessmentQuestionIds?.length ? (
+                    <p className="evidence-assessment-criterion__question-links">
+                      Assessed through questions{" "}
+                      {criterion.assessmentQuestionIds.join(", ")}.
+                    </p>
+                  ) : null}
                   {level.number > 0 ? (
                     <>
                       <TextArea
@@ -683,10 +729,10 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                           })
                         }
                       />
-                      {missingEvidence ? (
+                      {progress.status === "met" && gateBlocker ? (
                         <output className="evidence-assessment-evidence-required">
-                          This criterion cannot establish the level until
-                          evidence is provided.
+                          This criterion cannot establish the level:{" "}
+                          {gateBlocker.slice(criterion.id.length + 2)}.
                         </output>
                       ) : null}
                       <EvidenceAttachments
@@ -747,10 +793,24 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                   </ReactMarkdown>
                 ) : null}
                 {group.questions.map((question) => {
-                  const progress = record.questionProgress[question.id] ?? {
-                    answer: "",
-                    evidenceIds: [],
-                  };
+                  const hasProgress = Boolean(
+                    record.questionProgress[question.id],
+                  );
+                  const progress =
+                    record.questionProgress[question.id] ??
+                    emptyQuestionProgress();
+                  const definition = responseDefinition(
+                    question,
+                    group.kind,
+                    profile,
+                  );
+                  const responseIssues = questionResponseIssues(
+                    question,
+                    group.kind,
+                    profile,
+                    progress,
+                    record.evidenceFiles,
+                  );
                   return (
                     <Card
                       key={question.id}
@@ -783,33 +843,61 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                           <strong>Purpose:</strong> {question.purpose}
                         </p>
                       ) : null}
-                      <TextArea
-                        label="Response and evidence references"
-                        rows={4}
-                        value={progress.answer}
-                        onChange={(event) =>
-                          updateQuestion(question.id, {
-                            answer: event.target.value,
-                          })
+                      <QuestionResponseFields
+                        question={question}
+                        kind={group.kind}
+                        profile={profile}
+                        progress={progress}
+                        onChange={(update) =>
+                          updateQuestion(question.id, update)
                         }
                       />
-                      <EvidenceAttachments
-                        ownerLabel={`question ${question.id}`}
-                        evidenceIds={progress.evidenceIds}
-                        evidenceFiles={record.evidenceFiles}
-                        onAdd={(files) =>
-                          addEvidence(
-                            { kind: "question", id: question.id },
-                            files,
-                          )
-                        }
-                        onRemove={(id) =>
-                          removeEvidence(
-                            { kind: "question", id: question.id },
-                            id,
-                          )
-                        }
-                      />
+                      {hasProgress && responseIssues.length > 0 ? (
+                        <ul className="evidence-assessment-question__issues">
+                          {responseIssues.map((issue) => (
+                            <li key={issue}>{issue}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {definition.evidence || group.kind === "assessment" ? (
+                        <EvidenceAttachments
+                          ownerLabel={`question ${question.id}`}
+                          evidenceIds={progress.evidenceIds}
+                          evidenceFiles={record.evidenceFiles}
+                          onAdd={(files) =>
+                            addEvidence(
+                              {
+                                kind: "question",
+                                id: question.id,
+                                acceptedMediaTypes:
+                                  definition.evidence?.acceptedMediaTypes,
+                                maxFiles: definition.evidence?.maxFiles,
+                              },
+                              files,
+                            )
+                          }
+                          onRemove={(id) =>
+                            removeEvidence(
+                              { kind: "question", id: question.id },
+                              id,
+                            )
+                          }
+                          label={
+                            definition.evidence?.label ??
+                            profile.runtime.questions?.defaults[group.kind]
+                              .evidenceLabel
+                          }
+                          description={
+                            definition.evidence?.description ??
+                            profile.runtime.questions?.defaults[group.kind]
+                              .evidenceDescription
+                          }
+                          acceptedMediaTypes={
+                            definition.evidence?.acceptedMediaTypes
+                          }
+                          maxFiles={definition.evidence?.maxFiles}
+                        />
+                      ) : null}
                     </Card>
                   );
                 })}

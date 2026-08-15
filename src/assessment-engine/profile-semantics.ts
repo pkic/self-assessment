@@ -144,6 +144,18 @@ const validateGatedExperience = (profile: AssessmentProfileData): void => {
   }
   const parameters = profile.runtime.methodology.parameters;
   const passingStatuses = parameters.passingStatuses;
+  const passingQuestionFindings = parameters.passingQuestionFindings;
+  const questionFindingValues =
+    profile.runtime.questions?.findings.map(({ value }) => value) ?? [];
+  const questionParametersMatch =
+    profile.schemaVersion === "1.0.0" ||
+    (Array.isArray(passingQuestionFindings) &&
+      passingQuestionFindings.length > 0 &&
+      passingQuestionFindings.every(
+        (finding) =>
+          typeof finding === "string" &&
+          questionFindingValues.includes(finding),
+      ));
   const parametersMatch =
     parameters.baselineLevel === 0 &&
     parameters.minimumLevel === 0 &&
@@ -156,10 +168,11 @@ const validateGatedExperience = (profile: AssessmentProfileData): void => {
       (status) =>
         typeof status === "string" &&
         criterion.evidence.requiredForStatuses.includes(status),
-    );
+    ) &&
+    questionParametersMatch;
   if (!parametersMatch) {
     throw new Error(
-      "Cumulative gate parameters must match the declared evidence policy and supported level range.",
+      "Cumulative gate parameters must match the declared criterion, question, evidence, and level policies.",
     );
   }
   validateEvidencePolicy(profile);
@@ -178,6 +191,12 @@ export const validateAssessmentProfileSemantics = (
   profile: AssessmentProfileData,
 ): void => {
   validateSubjectPolicy(profile);
+  if (profile.runtime.questions) {
+    assertUnique(
+      profile.runtime.questions.findings.map(({ value }) => value),
+      "Question finding values must be unique.",
+    );
+  }
   validateAssurancePolicy(profile);
   validateWeightedExperience(profile);
   validateGatedExperience(profile);

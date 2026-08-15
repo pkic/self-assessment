@@ -1,5 +1,5 @@
 import pkimmModel from "../public/pkimm-model-2.0.0.yaml";
-import pqcmmModel from "../public/pqcmm-model-1.0.1.yaml";
+import pqcmmModel from "../public/pqcmm-model-1.1.0.yaml";
 
 const bundledModels: Record<string, string> = {
   pkimm: pkimmModel,

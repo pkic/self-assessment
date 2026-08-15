@@ -22,6 +22,24 @@ export interface AssessmentStatusOption {
   label: string;
 }
 
+export interface DefaultQuestionResponsePolicy {
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType: "text" | "textarea";
+  required: boolean;
+  evidenceLabel: string;
+  evidenceDescription: string;
+}
+
+export interface AssessmentQuestionPolicy {
+  findings: AssessmentStatusOption[];
+  requiredForKinds: ("assessment" | "intake")[];
+  defaults: {
+    assessment: DefaultQuestionResponsePolicy;
+    intake: DefaultQuestionResponsePolicy;
+  };
+}
+
 export type AssuranceFacet =
   | "identity"
   | "organization-binding"
@@ -49,7 +67,7 @@ export interface ReportSigningPolicy {
 }
 
 export interface AssessmentProfileData {
-  schemaVersion: "1.0.0";
+  schemaVersion: "1.0.0" | "1.1.0";
   profile: {
     id: string;
     version: string;
@@ -67,6 +85,7 @@ export interface AssessmentProfileData {
     };
     subjectFields: AssessmentSubjectField[];
     subjectRules?: AssessmentSubjectRule[];
+    questions?: AssessmentQuestionPolicy;
     criterion?: {
       statuses: AssessmentStatusOption[];
       evidence: {
@@ -143,7 +162,7 @@ export interface AssessmentCredentialDraft<Subject = unknown> {
 
 export interface AssessmentPackage<Subject = unknown> {
   format: "pkic-assessment-package";
-  schemaVersion: "1.0.0";
+  schemaVersion: "1.0.0" | "1.1.0";
   credential: AssessmentCredentialDraft<Subject>;
   attachments: AssessmentAttachment[];
 }

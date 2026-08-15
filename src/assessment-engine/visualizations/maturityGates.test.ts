@@ -14,6 +14,7 @@ const score = (overrides: Partial<GatedMaturityScore>): GatedMaturityScore => ({
   criteriaTotal: 6,
   questionsAnswered: 0,
   questionsTotal: 3,
+  questionFindingCounts: {},
   evidenceFiles: 0,
   levelResults: [
     {

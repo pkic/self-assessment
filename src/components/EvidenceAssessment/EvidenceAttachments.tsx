@@ -9,6 +9,10 @@ interface Props {
   onAdd: (files: FileList) => Promise<void>;
   onRemove: (evidenceId: string) => void;
   disabled?: boolean;
+  label?: string;
+  description?: string;
+  acceptedMediaTypes?: string[];
+  maxFiles?: number;
 }
 
 const formatBytes = (bytes: number): string => {
@@ -24,6 +28,10 @@ export const EvidenceAttachments: React.FC<Props> = ({
   onAdd,
   onRemove,
   disabled = false,
+  label = "Evidence files",
+  description,
+  acceptedMediaTypes = ["*/*"],
+  maxFiles,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const files = evidenceIds
@@ -33,27 +41,35 @@ export const EvidenceAttachments: React.FC<Props> = ({
   return (
     <div className="evidence-assessment-evidence-attachments">
       <div className="evidence-assessment-evidence-attachments__header">
-        <span>Evidence files</span>
+        <span>{label}</span>
         <Button
           size="sm"
           variant="secondary"
-          disabled={disabled}
+          disabled={
+            disabled || (maxFiles !== undefined && files.length >= maxFiles)
+          }
           onClick={() => inputRef.current?.click()}
         >
-          Add screenshots or documents
+          Add {label}
         </Button>
         <input
           ref={inputRef}
           className="pkimm-visually-hidden"
           type="file"
-          multiple
-          aria-label={`Add evidence files for ${ownerLabel}`}
+          multiple={maxFiles !== 1}
+          accept={acceptedMediaTypes.join(",")}
+          aria-label={`Add ${label} for ${ownerLabel}`}
           onChange={async (event) => {
             if (event.target.files?.length) await onAdd(event.target.files);
             event.target.value = "";
           }}
         />
       </div>
+      {description ? (
+        <p className="evidence-assessment-evidence-attachments__description">
+          {description}
+        </p>
+      ) : null}
       {files.length === 0 ? (
         <p className="evidence-assessment-evidence-attachments__empty">
           No files attached.
