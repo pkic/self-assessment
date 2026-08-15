@@ -14,6 +14,12 @@
     if (value) assessment?.setAttribute(attribute, value);
   }
 
+  const componentScript = document.createElement("script");
+  const componentUrl = new URL("self-assessment.js", window.location.href);
+  componentUrl.searchParams.set("preview", document.lastModified);
+  componentScript.src = componentUrl.href;
+  document.body.append(componentScript);
+
   const form = document.querySelector(".preview-controls form");
   if (!(form instanceof HTMLFormElement)) return;
 
