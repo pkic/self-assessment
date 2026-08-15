@@ -30,7 +30,7 @@ describe("EvidenceAssessment", () => {
       screen.getByRole("progressbar", {
         name: /level 0.*criteria completion/i,
       }),
-    ).toHaveAttribute("aria-valuenow", "0");
+    ).toHaveAttribute("value", "0");
     expect(screen.getByText("Next gate")).toBeInTheDocument();
 
     const criteria = container.querySelectorAll(
@@ -54,7 +54,7 @@ describe("EvidenceAssessment", () => {
       screen.getByRole("progressbar", {
         name: /level 0.*criteria completion/i,
       }),
-    ).toHaveAttribute("aria-valuenow", "100");
+    ).toHaveAttribute("value", "100");
     expect(screen.getByText("Established")).toBeInTheDocument();
 
     expect(

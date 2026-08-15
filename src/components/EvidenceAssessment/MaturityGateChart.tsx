@@ -36,17 +36,13 @@ export const MaturityGateChart: React.FC<Props> = ({ levels, score }) => {
               <span>Level {level.level}</span>
               <strong>{level.name}</strong>
             </div>
-            <div
+            <progress
               className="evidence-assessment-maturity-gate__progress"
-              role="progressbar"
               aria-label={`Level ${level.level} ${level.name} criteria completion`}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={level.completionPercentage}
               aria-valuetext={`${level.criteriaMet} of ${level.criteriaTotal} criteria met`}
-            >
-              <span style={{ width: `${level.completionPercentage}%` }} />
-            </div>
+              max={100}
+              value={level.completionPercentage}
+            />
             <div className="evidence-assessment-maturity-gate__result">
               <span>{level.statusLabel}</span>
               <small>

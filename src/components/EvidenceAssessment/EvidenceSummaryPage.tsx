@@ -3,8 +3,7 @@ import { Page, Text, View } from "@react-pdf/renderer";
 import type { GatedMaturityScore } from "../../assessment-engine/methodologies/cumulativeGates";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { buildMaturityGateVisualization } from "../../assessment-engine/visualizations/maturityGates";
-import type { EvidenceLevel } from "./types";
-import type { EvidenceAssessmentRecord } from "./types";
+import type { EvidenceAssessmentRecord, EvidenceLevel } from "./types";
 import { ReportPageNumber } from "./ReportPageNumber";
 import { reportStyles as styles } from "./reportStyles";
 
