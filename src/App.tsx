@@ -50,9 +50,9 @@ const App: React.FC<AppProps> = ({
         }
         const parsed = parseAssessmentProfile(yaml);
         if (!cancelled) setProfile(parsed);
-      } catch (caught) {
+      } catch (error_) {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : String(caught));
+          setError(error_ instanceof Error ? error_.message : String(error_));
         }
       }
     };
@@ -64,7 +64,7 @@ const App: React.FC<AppProps> = ({
   }, [profileId, profileUrl]);
 
   if (error) return <div role="alert">{error}</div>;
-  if (!profile) return <div role="status">Loading assessment profile…</div>;
+  if (!profile) return <output>Loading assessment profile…</output>;
 
   const experiences: Record<string, React.ReactNode> = {
     "weighted-maturity": (

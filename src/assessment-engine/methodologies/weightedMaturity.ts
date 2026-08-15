@@ -18,12 +18,9 @@ export const roundAndBoundWeightedLevel = (
   parameters: WeightedMaturityParameters = {},
 ): number => {
   if (!Number.isFinite(value) || value <= 0) return 0;
-  const round =
-    parameters.rounding === "ceil"
-      ? Math.ceil
-      : parameters.rounding === "round"
-        ? Math.round
-        : Math.floor;
+  let round = Math.floor;
+  if (parameters.rounding === "ceil") round = Math.ceil;
+  if (parameters.rounding === "round") round = Math.round;
   const minimum =
     typeof parameters.minimumLevel === "number" ? parameters.minimumLevel : 0;
   const maximum =

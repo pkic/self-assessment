@@ -1,10 +1,7 @@
 import { getBundledAssessmentModelYaml } from "../../defaults/assessmentModels";
 import { parseEvidenceModel } from "./model";
 import { calculateGatedMaturityScore } from "../../assessment-engine/methodologies/cumulativeGates";
-import type {
-  EvidenceCriterionStatus,
-  EvidenceAssessmentRecord,
-} from "./types";
+import type { EvidenceAssessmentRecord } from "./types";
 
 const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
 const methodology = {
@@ -25,7 +22,7 @@ const record = (): Pick<
 const setLevel = (
   target: ReturnType<typeof record>,
   level: number,
-  status: EvidenceCriterionStatus,
+  status: string,
   withEvidence = true,
 ) => {
   const definition = model.levels.find((item) => item.number === level)!;

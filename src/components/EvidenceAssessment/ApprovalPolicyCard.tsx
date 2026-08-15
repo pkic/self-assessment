@@ -38,14 +38,14 @@ export const ApprovalPolicyCard: React.FC<Props> = ({
         </ul>
       ) : null}
       <div className="evidence-assessment-attestation-actions">
-        <span role="status">
+        <output>
           The browser prepares signature fields but does not select or sign for
           a person. The external signing flow establishes each actual signer at
           signing time
           {signing?.allowAdditionalSignatures
             ? " and may add further signatures."
             : "."}
-        </span>
+        </output>
       </div>
     </Card>
   );

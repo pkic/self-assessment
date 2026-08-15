@@ -125,24 +125,23 @@ const cumulativeGates = (
   const baselineResult = levelResults.find(
     (item) => item.level === baselineLevel,
   );
-  const achievedLevel =
-    achievedPositiveLevel > baselineLevel
-      ? achievedPositiveLevel
-      : baselineResult?.met
-        ? baselineLevel
-        : null;
+  let achievedLevel: number | null = null;
+  if (achievedPositiveLevel > baselineLevel) {
+    achievedLevel = achievedPositiveLevel;
+  } else if (baselineResult?.met) {
+    achievedLevel = baselineLevel;
+  }
+  let nextLevel: number | null = baselineLevel;
+  if (achievedLevel !== null) {
+    nextLevel = achievedLevel < maximumLevel ? achievedLevel + 1 : null;
+  }
   const questions = orderedLevels.flatMap((level) =>
     level.assessment.groups.flatMap((group) => group.questions),
   );
 
   return {
     achievedLevel,
-    nextLevel:
-      achievedLevel === null
-        ? baselineLevel
-        : achievedLevel < maximumLevel
-          ? achievedLevel + 1
-          : null,
+    nextLevel,
     criteriaMet,
     criteriaTotal,
     questionsAnswered: questions.filter(

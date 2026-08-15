@@ -54,4 +54,57 @@ describe("assessment profile trust boundaries", () => {
       "Cumulative gate parameters must match",
     );
   });
+
+  it("rejects duplicate subject fields and unknown rule references", () => {
+    const duplicate = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.subjectFields[1].key =
+        profile.runtime.subjectFields[0].key;
+    });
+    expect(() => parseAssessmentProfile(duplicate)).toThrow(
+      "Assessment subject field keys must be unique",
+    );
+
+    const unknown = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.subjectRules![0].fields = [
+        profile.runtime.subjectRules![0].fields[0],
+        "notDeclared",
+      ];
+    });
+    expect(() => parseAssessmentProfile(unknown)).toThrow(
+      "Subject rule references unknown field",
+    );
+  });
+
+  it("rejects evidence policies with unknown statuses or validators", () => {
+    const unknownStatus = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.criterion!.evidence.requiredForStatuses = ["unknown"];
+      profile.runtime.methodology.parameters.passingStatuses = ["unknown"];
+    });
+    expect(() => parseAssessmentProfile(unknownStatus)).toThrow(
+      "Evidence policy references unknown criterion status",
+    );
+
+    const missingValidator = mutateProfile(
+      "pqcmm-self-assessment",
+      (profile) => {
+        profile.runtime.criterion!.evidence.validators = [
+          "sha256-integrity",
+          "untrusted-validator",
+        ];
+      },
+    );
+    expect(() => parseAssessmentProfile(missingValidator)).toThrow(
+      "Evidence validators must be",
+    );
+  });
+
+  it("rejects duplicate PDF signature field names", () => {
+    const source = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.report.signing!.fields[1].name =
+        profile.report.signing!.fields[0].name;
+    });
+    expect(() => parseAssessmentProfile(source)).toThrow(
+      "PDF signature field names must be unique",
+    );
+  });
 });

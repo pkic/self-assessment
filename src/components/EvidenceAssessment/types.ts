@@ -1,5 +1,3 @@
-export type EvidenceCriterionStatus = string;
-
 export interface EvidenceCriterion {
   id: string;
   text: string;
@@ -58,7 +56,7 @@ export interface EvidenceModelData {
     method: string;
     minimumLevel: number;
     maximumLevel: number;
-    criterionStatuses: EvidenceCriterionStatus[];
+    criterionStatuses: string[];
     rule: string;
   };
   levels: EvidenceLevel[];
@@ -67,7 +65,7 @@ export interface EvidenceModelData {
 export type AssessmentEvidenceFile = EvidenceFile;
 
 export interface EvidenceCriterionProgress {
-  status: EvidenceCriterionStatus;
+  status: string;
   evidenceStatement: string;
   notes: string;
   evidenceIds: string[];
@@ -130,7 +128,7 @@ export interface AssessmentCredentialSubject {
     level: number;
     group?: string;
     prompt: string;
-    status?: EvidenceCriterionStatus;
+    status?: string;
     value: string;
     notes?: string;
     evidenceIds: string[];

@@ -58,17 +58,15 @@ const normalizeRecord = (
 };
 
 const database = (): Promise<IDBPDatabase<EvidenceAssessmentDatabase>> => {
-  if (!databasePromise) {
-    databasePromise = openDB<EvidenceAssessmentDatabase>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const assessments = db.createObjectStore("assessments", {
-          keyPath: "id",
-        });
-        assessments.createIndex("by-updated", "updatedAt");
-        db.createObjectStore("meta");
-      },
-    });
-  }
+  databasePromise ??= openDB<EvidenceAssessmentDatabase>(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      const assessments = db.createObjectStore("assessments", {
+        keyPath: "id",
+      });
+      assessments.createIndex("by-updated", "updatedAt");
+      db.createObjectStore("meta");
+    },
+  });
   return databasePromise;
 };
 

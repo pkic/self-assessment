@@ -115,6 +115,74 @@ const utf8SizeExceeds = (value: string, limit: number): boolean => {
   return false;
 };
 
+type EvidencePolicy = ReturnType<typeof evidenceCriterionPolicy>["evidence"];
+
+const assertEvidenceFilePolicy = (
+  file: AssessmentEvidenceFile,
+  ids: Set<string>,
+  policy: EvidencePolicy,
+  totalBytes: number,
+): number => {
+  if (!/^[a-zA-Z0-9._-]+$/.test(file.id) || ids.has(file.id)) {
+    throw new Error(`Invalid or duplicate evidence id: ${file.id}`);
+  }
+  ids.add(file.id);
+  const nextTotalBytes = totalBytes + file.size;
+  const exceedsSizePolicy =
+    file.size > policy.maxFileBytes ||
+    nextTotalBytes > policy.maxPackageBytes ||
+    file.dataBase64.length !== expectedBase64Length(file.size);
+  if (exceedsSizePolicy) {
+    throw new Error(`Evidence file exceeds the export policy: ${file.name}`);
+  }
+  if (!evidenceMediaTypeAllowed(file.mediaType, policy.acceptedMediaTypes)) {
+    throw new Error(`Evidence media type is not accepted: ${file.mediaType}`);
+  }
+  return nextTotalBytes;
+};
+
+const assertEvidenceReferences = (
+  record: EvidenceAssessmentRecord,
+  evidenceIds: Set<string>,
+): void => {
+  const progressEntries = [
+    ...Object.values(record.criterionProgress),
+    ...Object.values(record.questionProgress),
+  ];
+  for (const progress of progressEntries) {
+    for (const evidenceId of progress.evidenceIds) {
+      if (!evidenceIds.has(evidenceId)) {
+        throw new Error(
+          `Assessment response references missing evidence: ${evidenceId}`,
+        );
+      }
+    }
+  }
+};
+
+const assertResponseIds = (
+  model: EvidenceModelData,
+  record: EvidenceAssessmentRecord,
+): void => {
+  const knownIds = new Set(
+    model.levels.flatMap((level) => [
+      ...level.criteria.items.map(({ id }) => id),
+      ...level.assessment.groups.flatMap((group) =>
+        group.questions.map(({ id }) => id),
+      ),
+    ]),
+  );
+  const responseIds = [
+    ...Object.keys(record.criterionProgress),
+    ...Object.keys(record.questionProgress),
+  ];
+  for (const id of responseIds) {
+    if (!knownIds.has(id)) {
+      throw new Error(`Assessment response does not match the model: ${id}`);
+    }
+  }
+};
+
 const assertRecordEvidencePolicy = (
   model: EvidenceModelData,
   record: EvidenceAssessmentRecord,
@@ -129,51 +197,10 @@ const assertRecordEvidencePolicy = (
   const ids = new Set<string>();
   let totalBytes = 0;
   for (const file of record.evidenceFiles) {
-    if (!/^[a-zA-Z0-9._-]+$/.test(file.id) || ids.has(file.id)) {
-      throw new Error(`Invalid or duplicate evidence id: ${file.id}`);
-    }
-    ids.add(file.id);
-    totalBytes += file.size;
-    if (
-      file.size > policy.maxFileBytes ||
-      totalBytes > policy.maxPackageBytes ||
-      file.dataBase64.length !== expectedBase64Length(file.size)
-    ) {
-      throw new Error(`Evidence file exceeds the export policy: ${file.name}`);
-    }
-    if (!evidenceMediaTypeAllowed(file.mediaType, policy.acceptedMediaTypes)) {
-      throw new Error(`Evidence media type is not accepted: ${file.mediaType}`);
-    }
+    totalBytes = assertEvidenceFilePolicy(file, ids, policy, totalBytes);
   }
-  const progressEntries = [
-    ...Object.values(record.criterionProgress),
-    ...Object.values(record.questionProgress),
-  ];
-  for (const progress of progressEntries) {
-    for (const evidenceId of progress.evidenceIds) {
-      if (!ids.has(evidenceId)) {
-        throw new Error(
-          `Assessment response references missing evidence: ${evidenceId}`,
-        );
-      }
-    }
-  }
-  const knownIds = new Set(
-    model.levels.flatMap((level) => [
-      ...level.criteria.items.map(({ id }) => id),
-      ...level.assessment.groups.flatMap((group) =>
-        group.questions.map(({ id }) => id),
-      ),
-    ]),
-  );
-  for (const id of [
-    ...Object.keys(record.criterionProgress),
-    ...Object.keys(record.questionProgress),
-  ]) {
-    if (!knownIds.has(id)) {
-      throw new Error(`Assessment response does not match the model: ${id}`);
-    }
-  }
+  assertEvidenceReferences(record, ids);
+  assertResponseIds(model, record);
 };
 
 const assertImportEvidencePolicy = (

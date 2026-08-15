@@ -32,4 +32,27 @@ describe("assessment subject validation", () => {
       }),
     ).toEqual([]);
   });
+
+  it("counts only unescaped CPE separators", () => {
+    expect(
+      assessmentSubjectIssues(profile, {
+        ...requiredScope,
+        cpe: "cpe:2.3:a:example:prod\\:uct:1.0.0:*:*:*:*:*:*:*",
+      }),
+    ).toEqual([]);
+    expect(
+      assessmentSubjectIssues(profile, {
+        ...requiredScope,
+        cpe: "cpe:2.3:a:example:product:1.0.0:*:*:*:*:*:*",
+      }),
+    ).toContainEqual(expect.stringContaining("not a valid cpe-2.3"));
+  });
+
+  it("rejects package URLs without a type, name, or with whitespace", () => {
+    for (const purl of ["pkg:/product", "pkg:maven/", "pkg:maven/a b"]) {
+      expect(
+        assessmentSubjectIssues(profile, { ...requiredScope, purl }),
+      ).toContainEqual(expect.stringContaining("not a valid package-url"));
+    }
+  });
 });

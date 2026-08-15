@@ -3,6 +3,7 @@ import { pdf } from "@react-pdf/renderer";
 import { PDFDocument } from "pdf-lib";
 import "../../utils/pdf/theme";
 import { downloadBlob } from "../../assessment-engine/download";
+import { safeFileName } from "../../assessment-engine/evidence";
 import { calculateGatedMaturityScore } from "../../assessment-engine/methodologies/cumulativeGates";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { base64ToBytes } from "./encoding";
@@ -102,12 +103,6 @@ export const downloadEvidenceAssessmentPdf = async (
   record: EvidenceAssessmentRecord,
 ): Promise<void> => {
   const blob = await buildEvidenceAssessmentPdfBlob(model, profile, record);
-  const base = subjectDisplayName(profile, record)
-    .replace(/[^a-zA-Z0-9._-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase();
-  downloadBlob(
-    blob,
-    `${base || "assessment"}-${model.model.id}-assessment-report.pdf`,
-  );
+  const base = safeFileName(subjectDisplayName(profile, record)).toLowerCase();
+  downloadBlob(blob, `${base}-${model.model.id}-assessment-report.pdf`);
 };

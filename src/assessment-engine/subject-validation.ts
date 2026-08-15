@@ -1,31 +1,45 @@
 import type { AssessmentProfileData } from "./types";
 
+const hasUnescapedSeparatorCount = (
+  value: string,
+  expected: number,
+): boolean => {
+  let separatorCount = 0;
+  let precedingEscapes = 0;
+  for (const character of value) {
+    if (character === "\\") {
+      precedingEscapes += 1;
+      continue;
+    }
+    if (character === ":" && precedingEscapes % 2 === 0) separatorCount += 1;
+    precedingEscapes = 0;
+  }
+  return separatorCount === expected;
+};
+
+const validCpe23 = (value: string): boolean =>
+  value.toLowerCase().startsWith("cpe:2.3:") &&
+  hasUnescapedSeparatorCount(value, 12);
+
+const validPackageUrl = (value: string): boolean => {
+  if (!value.startsWith("pkg:")) return false;
+  const slash = value.indexOf("/", 4);
+  return slash > 4 && slash < value.length - 1 && !/\s/.test(value);
+};
+
+const validUri = (value: string): boolean => {
+  try {
+    return Boolean(new URL(value));
+  } catch {
+    return false;
+  }
+};
+
 const validFormat = (format: string | undefined, value: string): boolean => {
   if (!format || !value) return true;
-  if (format === "cpe-2.3") {
-    let separatorCount = 0;
-    for (let index = 0; index < value.length; index += 1) {
-      if (value[index] !== ":") continue;
-      let escapes = 0;
-      for (
-        let cursor = index - 1;
-        cursor >= 0 && value[cursor] === "\\";
-        cursor -= 1
-      ) {
-        escapes += 1;
-      }
-      if (escapes % 2 === 0) separatorCount += 1;
-    }
-    return value.toLowerCase().startsWith("cpe:2.3:") && separatorCount === 12;
-  }
-  if (format === "package-url") return /^pkg:[^\s/]+\/.+/.test(value);
-  if (format === "uri") {
-    try {
-      return Boolean(new URL(value));
-    } catch {
-      return false;
-    }
-  }
+  if (format === "cpe-2.3") return validCpe23(value);
+  if (format === "package-url") return validPackageUrl(value);
+  if (format === "uri") return validUri(value);
   return false;
 };
 

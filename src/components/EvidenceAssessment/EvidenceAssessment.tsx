@@ -36,7 +36,6 @@ import {
 import type {
   EvidenceAssessmentRecord,
   EvidenceCriterionProgress,
-  EvidenceCriterionStatus,
   AssessmentEvidenceFile,
   EvidenceModelData,
   EvidenceQuestionProgress,
@@ -56,9 +55,8 @@ const compatibleRecord = (
   model: EvidenceModelData,
 ): record is EvidenceAssessmentRecord =>
   Boolean(
-    record &&
-    record.modelId === model.model.id &&
-    record.dataVersion === model.model.version,
+    record?.modelId === model.model.id &&
+    record?.dataVersion === model.model.version,
   );
 
 export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
@@ -125,9 +123,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
         if (!compatibleRecord(active, parsed))
           await saveEvidenceAssessment(current);
         setStatusMessage("Saved locally in this browser");
-      } catch (caught) {
+      } catch (error_) {
         if (!cancelled)
-          setError(caught instanceof Error ? caught.message : String(caught));
+          setError(error_ instanceof Error ? error_.message : String(error_));
       }
     };
     void load();
@@ -155,7 +153,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
 
   const score = useMemo(
     () =>
-      model && profile && record
+      model && record
         ? calculateGatedMaturityScore(
             model,
             record,
@@ -164,7 +162,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
         : null,
     [model, profile, record],
   );
-  const criterionPolicy = profile ? evidenceCriterionPolicy(profile) : null;
+  const criterionPolicy = evidenceCriterionPolicy(profile);
   const level = model?.levels.find((item) => item.number === selectedLevel);
 
   const mutate = (
@@ -262,8 +260,8 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
         };
       });
       setError(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : String(error_));
     }
   };
 
@@ -302,7 +300,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
     });
 
   const createAssessment = async () => {
-    if (!model || !profile) return;
+    if (!model) return;
     const created = newEvidenceAssessment(model, profile);
     await saveEvidenceAssessment(created);
     setRecord(created);
@@ -317,17 +315,18 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   };
 
   const deleteAssessment = async () => {
-    if (!record || !model || !profile) return;
+    if (!record || !model) return;
     if (!window.confirm(`Delete “${record.name}” from this browser?`)) return;
     await deleteEvidenceAssessment(record.id);
-    const remaining = assessments.filter((item) => item.id !== record.id);
-    const next = remaining[0] ?? newEvidenceAssessment(model, profile);
+    const next =
+      assessments.find((item) => item.id !== record.id) ??
+      newEvidenceAssessment(model, profile);
     await saveEvidenceAssessment(next);
     setRecord(next);
   };
 
   const importAssessment = async (file: File) => {
-    if (!model || !profile) return;
+    if (!model) return;
     try {
       if (file.size > maxAssessmentPackageFileBytes(profile)) {
         throw new Error("The selected assessment package is too large.");
@@ -351,23 +350,21 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
       setRecord(imported);
       setSelectedLevel(0);
       setError(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+    } catch (error_) {
+      setError(error_ instanceof Error ? error_.message : String(error_));
     }
   };
 
-  if (error && (!model || !profile || !record)) {
+  if (error && (!model || !record)) {
     return (
       <div className="evidence-assessment-load-error" role="alert">
         {error}
       </div>
     );
   }
-  if (!model || !profile || !record || !score || !level) {
+  if (!model || !record || !score || !level) {
     return (
-      <div className="evidence-assessment-loading" role="status">
-        {statusMessage}
-      </div>
+      <output className="evidence-assessment-loading">{statusMessage}</output>
     );
   }
 
@@ -419,9 +416,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
           }
           onClick={() =>
             void downloadAssessmentPackage(model, profile, record).catch(
-              (caught) =>
+              (error_) =>
                 setError(
-                  caught instanceof Error ? caught.message : String(caught),
+                  error_ instanceof Error ? error_.message : String(error_),
                 ),
             )
           }
@@ -453,9 +450,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             setGeneratingPdf(true);
             try {
               await downloadEvidenceAssessmentPdf(model, profile, record);
-            } catch (caught) {
+            } catch (error_) {
               setError(
-                caught instanceof Error ? caught.message : String(caught),
+                error_ instanceof Error ? error_.message : String(error_),
               );
             } finally {
               setGeneratingPdf(false);
@@ -473,11 +470,11 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
       ) : null}
 
       {!cryptographyAvailable ? (
-        <div className="evidence-assessment-crypto-notice" role="status">
+        <output className="evidence-assessment-crypto-notice">
           This page is using an insecure HTTP connection. You can review and
           complete text fields, but evidence hashing, JSON export, and PDF
           generation require HTTPS or localhost.
-        </div>
+        </output>
       ) : null}
 
       <main className="evidence-assessment-main">
@@ -658,7 +655,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                           checked={progress.status === option.value}
                           onChange={() =>
                             updateCriterion(criterion.id, {
-                              status: option.value as EvidenceCriterionStatus,
+                              status: option.value,
                             })
                           }
                         />
@@ -682,13 +679,10 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                         }
                       />
                       {missingEvidence ? (
-                        <p
-                          className="evidence-assessment-evidence-required"
-                          role="status"
-                        >
+                        <output className="evidence-assessment-evidence-required">
                           This criterion cannot establish the level until
                           evidence is provided.
-                        </p>
+                        </output>
                       ) : null}
                       <EvidenceAttachments
                         ownerLabel={`criterion ${criterion.id}`}

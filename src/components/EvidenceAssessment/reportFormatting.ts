@@ -1,8 +1,24 @@
 import type { EvidenceAssessmentRecord } from "./types";
 
+const replaceMarkdownLinks = (value: string): string => {
+  let result = "";
+  let cursor = 0;
+  while (cursor < value.length) {
+    const labelStart = value.indexOf("[", cursor);
+    if (labelStart < 0) return result + value.slice(cursor);
+    const labelEnd = value.indexOf("](", labelStart + 1);
+    if (labelEnd < 0) return result + value.slice(cursor);
+    const urlEnd = value.indexOf(")", labelEnd + 2);
+    if (urlEnd < 0) return result + value.slice(cursor);
+    result += value.slice(cursor, labelStart);
+    result += value.slice(labelStart + 1, labelEnd);
+    cursor = urlEnd + 1;
+  }
+  return result;
+};
+
 export const plainReportText = (value: string): string =>
-  value
-    .replace(/\[([^\]]+)]\([^\)]+\)/g, "$1")
+  replaceMarkdownLinks(value)
     .replace(/[*_`>#]/g, "")
     .replace(/\{\.[^}]+\}/g, "")
     .trim();

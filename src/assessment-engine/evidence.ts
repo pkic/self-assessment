@@ -18,7 +18,7 @@ export const bytesToBase64 = (bytes: Uint8Array): string => {
   let binary = "";
   const chunk = 0x8000;
   for (let offset = 0; offset < bytes.length; offset += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunk));
+    binary += String.fromCodePoint(...bytes.subarray(offset, offset + chunk));
   }
   return btoa(binary);
 };
@@ -27,7 +27,7 @@ export const base64ToBytes = (encoded: string): Uint8Array => {
   const binary = atob(encoded);
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
+    bytes[index] = binary.codePointAt(index) ?? 0;
   }
   return bytes;
 };
@@ -52,8 +52,16 @@ export const sha256Hex = async (bytes: Uint8Array): Promise<string> => {
   );
 };
 
+const trimOuterHyphens = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+  while (value[start] === "-") start += 1;
+  while (end > start && value[end - 1] === "-") end -= 1;
+  return value.slice(start, end);
+};
+
 export const safeFileName = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "evidence";
+  trimOuterHyphens(value.replace(/[^a-zA-Z0-9._-]+/g, "-")) || "evidence";
 
 export const evidenceMediaTypeAllowed = (
   mediaType: string,
