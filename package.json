@@ -8,10 +8,11 @@
   "main": "dist/self-assessment.js",
   "scripts": {
     "generate:validators": "node scripts/generate-validators.mjs",
+    "copy:public": "node scripts/copy-public.mjs",
     "sync:pqcmm": "node scripts/sync-pqcmm-model.mjs",
-    "prestart": "npm run generate:validators",
+    "prestart": "npm run generate:validators && npm run copy:public",
     "start": "webpack serve --mode development",
-    "prebuild": "npm run generate:validators",
+    "prebuild": "npm run generate:validators && npm run copy:public",
     "build": "webpack --mode production",
     "coverage-badge": "make-coverage-badge --output-path ./coverage_badge.svg",
     "format": "prettier --write .",

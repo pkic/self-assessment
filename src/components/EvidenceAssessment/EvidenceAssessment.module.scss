@@ -166,6 +166,98 @@
   }
 }
 
+.evidence-assessment-maturity-path {
+  ol {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--pkimm-space-sm);
+    margin: var(--pkimm-space-lg) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.evidence-assessment-maturity-gate {
+  position: relative;
+  min-width: 0;
+  padding: var(--pkimm-space-md);
+  background: var(--pkimm-surface-color-alt);
+  border: 1px solid var(--pkimm-border-color);
+  border-top: 4px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+}
+
+.evidence-assessment-maturity-gate--established {
+  border-top-color: var(--pkimm-success-border);
+}
+
+.evidence-assessment-maturity-gate--next {
+  border-top-color: var(--pkimm-primary-color);
+  box-shadow: 0 0 0 2px var(--pkimm-primary-color-lighter);
+}
+
+.evidence-assessment-maturity-gate--complete {
+  border-top-color: var(--pkimm-timing-warning-border);
+}
+
+.evidence-assessment-maturity-gate__heading {
+  display: flex;
+  flex-direction: column;
+  min-height: 3.3rem;
+
+  span {
+    color: var(--pkimm-primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  strong {
+    overflow-wrap: anywhere;
+  }
+}
+
+.evidence-assessment-maturity-gate__progress {
+  height: 0.5rem;
+  margin: var(--pkimm-space-sm) 0;
+  overflow: hidden;
+  background: var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-pill);
+
+  span {
+    display: block;
+    height: 100%;
+    background: var(--pkimm-primary-color);
+    border-radius: inherit;
+  }
+}
+
+.evidence-assessment-maturity-gate--established
+  .evidence-assessment-maturity-gate__progress
+  span {
+  background: var(--pkimm-success-border);
+}
+
+.evidence-assessment-maturity-gate--complete
+  .evidence-assessment-maturity-gate__progress
+  span {
+  background: var(--pkimm-timing-warning-border);
+}
+
+.evidence-assessment-maturity-gate__result {
+  display: flex;
+  flex-direction: column;
+
+  span {
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  small {
+    color: var(--pkimm-text-color-muted);
+  }
+}
+
 .evidence-assessment-assurance-card {
   border-left: 5px solid var(--pkimm-timing-warning-border);
 }
@@ -457,6 +549,9 @@
   .evidence-assessment-level-tabs {
     grid-template-columns: repeat(3, 1fr);
   }
+  .evidence-assessment-maturity-path ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .evidence-assessment-level-tabs button:nth-child(3) {
     border-right: 0;
   }
@@ -482,6 +577,9 @@
   }
   .evidence-assessment-level-tabs {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .evidence-assessment-maturity-path ol {
+    grid-template-columns: 1fr 1fr;
   }
   .evidence-assessment-level-tabs button:nth-child(odd) {
     border-right: 1px solid var(--pkimm-border-color);

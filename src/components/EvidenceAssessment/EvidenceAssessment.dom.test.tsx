@@ -26,6 +26,12 @@ describe("EvidenceAssessment", () => {
     );
     await screen.findByRole("heading", { name: "PQCMM Assessment" });
     await screen.findByText("No level established");
+    expect(
+      screen.getByRole("progressbar", {
+        name: /level 0.*criteria completion/i,
+      }),
+    ).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByText("Next gate")).toBeInTheDocument();
 
     const criteria = container.querySelectorAll(
       ".evidence-assessment-criterion",
@@ -44,6 +50,12 @@ describe("EvidenceAssessment", () => {
         container.querySelector(".evidence-assessment-header__result"),
       ).toHaveTextContent("Level 0"),
     );
+    expect(
+      screen.getByRole("progressbar", {
+        name: /level 0.*criteria completion/i,
+      }),
+    ).toHaveAttribute("aria-valuenow", "100");
+    expect(screen.getByText("Established")).toBeInTheDocument();
 
     expect(
       screen.getByText(/external signing flow establishes each actual signer/i),

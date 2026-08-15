@@ -42,6 +42,7 @@ import type {
 } from "./types";
 import { EvidenceAttachments } from "./EvidenceAttachments";
 import { ApprovalPolicyCard } from "./ApprovalPolicyCard";
+import { MaturityGateChart } from "./MaturityGateChart";
 import "./EvidenceAssessment.module.scss";
 
 interface Props {
@@ -566,6 +567,10 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             </div>
           </dl>
           <p>{model.scoring.rule}</p>
+        </Card>
+
+        <Card as="section" padding="lg">
+          <MaturityGateChart levels={model.levels} score={score} />
         </Card>
 
         <nav

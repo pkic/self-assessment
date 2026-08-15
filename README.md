@@ -64,6 +64,19 @@ Select PQCMM by profile on the same component and route. It uses the bundled PQC
 <script src="https://pkic.github.io/self-assessment/develop/self-assessment.js"></script>
 ```
 
+The standalone preview exposes the same selection on one URL:
+
+- `/?profile=pkimm-self-assessment` loads bundled PKIMM 2.0.0.
+- `/?profile=pqcmm-self-assessment` loads bundled PQCMM 1.0.1.
+- `/?profileUrl=<url>&dataUrl=<url>` loads another schema-compatible profile
+  and model. The external server must permit browser access with CORS, and the
+  model id and version must match the profile.
+
+Visualizations follow the selected methodology. Weighted category assessments
+use the radar view; cumulative assessments use a maturity-gate path in both the
+browser and PDF so that the visualization cannot imply that an out-of-sequence
+level has been established.
+
 PQCMM is product/service-centric and uses cumulative gates, not PKIMM's weighted category calculation. Level 0 is a self-declared baseline. For Levels 1 through 5, every criterion at the claimed level and every lower positive level must be marked met and supported by an evidence statement or file. Partial results remain gaps and never establish a level. Its profile also requires at least one canonical CPE 2.3 name or package URL (pURL). The credential exposes these as separate `credentialSubject.identifiers.cpe` and `.purl` properties for inventory matching.
 
 Evidence-gated assessment records and uploaded evidence are stored in the `pkic-evidence-assessments` IndexedDB database. Portable JSON exports use the generic `pkic-assessment-package` schema: a W3C VC-shaped `AssessmentCredential` plus evidence attachments. Browser exports are explicitly marked `unsecured-draft`; only an external issuer/signing workflow may add a verifiable proof. Generated PDFs embed the package and original evidence files, record SHA-256 digests, and include a PDF signature field for an external PAdES workflow. Its durable report text remains valid before and after signing.
@@ -98,26 +111,18 @@ The full token list lives in [`src/index.module.scss`](src/index.module.scss); p
 Node version is pinned via `.node-version` (24.15.0).
 
 ```bash
-pnpm install          # install deps
-pnpm run build        # production UMD build → dist/self-assessment.js
-pnpm run start        # webpack-dev-server on http://localhost:9000
-pnpm test             # jest
-pnpm run lint:check   # eslint (no fix)
-pnpm run format:check # prettier (no fix)
+npm install          # install deps
+npm run build        # production UMD build and public preview files → dist/
+npm run start        # webpack-dev-server on http://localhost:9000
+npm test             # jest
+npm run lint:check   # eslint (no fix)
+npm run format:check # prettier (no fix)
 ```
 
-Local dev note: the webpack-dev-server serves the `dist/` directory. After `pnpm run build`, the YAML/index files in `src/public/` are not automatically copied. Run once:
-
-```bash
-cp src/public/index.html src/public/pkimm-model-1.0.0.yaml \
-   src/public/pkimm-model-2.0.0.yaml src/public/pkimm-references.yaml \
-   src/public/pqcmm-model-1.0.1.yaml \
-   src/public/pqcmm-model.schema-1.0.0.json \
-   src/public/assessment-profile.schema-1.0.0.json \
-   src/public/assessment-package.schema-1.0.0.json dist/
-```
-
-The single dev route accepts the same attributes as query parameters. For example, use `/?profile=pqcmm-self-assessment`; no separate assessment route is needed. Per-category reference disclosures appear from the bundled references catalog without any copy step; the `cp` above is only needed to exercise URL overrides locally.
+The prebuild and prestart hooks copy all versioned public profiles, models, and
+schemas into `dist/`. The single dev route accepts the same attributes as query
+parameters and provides controls for bundled or external data; no separate
+assessment route is needed.
 
 CI workflows do this on every build. To try an extension, open the running widget's **Extensions** tab and upload an extension YAML — no build step or attribute is involved.
 

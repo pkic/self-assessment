@@ -59,7 +59,12 @@ export const EvidenceReportDocument: React.FC<Props> = ({
           machine={machine}
         />
       ) : null}
-      <EvidenceSummaryPage profile={profile} record={record} score={score} />
+      <EvidenceSummaryPage
+        profile={profile}
+        record={record}
+        score={score}
+        levels={model.levels}
+      />
       {model.levels.map((level) => (
         <EvidenceLevelPage key={level.number} level={level} record={record} />
       ))}

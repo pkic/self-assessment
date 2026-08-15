@@ -3,26 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Self-Assessment Component</title>
+    <title>Assessment preview</title>
+    <link rel="stylesheet" href="preview.css" />
   </head>
   <body>
-    <!-- One host route for every assessment. The selected profile points to
-         the experience, methodology, model, assurance, and report policy. -->
-    <self-assessment id="assessment"></self-assessment>
-    <script>
-      const parameters = new URLSearchParams(window.location.search);
-      const assessment = document.getElementById("assessment");
-      for (const attribute of [
-        "profile",
-        "profileUrl",
-        "dataUrl",
-        "referencesUrl",
-        "modes",
-      ]) {
-        const value = parameters.get(attribute);
-        if (value) assessment.setAttribute(attribute, value);
-      }
-    </script>
+    <header class="preview-controls">
+      <div>
+        <p class="preview-controls__eyebrow">PKI Consortium</p>
+        <h1>Assessment preview</h1>
+        <p>
+          Test a bundled assessment or load a schema-compatible profile and
+          model on this same route.
+        </p>
+      </div>
+      <form method="get" aria-label="Assessment preview configuration">
+        <label>
+          Bundled assessment
+          <select name="profile" id="preview-profile">
+            <option value="pkimm-self-assessment">PKIMM 2.0.0</option>
+            <option value="pqcmm-self-assessment">PQCMM 1.0.1</option>
+          </select>
+        </label>
+        <details>
+          <summary>External profile or model</summary>
+          <div class="preview-controls__external">
+            <label>
+              Profile YAML URL
+              <input
+                type="url"
+                name="profileUrl"
+                placeholder="https://example.org/assessment-profile.yaml"
+              />
+            </label>
+            <label>
+              Model YAML URL
+              <input
+                type="url"
+                name="dataUrl"
+                placeholder="https://example.org/assessment-model.yaml"
+              />
+            </label>
+            <label>
+              References YAML URL
+              <input
+                type="url"
+                name="referencesUrl"
+                placeholder="https://example.org/references.yaml"
+              />
+            </label>
+          </div>
+          <p class="preview-controls__hint">
+            External servers must allow browser access with CORS. The profile
+            and model must pass the supported schemas and identify matching
+            model versions.
+          </p>
+        </details>
+        <div class="preview-controls__actions">
+          <button type="submit">Load assessment</button>
+          <a href="./">Reset</a>
+        </div>
+      </form>
+    </header>
+    <main>
+      <!-- One host route for every assessment. The selected profile points to
+           the experience, methodology, model, assurance, and report policy. -->
+      <self-assessment id="assessment"></self-assessment>
+    </main>
+    <script src="preview.js"></script>
     <script src="self-assessment.js"></script>
   </body>
 </html>
