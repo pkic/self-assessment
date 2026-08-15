@@ -33,6 +33,16 @@ describe("assessment subject conveniences", () => {
     ).toBeNull();
   });
 
+  it("handles long punctuation-only source values without a suggestion", () => {
+    expect(
+      suggestedSubjectValue(cpeField, {
+        vendorName: ".-_".repeat(20_000),
+        productName: "Gateway",
+        productVersion: "2.0",
+      }),
+    ).toBeNull();
+  });
+
   it("keeps a configured default in sync without replacing manual input", () => {
     const first = updateSubjectWithDefaults(profile, {}, "vendorName", "A");
     expect(first.assessorOrganization).toBe("A");

@@ -1,4 +1,4 @@
-import type { AssessmentProfileData } from "./types";
+import type { AssessmentProfileData, AssessmentSubjectField } from "./types";
 import {
   MAX_EVIDENCE_FILE_BYTES,
   MAX_EVIDENCE_PACKAGE_BYTES,
@@ -8,42 +8,52 @@ const assertUnique = (values: string[], message: string): void => {
   if (new Set(values).size !== values.length) throw new Error(message);
 };
 
+const validateDefaultSource = (
+  field: AssessmentSubjectField,
+  knownFields: Set<string>,
+): void => {
+  if (!field.defaultFrom) return;
+  if (!knownFields.has(field.defaultFrom)) {
+    throw new Error(
+      `Subject field ${field.key} defaults from unknown field: ${field.defaultFrom}`,
+    );
+  }
+  if (field.defaultFrom === field.key) {
+    throw new Error(`Subject field ${field.key} cannot default from itself.`);
+  }
+};
+
+const validateSubjectSuggestion = (
+  field: AssessmentSubjectField,
+  knownFields: Set<string>,
+): void => {
+  if (!field.suggestion) return;
+  if (field.format !== "cpe-2.3") {
+    throw new Error(
+      `Subject field ${field.key} uses a CPE suggestion without the cpe-2.3 format.`,
+    );
+  }
+  const sourceFields = [
+    field.suggestion.vendorField,
+    field.suggestion.productField,
+    field.suggestion.versionField,
+  ];
+  const unknownField = sourceFields.find((source) => !knownFields.has(source));
+  if (unknownField) {
+    throw new Error(
+      `Subject field ${field.key} suggestion references unknown field: ${unknownField}`,
+    );
+  }
+};
+
 const validateSubjectPolicy = (profile: AssessmentProfileData): void => {
   const fields = profile.runtime.subjectFields;
   const fieldKeys = fields.map(({ key }) => key);
   assertUnique(fieldKeys, "Assessment subject field keys must be unique.");
   const knownFields = new Set(fieldKeys);
   for (const field of fields) {
-    if (field.defaultFrom) {
-      if (!knownFields.has(field.defaultFrom)) {
-        throw new Error(
-          `Subject field ${field.key} defaults from unknown field: ${field.defaultFrom}`,
-        );
-      }
-      if (field.defaultFrom === field.key) {
-        throw new Error(
-          `Subject field ${field.key} cannot default from itself.`,
-        );
-      }
-    }
-    if (field.suggestion) {
-      if (field.format !== "cpe-2.3") {
-        throw new Error(
-          `Subject field ${field.key} uses a CPE suggestion without the cpe-2.3 format.`,
-        );
-      }
-      for (const sourceField of [
-        field.suggestion.vendorField,
-        field.suggestion.productField,
-        field.suggestion.versionField,
-      ]) {
-        if (!knownFields.has(sourceField)) {
-          throw new Error(
-            `Subject field ${field.key} suggestion references unknown field: ${sourceField}`,
-          );
-        }
-      }
-    }
+    validateDefaultSource(field, knownFields);
+    validateSubjectSuggestion(field, knownFields);
   }
   for (const rule of profile.runtime.subjectRules ?? []) {
     for (const field of rule.fields) {

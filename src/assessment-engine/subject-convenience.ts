@@ -1,20 +1,31 @@
 import type { AssessmentProfileData, AssessmentSubjectField } from "./types";
 
+const cpePunctuation = new Set([".", "_", "-"]);
+
+const trimCpePunctuation = (value: string): string => {
+  let start = 0;
+  let end = value.length;
+  while (start < end && cpePunctuation.has(value[start])) start += 1;
+  while (end > start && cpePunctuation.has(value[end - 1])) end -= 1;
+  return value.slice(start, end);
+};
+
 const cpeComponent = (value: string): string =>
-  value
-    .trim()
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9._-]+/g, "_")
-    .replace(/^[._-]+|[._-]+$/g, "");
+  trimCpePunctuation(
+    value
+      .trim()
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9._-]+/g, "_"),
+  );
 
 export const suggestedSubjectValue = (
   field: AssessmentSubjectField,
   subject: Record<string, string>,
 ): string | null => {
   const suggestion = field.suggestion;
-  if (!suggestion || suggestion.strategy !== "cpe-2.3-application") {
+  if (suggestion?.strategy !== "cpe-2.3-application") {
     return null;
   }
   const vendor = cpeComponent(subject[suggestion.vendorField] ?? "");
