@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Self-Assessment Component</title>
+  </head>
+  <body>
+    <!-- One host route for every assessment. The selected profile points to
+         the experience, methodology, model, assurance, and report policy. -->
+    <self-assessment id="assessment"></self-assessment>
+    <script>
+      const parameters = new URLSearchParams(window.location.search);
+      const assessment = document.getElementById("assessment");
+      for (const attribute of [
+        "profile",
+        "profileUrl",
+        "dataUrl",
+        "referencesUrl",
+        "modes",
+      ]) {
+        const value = parameters.get(attribute);
+        if (value) assessment.setAttribute(attribute, value);
+      }
+    </script>
+    <script src="self-assessment.js"></script>
+  </body>
+</html>
