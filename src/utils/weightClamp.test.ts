@@ -1,4 +1,7 @@
-import { getEffectiveWeight, getWeightSum } from "./maturityCalculations";
+import {
+  getEffectiveWeight,
+  getWeightSum,
+} from "../assessment-engine/methodologies/weightedMaturity";
 import type { CategoryData, ExtensionData } from "../types/types";
 
 const cat: CategoryData = {

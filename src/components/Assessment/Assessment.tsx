@@ -75,12 +75,10 @@ import {
 } from "../../utils/categoryProgress";
 import LevelResult from "../../enums/LevelResult";
 import {
-  calculateOverallMaturityLevel,
-  calculateOverallMaturityRaw,
-  calculateModuleMaturityLevels,
-  calculateModuleMaturityRaw,
   calculateExtensionMaturityLevels,
-} from "../../utils/maturityCalculations";
+  calculateWeightedMaturityScore,
+} from "../../assessment-engine/methodologies/weightedMaturity";
+import type { AssessmentProfileData } from "../../assessment-engine/types";
 import {
   computeCategoryGrainCounts,
   buildReportCompleteness,
@@ -156,6 +154,7 @@ interface AssessmentProps {
   src: string | null;
   references: string | null;
   modes?: string | null;
+  profile: AssessmentProfileData;
 }
 
 const EMPTY_STATE: SavedState = {
@@ -189,6 +188,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
   src,
   references,
   modes,
+  profile,
 }) => {
   const modeCaps = parseModes(modes);
 
@@ -1091,20 +1091,13 @@ export const Assessment: React.FC<AssessmentProps> = ({
       generate: async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        const overallMaturityLevel = calculateOverallMaturityLevel(
-          data.modules,
-          progress,
-          [],
-          [],
-          requirementProgress,
+        const scoring = calculateWeightedMaturityScore(
+          data,
+          { progress, requirementProgress },
+          profile.runtime.methodology,
         );
-        const moduleMaturityLevels = calculateModuleMaturityLevels(
-          data.modules,
-          progress,
-          [],
-          [],
-          requirementProgress,
-        );
+        const overallMaturityLevel = scoring.achievedLevel;
+        const moduleMaturityLevels = scoring.moduleLevels;
         const url = generateURL({
           progress,
           enabledExtensions: [],
@@ -1155,6 +1148,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
           comparisonBaselineDate:
             formatComparisonBaselineDate(comparisonBaseline),
           requirementFilter: filter,
+          methodology: profile.runtime.methodology,
         });
       },
       onError: (error) => console.error("Error exporting to PDF:", error),
@@ -1190,6 +1184,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
           dataVersion: data.version ?? "1.0.0",
           chartImgData,
           requirementProgress,
+          methodology: profile.runtime.methodology,
         });
       },
       onError: (error) =>
@@ -1652,46 +1647,22 @@ export const Assessment: React.FC<AssessmentProps> = ({
       return acc;
     }, [] as string[]) || [];
 
-  const moduleMaturityLevels = data
-    ? calculateModuleMaturityLevels(
-        data.modules,
-        progress,
-        [],
-        [],
-        requirementProgress,
+  const weightedScore = data
+    ? calculateWeightedMaturityScore(
+        data,
+        { progress, requirementProgress },
+        profile.runtime.methodology,
       )
-    : [];
-  const overallChartMaturityLevel = data
-    ? calculateOverallMaturityLevel(
-        data.modules,
-        progress,
-        [],
-        [],
-        requirementProgress,
-      )
-    : 0;
+    : null;
+  const moduleMaturityLevels = weightedScore?.moduleLevels ?? [];
+  const overallChartMaturityLevel = weightedScore?.achievedLevel ?? 0;
   // Unfloored counterparts of the two rollups above — same args, same
   // source numbers — so the right-rail bars can fill by fractional
   // progress toward the next level instead of jumping in whole-level
-  // steps. Math.floor(raw) always equals the floored level computed above.
-  const moduleMaturityRaw = data
-    ? calculateModuleMaturityRaw(
-        data.modules,
-        progress,
-        [],
-        [],
-        requirementProgress,
-      )
-    : [];
-  const overallMaturityRaw = data
-    ? calculateOverallMaturityRaw(
-        data.modules,
-        progress,
-        [],
-        [],
-        requirementProgress,
-      )
-    : 0;
+  // steps. The profile's rounding policy is applied only to the displayed
+  // achieved level, while these values intentionally remain fractional.
+  const moduleMaturityRaw = weightedScore?.moduleRawLevels ?? [];
+  const overallMaturityRaw = weightedScore?.rawLevel ?? 0;
   const extensionMaturityLevels = data
     ? calculateExtensionMaturityLevels(
         data.modules,
@@ -1699,6 +1670,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
         enabledExtensions,
         progress,
         requirementProgress,
+        profile.runtime.methodology.parameters,
       )
     : [];
 
@@ -1759,6 +1731,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
           currentRequirementProgress: activeAssessment?.requirementProgress,
           baselineProgress: alignedBaseline.progress,
           baselineRequirementProgress: alignedBaseline.requirementProgress,
+          methodology: profile.runtime.methodology,
         })
       : null;
   const reconciliation =
@@ -1828,6 +1801,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
       progress={progress}
       requirementProgress={activeAssessment?.requirementProgress ?? {}}
       enabledExtensions={enabledExtensions}
+      methodology={profile.runtime.methodology}
     >
       <HelpBridge
         tab={currentTab}
@@ -2200,6 +2174,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
                     loadedDataVersion={data?.version ?? "1.0.0"}
                     data={data}
                     extensionsData={extensionsData}
+                    methodology={profile.runtime.methodology}
                     onSelect={handleManagerSelect}
                     onCreateNew={handleManagerCreateNew}
                     onRename={handleManagerRename}
@@ -2283,6 +2258,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
                       ? alignedBaseline?.requirementProgress
                       : undefined
                   }
+                  methodology={profile.runtime.methodology}
                 />
               )}
               {data && (

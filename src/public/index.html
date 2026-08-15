@@ -6,10 +6,23 @@
     <title>Self-Assessment Component</title>
   </head>
   <body>
-    <!-- Zero-config: the model + references are bundled into the widget.
-         To override, add e.g.
-         dataUrl="pkimm-model-2.0.0.yaml" referencesUrl="pkimm-references.yaml" -->
-    <self-assessment></self-assessment>
+    <!-- One host route for every assessment. The selected profile points to
+         the experience, methodology, model, assurance, and report policy. -->
+    <self-assessment id="assessment"></self-assessment>
+    <script>
+      const parameters = new URLSearchParams(window.location.search);
+      const assessment = document.getElementById("assessment");
+      for (const attribute of [
+        "profile",
+        "profileUrl",
+        "dataUrl",
+        "referencesUrl",
+        "modes",
+      ]) {
+        const value = parameters.get(attribute);
+        if (value) assessment.setAttribute(attribute, value);
+      }
+    </script>
     <script src="self-assessment.js"></script>
   </body>
 </html>

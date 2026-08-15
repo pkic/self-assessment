@@ -1,6 +1,6 @@
-# PKI Maturity Model Self-Assessment Web Component
+# PKI Consortium Assessment Web Component
 
-A self-contained web component that embeds assessments for the [PKI Maturity Model (PKIMM)](https://pkic.org/wg/pkimm/) and [PQC Maturity Model (PQCMM)](https://pkic.org/wg/pqc/pqcmm/) into any HTML page via a `<self-assessment>` custom element. The models are bundled into the component, so dropping one `<script>` tag and the `<self-assessment>` element is enough to get a working assessment — local-only data, no backend. A host can optionally point the component at a different data source.
+A self-contained, profile-driven web component for PKI Consortium assessments. The assessment profile selects the model, user experience, scoring methodology and parameters, subject fields, assurance policy, and report behavior. PKIMM and PQCMM are bundled profiles; adding another assessment does not require a new HTTP route or a model-id branch in the application.
 
 ## Quick start
 
@@ -28,7 +28,8 @@ Extensions are not configured by a host attribute — the user uploads and remov
 
 | Attribute       | Required | Description                                                                                                                                                                                                                                                                                                                    |
 | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `model`         | no       | Assessment model to render: `pkimm` (default) or `pqcmm`.                                                                                                                                                                                                                                                                      |
+| `profile`       | no       | Bundled assessment profile id. Defaults to `pkimm-self-assessment`.                                                                                                                                                                                                                                                            |
+| `profileUrl`    | no       | URL of an assessment profile YAML. The profile selects the experience and methodology.                                                                                                                                                                                                                                         |
 | `dataUrl`       | no       | Optional model YAML override. For PKIMM this defaults to the bundled 2.0.0 model; for PQCMM it defaults to the bundled 1.0.1 model.                                                                                                                                                                                            |
 | `referencesUrl` | no       | Optional override. URL of the shared references catalog (`pkimm-references.yaml`). Defaults to the bundled references catalog (so category cards + the PDF References appendix appear by default); set this to point at a different catalog.                                                                                   |
 | `modes`         | no       | Which assessment views are offered (comma-separated, case-insensitive): `self`, `full`, or `self,full`. Unset (default) offers both, opening in Self. `modes="self"` offers only the quick Self assessment; `modes="full"` opens in Full but keeps Self available. Self can never be disabled. See **Assessment modes** below. |
@@ -51,25 +52,25 @@ The model and references YAMLs are bundled into `dist/self-assessment.js`, so th
 - `pkimm-references.yaml` — shared references catalog (cited by both models). Schema: [`pkimm-references.schema-1.0.0.json`](src/public/pkimm-references.schema-1.0.0.json).
 - Extension YAMLs (any name) — must validate against [`extension.schema-1.0.0.json`](src/public/extension.schema-1.0.0.json).
 
-### PQCMM assessment
+### Profile-selected assessments
 
-Select the PQCMM route explicitly. It uses the bundled PQCMM 1.0.1 data when `dataUrl` is absent and the supplied versioned model URL when it is present:
+Select PQCMM by profile on the same component and route. It uses the bundled PQCMM 1.0.1 data when `dataUrl` is absent and the supplied versioned model URL when it is present:
 
 ```html
 <self-assessment
-  model="pqcmm"
+  profile="pqcmm-self-assessment"
   dataUrl="https://pkic.org/wg/pqc/pqcmm/data/pqcmm-model-1.0.1.yaml"
 ></self-assessment>
 <script src="https://pkic.github.io/self-assessment/develop/self-assessment.js"></script>
 ```
 
-PQCMM is product/service-centric and uses cumulative gates, not PKIMM's weighted category calculation. Level 0 is a self-declared baseline. For Levels 1 through 5, every criterion at the claimed level and every lower positive level must be marked met and supported by an evidence statement or file. Partial results remain gaps and never establish a level.
+PQCMM is product/service-centric and uses cumulative gates, not PKIMM's weighted category calculation. Level 0 is a self-declared baseline. For Levels 1 through 5, every criterion at the claimed level and every lower positive level must be marked met and supported by an evidence statement or file. Partial results remain gaps and never establish a level. Its profile also requires at least one canonical CPE 2.3 name or package URL (pURL). The credential exposes these as separate `credentialSubject.identifiers.cpe` and `.purl` properties for inventory matching.
 
-PQCMM assessment records and uploaded evidence are stored in a separate IndexedDB database (`pqcmm-sa`). Portable JSON exports contain the evidence package for offline restore. Generated PDFs embed a machine-readable `pqcmm-assessment.json` manifest and the original evidence files, with SHA-256 digests recorded in the manifest.
+Evidence-gated assessment records and uploaded evidence are stored in the `pkic-evidence-assessments` IndexedDB database. Portable JSON exports use the generic `pkic-assessment-package` schema: a W3C VC-shaped `AssessmentCredential` plus evidence attachments. Browser exports are explicitly marked `unsecured-draft`; only an external issuer/signing workflow may add a verifiable proof. Generated PDFs embed the package and original evidence files, record SHA-256 digests, and include a PDF signature field for an external PAdES workflow. Its durable report text remains valid before and after signing.
 
-The canonical model source is maintained in the `pkic.org` repository. After an approved model release, update the bundled offline snapshot with `npm run sync:pqcmm` (or set `PQCMM_SITE_ROOT` when the site checkout is elsewhere). Do not edit the bundled YAML independently.
+The intended canonical model source is the standalone `pkic/pqcmm` repository. Until that local repository has been published and pinned by consumers, update the bundled and website snapshots together with the canonical candidate. Do not edit one copy independently.
 
-The PKIMM and PQCMM release files are bundled directly into the widget for zero-config use and served from gh-pages for hosts that override `dataUrl` or `referencesUrl`. Their schemas are precompiled into CSP-safe validators. PKIMM's canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository; PQCMM's canonical copies live in the `pkic.org` repository as described above.
+The PKIMM and PQCMM release files are bundled directly into the widget for zero-config use and served from gh-pages for hosts that override `dataUrl` or `referencesUrl`. Their schemas are precompiled into CSP-safe validators. PKIMM's canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository; PQCMM will follow the same pinned-repository model after publication.
 
 ## Data storage
 
@@ -97,25 +98,26 @@ The full token list lives in [`src/index.module.scss`](src/index.module.scss); p
 Node version is pinned via `.node-version` (24.15.0).
 
 ```bash
-npm install          # install deps
-npm run build        # production UMD build → dist/self-assessment.js
-npm run start        # webpack-dev-server on http://localhost:9000
-npm test             # jest
-npm run lint:check   # eslint (no fix)
-npm run format:check # prettier (no fix)
+pnpm install          # install deps
+pnpm run build        # production UMD build → dist/self-assessment.js
+pnpm run start        # webpack-dev-server on http://localhost:9000
+pnpm test             # jest
+pnpm run lint:check   # eslint (no fix)
+pnpm run format:check # prettier (no fix)
 ```
 
-Local dev note: the webpack-dev-server serves the `dist/` directory. After `npm run build`, the YAML/index files in `src/public/` are not automatically copied. Run once:
+Local dev note: the webpack-dev-server serves the `dist/` directory. After `pnpm run build`, the YAML/index files in `src/public/` are not automatically copied. Run once:
 
 ```bash
 cp src/public/index.html src/public/pkimm-model-1.0.0.yaml \
    src/public/pkimm-model-2.0.0.yaml src/public/pkimm-references.yaml \
-   src/public/pqcmm.html src/public/pqcmm-model-1.0.1.yaml \
+   src/public/pqcmm-model-1.0.1.yaml \
    src/public/pqcmm-model.schema-1.0.0.json \
-   src/public/pqcmm-assessment.schema-1.0.0.json dist/
+   src/public/assessment-profile.schema-1.0.0.json \
+   src/public/assessment-package.schema-1.0.0.json dist/
 ```
 
-The dev fixture (`src/public/index.html`) is attribute-free (zero-config) — it no longer sets `dataUrl`/`referencesUrl`. Per-category reference disclosures appear from the bundled references catalog without any copy step; the `cp` above is only needed to exercise the `dataUrl`/`referencesUrl` override path locally.
+The single dev route accepts the same attributes as query parameters. For example, use `/?profile=pqcmm-self-assessment`; no separate assessment route is needed. Per-category reference disclosures appear from the bundled references catalog without any copy step; the `cp` above is only needed to exercise URL overrides locally.
 
 CI workflows do this on every build. To try an extension, open the running widget's **Extensions** tab and upload an extension YAML — no build step or attribute is involved.
 

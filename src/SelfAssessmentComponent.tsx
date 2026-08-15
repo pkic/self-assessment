@@ -13,7 +13,8 @@ class SelfAssessmentComponent extends HTMLElement {
     const dataUrl = this.getAttribute("dataUrl");
     const referencesUrl = this.getAttribute("referencesUrl");
     const modes = this.getAttribute("modes");
-    const model = this.getAttribute("model");
+    const profile = this.getAttribute("profile");
+    const profileUrl = this.getAttribute("profileUrl");
     if (!this.root) {
       this.root = createRoot(this);
     }
@@ -22,7 +23,8 @@ class SelfAssessmentComponent extends HTMLElement {
         dataUrl={dataUrl}
         referencesUrl={referencesUrl}
         modes={modes}
-        model={model}
+        profile={profile}
+        profileUrl={profileUrl}
       />,
     );
   }

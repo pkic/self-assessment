@@ -27,10 +27,10 @@ jobs:
           cp ./src/public/pkimm-model-1.0.0.yaml ./dist/pkimm-model-1.0.0.yaml
           cp ./src/public/pkimm-model-2.0.0.yaml ./dist/pkimm-model-2.0.0.yaml
           cp ./src/public/pkimm-references.yaml ./dist/pkimm-references.yaml
-          cp ./src/public/pqcmm.html ./dist/pqcmm.html
           cp ./src/public/pqcmm-model-1.0.1.yaml ./dist/pqcmm-model-1.0.1.yaml
           cp ./src/public/pqcmm-model.schema-1.0.0.json ./dist/pqcmm-model.schema-1.0.0.json
-          cp ./src/public/pqcmm-assessment.schema-1.0.0.json ./dist/pqcmm-assessment.schema-1.0.0.json
+          cp ./src/public/assessment-profile.schema-1.0.0.json ./dist/assessment-profile.schema-1.0.0.json
+          cp ./src/public/assessment-package.schema-1.0.0.json ./dist/assessment-package.schema-1.0.0.json
       # Popular action to deploy to GitHub Pages:
       # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
       - name: Deploy to GitHub Pages
