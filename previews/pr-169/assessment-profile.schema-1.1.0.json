@@ -217,7 +217,32 @@
         "required": { "type": "boolean" },
         "rows": { "type": "integer", "minimum": 1 },
         "hint": { "type": "string" },
-        "format": { "enum": ["cpe-2.3", "package-url", "uri"] }
+        "format": { "enum": ["cpe-2.3", "package-url", "uri"] },
+        "defaultFrom": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]*$"
+        },
+        "suggestion": { "$ref": "#/$defs/subjectFieldSuggestion" }
+      }
+    },
+    "subjectFieldSuggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "vendorField", "productField", "versionField"],
+      "properties": {
+        "strategy": { "const": "cpe-2.3-application" },
+        "vendorField": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]*$"
+        },
+        "productField": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]*$"
+        },
+        "versionField": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]*$"
+        }
       }
     },
     "subjectRule": {

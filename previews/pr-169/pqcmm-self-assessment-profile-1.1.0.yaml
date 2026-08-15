@@ -18,6 +18,7 @@ runtime:
       minimumLevel: 0
       maximumLevel: 5
       passingStatuses: [met]
+      defaultBaselineStatus: met
       evidenceRequiredFromLevel: 1
       passingQuestionFindings: [supports]
   subjectFields:
@@ -40,7 +41,12 @@ runtime:
       component: text
       required: false
       format: cpe-2.3
-      hint: Canonical formatted CPE 2.3 name, for example cpe:2.3:a:vendor:product:version:*:*:*:*:*:*:*.
+      hint: Use the vendor's canonical formatted CPE 2.3 name. A generated suggestion must be confirmed against the vendor's naming.
+      suggestion:
+        strategy: cpe-2.3-application
+        vendorField: vendorName
+        productField: productName
+        versionField: productVersion
     - key: purl
       label: Package URL (pURL)
       component: text
@@ -63,6 +69,7 @@ runtime:
         label: Assessor organization,
         component: text,
         required: false,
+        defaultFrom: vendorName,
       }
     - {
         key: assessmentDate,
