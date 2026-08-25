@@ -13,11 +13,11 @@ import {
 import "../index.module.scss";
 import { generateURL } from "./urlGenerator";
 import {
-  calculateExtensionWeightedPKIMMScore,
+  calculateExtensionWeightedScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
-} from "./maturityCalculations";
+} from "../assessment-engine/methodologies/weightedMaturity";
 import { generateQRDataUrl } from "./pdf/qr";
 import { PdfDocument } from "./pdf/CoreReportDocument";
 import { ExtensionPdfDocument } from "./pdf/ExtensionReportDocument";
@@ -37,6 +37,7 @@ import {
 } from "./reportData";
 import type { ComparisonResult, ReconciliationRow } from "./comparison";
 import type { RequirementFilterState } from "./requirementFilter";
+import type { AssessmentProfileData } from "../assessment-engine/types";
 
 export interface ExportPdfOptions {
   reportTier: "self" | "attestation" | "assessment" | "detailed" | "custom";
@@ -71,6 +72,7 @@ export interface ExportPdfOptions {
   comparisonBaselineName?: string;
   comparisonBaselineDate?: string;
   requirementFilter?: RequirementFilterState;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 export const exportToPDF = async (opts: ExportPdfOptions) => {
@@ -107,6 +109,7 @@ export const exportToPDF = async (opts: ExportPdfOptions) => {
     modules,
     progress,
     requirementProgress,
+    methodology: opts.methodology,
   });
 
   if (opts.reportTier === "self") {
@@ -251,6 +254,7 @@ interface ExportExtensionPDFOptions {
   dataVersion: string;
   chartImgData: string;
   requirementProgress?: Record<string, RequirementProgress>;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 export const exportExtensionPDF = async ({
@@ -265,6 +269,7 @@ export const exportExtensionPDF = async ({
   dataVersion,
   chartImgData,
   requirementProgress,
+  methodology,
 }: ExportExtensionPDFOptions) => {
   const extId = extension.extension.id;
 
@@ -273,6 +278,7 @@ export const exportExtensionPDF = async ({
     modules: coreModules,
     activeExtension: extension,
     requirementProgress,
+    methodology,
   });
 
   const overallMaturityLevel = calculateOverallMaturityLevel(
@@ -281,6 +287,7 @@ export const exportExtensionPDF = async ({
     [],
     [],
     requirementProgress,
+    methodology?.parameters,
   );
 
   const overallWeightedMaturity = calculateOverallMaturityLevel(
@@ -289,6 +296,7 @@ export const exportExtensionPDF = async ({
     [extension],
     [extId],
     requirementProgress,
+    methodology?.parameters,
   );
 
   const moduleWeightedMaturityLevels = calculateModuleMaturityLevels(
@@ -297,6 +305,7 @@ export const exportExtensionPDF = async ({
     [extension],
     [extId],
     requirementProgress,
+    methodology?.parameters,
   );
 
   const floorScore = calculateExtensionFloorScore(
@@ -304,13 +313,15 @@ export const exportExtensionPDF = async ({
     extension,
     progress,
     requirementProgress,
+    methodology?.parameters,
   );
 
-  const weightedScore = calculateExtensionWeightedPKIMMScore(
+  const weightedScore = calculateExtensionWeightedScore(
     coreModules,
     progress,
     extension,
     requirementProgress,
+    methodology?.parameters,
   );
 
   const assessmentUrl = generateURL({

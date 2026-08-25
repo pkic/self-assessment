@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      destination_dir:
+        description: GitHub Pages directory for this build
+        required: true
+        default: develop
+
+permissions:
+  contents: write
 
 jobs:
   gh-deploy:
@@ -21,12 +29,6 @@ jobs:
         run: |
           npm install
           npm run build
-      - name: Copy index and data files
-        run: |
-          cp ./src/public/index.html ./dist/index.html
-          cp ./src/public/pkimm-model-1.0.0.yaml ./dist/pkimm-model-1.0.0.yaml
-          cp ./src/public/pkimm-model-2.0.0.yaml ./dist/pkimm-model-2.0.0.yaml
-          cp ./src/public/pkimm-references.yaml ./dist/pkimm-references.yaml
       # Popular action to deploy to GitHub Pages:
       # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
       - name: Deploy to GitHub Pages
@@ -35,4 +37,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Build output to publish to the `gh-pages` branch:
           publish_dir: ./dist
-          destination_dir: develop
+          destination_dir: ${{ inputs.destination_dir || 'develop' }}

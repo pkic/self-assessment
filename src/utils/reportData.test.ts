@@ -18,7 +18,10 @@ import type {
   RequirementProgress,
   ActionPlans,
 } from "../types/types";
-import { calculateBlendedLevel } from "./maturityCalculations";
+import {
+  calculateBlendedLevel,
+  calculateWeightedMaturityScore,
+} from "../assessment-engine/methodologies/weightedMaturity";
 import { calculateEffectiveCategoryLevel } from "./effectiveLevel";
 import type { RequirementFilterState } from "./requirementFilter";
 import LevelResult from "../enums/LevelResult";
@@ -91,6 +94,36 @@ describe("buildReportScores (core mode)", () => {
     expect(s.extension).toBeNull();
     expect(s.floor).toBeNull();
     expect(s.weighted).toBeNull();
+  });
+
+  it("uses the same profile rounding policy as the primary scoring strategy", () => {
+    const methodology = {
+      strategy: "weighted-average",
+      version: "1.0.0",
+      parameters: {
+        minimumLevel: 0,
+        maximumLevel: 5,
+        rounding: "ceil",
+        categoryWeightField: "weight",
+        requirementWeightField: "weight",
+        excludeNotApplicable: true,
+      },
+    };
+    const report = buildReportScores(
+      modules,
+      progress,
+      null,
+      undefined,
+      methodology,
+    );
+    const primary = calculateWeightedMaturityScore(
+      { modules },
+      { progress },
+      methodology,
+    );
+    expect(report.overall).toBe(4);
+    expect(report.modules[0].level).toBe(primary.moduleLevels[0].level);
+    expect(report.overall).toBe(primary.achievedLevel);
   });
 });
 

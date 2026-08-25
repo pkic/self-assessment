@@ -17,6 +17,7 @@ import {
   hasV2Content,
 } from "./stateSchema";
 import { normalizeAssessmentActionPlans } from "./actionPlans";
+import { newAssessmentId } from "../assessment-engine/id";
 export { WIDGET_MAX_STATE_SCHEMA_VERSION } from "./stateSchema";
 
 export type ParseResult =
@@ -42,7 +43,7 @@ export const buildStructureSnapshot = (
   return { byKey };
 };
 
-export const newId = (): string => crypto.randomUUID();
+export const newId = newAssessmentId;
 
 export const STORAGE_KEY = "pkimm-sa";
 export const LEGACY_KEY = "assessmentData";

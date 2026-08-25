@@ -1,8 +1,8 @@
 import {
   calculateOverallMaturityLevel,
   calculateBlendedLevel,
-  calculateExtensionWeightedPKIMMScore,
-} from "./maturityCalculations";
+  calculateExtensionWeightedScore,
+} from "../assessment-engine/methodologies/weightedMaturity";
 import type {
   ModuleData,
   ExtensionData,
@@ -265,9 +265,9 @@ describe("full-mode rollups", () => {
     };
     // baseline raw_C = (2*3 + 4*2)/5 = 14/5 = 2.8 → floor 2 (single category → weight cancels)
     // extension-context would be (2*3 + 4*6)/9 = 30/9 = 3.33 → floor 3 (wrong)
-    expect(
-      calculateExtensionWeightedPKIMMScore(oneCat, prog, leadX3, rpTwo),
-    ).toBe(2);
+    expect(calculateExtensionWeightedScore(oneCat, prog, leadX3, rpTwo)).toBe(
+      2,
+    );
   });
 
   it("blend uses the extension-context (overlay-weighted) category level", () => {

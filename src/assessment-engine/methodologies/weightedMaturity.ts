@@ -1,13 +1,32 @@
-// utils/maturityCalculations.ts
+// Generic weighted maturity methodology.
 
 import {
   ModuleData,
   ProgressData,
   ExtensionData,
   CategoryData,
-} from "../types/types";
-import { calculateEffectiveCategoryLevel } from "./effectiveLevel";
-import type { RequirementProgress } from "../types/types";
+} from "../../types/types";
+import { calculateEffectiveCategoryLevel } from "../../utils/effectiveLevel";
+import type { RequirementProgress } from "../../types/types";
+import { registerScoringStrategy, scoreWithStrategy } from "../scoring";
+import type { AssessmentProfileData } from "../types";
+
+export type WeightedMaturityParameters = Record<string, unknown>;
+
+export const roundAndBoundWeightedLevel = (
+  value: number,
+  parameters: WeightedMaturityParameters = {},
+): number => {
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  let round = Math.floor;
+  if (parameters.rounding === "ceil") round = Math.ceil;
+  if (parameters.rounding === "round") round = Math.round;
+  const minimum =
+    typeof parameters.minimumLevel === "number" ? parameters.minimumLevel : 0;
+  const maximum =
+    typeof parameters.maximumLevel === "number" ? parameters.maximumLevel : 5;
+  return Math.min(maximum, Math.max(minimum, round(value)));
+};
 
 export const getWeightSum = (
   moduleId: string,
@@ -92,7 +111,7 @@ const calculateWeightedScores = (
   // calculateBlendedLevel), not this baseline rollup.
   //
   // Pass [] / [] for extensions to get a pure baseline view; pass an
-  // extension to get the ExtensionWeightedPKIMM view (Level_C with
+  // extension to get the extension-weighted view (Level_C with
   // extension-adjusted weights).
   return categories.reduce(
     (acc, category) => {
@@ -162,8 +181,9 @@ export const calculateOverallMaturityLevel = (
   extensions: ExtensionData[] = [],
   enabledExtensions: string[] = [],
   requirementProgress?: Record<string, RequirementProgress>,
+  parameters: WeightedMaturityParameters = {},
 ): number =>
-  Math.floor(
+  roundAndBoundWeightedLevel(
     calculateOverallMaturityRaw(
       modules,
       progress,
@@ -171,6 +191,7 @@ export const calculateOverallMaturityLevel = (
       enabledExtensions,
       requirementProgress,
     ),
+    parameters,
   );
 
 // UNFLOORED per-module weighted average — same source value that
@@ -202,6 +223,7 @@ export const calculateModuleMaturityLevels = (
   extensions: ExtensionData[] = [],
   enabledExtensions: string[] = [],
   requirementProgress?: Record<string, RequirementProgress>,
+  parameters: WeightedMaturityParameters = {},
 ): { module: string; level: number }[] => {
   return calculateModuleMaturityRaw(
     modules,
@@ -209,7 +231,10 @@ export const calculateModuleMaturityLevels = (
     extensions,
     enabledExtensions,
     requirementProgress,
-  ).map(({ module, raw }) => ({ module, level: Math.floor(raw) }));
+  ).map(({ module, raw }) => ({
+    module,
+    level: roundAndBoundWeightedLevel(raw, parameters),
+  }));
 };
 
 export const calculateBlendedLevel = (
@@ -286,6 +311,7 @@ export const calculateExtensionMaturityLevels = (
   enabledExtensions: string[],
   progress: Record<string, ProgressData>,
   requirementProgress?: Record<string, RequirementProgress>,
+  parameters: WeightedMaturityParameters = {},
 ): { id: string; name: string; level: number }[] => {
   return extensions
     .filter((ext) => enabledExtensions.includes(ext.extension.id))
@@ -335,7 +361,10 @@ export const calculateExtensionMaturityLevels = (
       }
 
       const level = totalWeight
-        ? Math.floor(totalWeightedScore / totalWeight)
+        ? roundAndBoundWeightedLevel(
+            totalWeightedScore / totalWeight,
+            parameters,
+          )
         : 0;
       return { id: ext.extension.id, name: ext.extension.name, level };
     });
@@ -346,6 +375,7 @@ export const calculateExtensionFloorScore = (
   extension: ExtensionData,
   progress: Record<string, ProgressData>,
   requirementProgress?: Record<string, RequirementProgress>,
+  parameters: WeightedMaturityParameters = {},
 ): number | null => {
   if (extension.extension.floorScore !== true) return null;
 
@@ -384,22 +414,25 @@ export const calculateExtensionFloorScore = (
     });
   });
 
-  return hasApplicableCategory ? Math.floor(minLevel) : 0;
+  return hasApplicableCategory
+    ? roundAndBoundWeightedLevel(minLevel, parameters)
+    : 0;
 };
 
 // Per spec — Extension-weighted PKI MM score:
-//   ExtensionWeightedPKIMM = Σ(Level_C × effective_category_weight)
+//   ExtensionWeighted = Σ(Level_C × effective_category_weight)
 //                            / Σ(effective_category_weight)
 // "Recalculates baseline PKI MM maturity using extension emphasis while
 //  preserving baseline maturity values." Uses the baseline category level
 // (NOT the blended ExtensionCategoryLevel) so the relevance signal does not
 // affect this view — only the category weights are adjusted by the
 // extension's category-level overlays.
-export const calculateExtensionWeightedPKIMMScore = (
+export const calculateExtensionWeightedScore = (
   modules: ModuleData[],
   progress: Record<string, ProgressData>,
   extension: ExtensionData,
   requirementProgress?: Record<string, RequirementProgress>,
+  parameters: WeightedMaturityParameters = {},
 ): number => {
   let totalWeight = 0;
   let totalWeightedScore = 0;
@@ -434,7 +467,9 @@ export const calculateExtensionWeightedPKIMMScore = (
 
   // Terminal display score — callers index LevelResult / getColorForLevel with
   // it, so it floors here (the single display-flooring point for this score).
-  return totalWeight ? Math.floor(totalWeightedScore / totalWeight) : 0;
+  return totalWeight
+    ? roundAndBoundWeightedLevel(totalWeightedScore / totalWeight, parameters)
+    : 0;
 };
 
 export type OverlayOperation = "multiplier" | "addition" | "override";
@@ -533,3 +568,62 @@ export const getCategoryOverlayInfo = (
 /** Convenience for code that just needs to know "are there any overlays?" */
 export const hasOverlays = (details: CategoryOverlayDetails): boolean =>
   details.category !== undefined || details.requirements.length > 0;
+
+export interface WeightedMaturityRecord {
+  progress: Record<string, ProgressData>;
+  extensions?: ExtensionData[];
+  enabledExtensions?: string[];
+  requirementProgress?: Record<string, RequirementProgress>;
+}
+
+export interface WeightedMaturityScore {
+  achievedLevel: number;
+  rawLevel: number;
+  moduleLevels: { module: string; level: number }[];
+  moduleRawLevels: { module: string; raw: number }[];
+}
+
+registerScoringStrategy(
+  "weighted-average",
+  (
+    model: { modules: ModuleData[] },
+    record: WeightedMaturityRecord,
+    parameters: Record<string, unknown>,
+  ) => {
+    const rawLevel = calculateOverallMaturityRaw(
+      model.modules,
+      record.progress,
+      record.extensions,
+      record.enabledExtensions,
+      record.requirementProgress,
+    );
+    const moduleRawLevels = calculateModuleMaturityRaw(
+      model.modules,
+      record.progress,
+      record.extensions,
+      record.enabledExtensions,
+      record.requirementProgress,
+    );
+    return {
+      achievedLevel: roundAndBoundWeightedLevel(rawLevel, parameters),
+      rawLevel,
+      moduleLevels: moduleRawLevels.map(({ module, raw }) => ({
+        module,
+        level: roundAndBoundWeightedLevel(raw, parameters),
+      })),
+      moduleRawLevels,
+    };
+  },
+);
+
+export const calculateWeightedMaturityScore = (
+  model: { modules: ModuleData[] },
+  record: WeightedMaturityRecord,
+  methodology: AssessmentProfileData["runtime"]["methodology"],
+): WeightedMaturityScore =>
+  scoreWithStrategy(
+    methodology.strategy,
+    model,
+    record,
+    methodology.parameters,
+  );
