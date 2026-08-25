@@ -37,11 +37,12 @@ export const DURATION_UNITS = new Set<DurationUnit>([
   "year",
   "decade",
 ]);
-const PRESENTATION_TYPES: Record<FieldPresentation, EvidenceQuestionFieldType> = {
-  checkbox: "boolean",
-  radio: "select",
-  range: "number",
-};
+const PRESENTATION_TYPES: Record<FieldPresentation, EvidenceQuestionFieldType> =
+  {
+    checkbox: "boolean",
+    radio: "select",
+    range: "number",
+  };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -102,7 +103,9 @@ const validField = (value: unknown): value is EvidenceQuestionField => {
   const numericOnly = type === "number";
   if (
     !numericOnly &&
-    (value.min !== undefined || value.max !== undefined || value.step !== undefined)
+    (value.min !== undefined ||
+      value.max !== undefined ||
+      value.step !== undefined)
   ) {
     return false;
   }

@@ -78,10 +78,7 @@ const validNumber = (value: string, policy: QuestionFieldPolicy): boolean => {
   return true;
 };
 
-const validDuration = (
-  value: string,
-  policy: QuestionFieldPolicy,
-): boolean => {
+const validDuration = (value: string, policy: QuestionFieldPolicy): boolean => {
   const parts = value.split("|");
   if (parts.length !== 2) return false;
   const [amount, unit] = parts;

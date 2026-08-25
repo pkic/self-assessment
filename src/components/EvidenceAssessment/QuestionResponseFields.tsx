@@ -110,7 +110,10 @@ export const QuestionResponseFields: React.FC<Props> = ({
         }
         if (field.type === "boolean" && field.presentation === "checkbox") {
           return (
-            <label key={field.key} className="evidence-assessment-question__checkbox">
+            <label
+              key={field.key}
+              className="evidence-assessment-question__checkbox"
+            >
               <input
                 type="checkbox"
                 checked={value === "yes"}

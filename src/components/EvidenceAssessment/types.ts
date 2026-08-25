@@ -32,14 +32,7 @@ export type FieldPresentation = "checkbox" | "radio" | "range";
 // (Julian-year-based) multipliers, not calendar-variable arithmetic, so two
 // implementations agree on what a stored value means. See DURATION_UNIT_SECONDS.
 export type DurationUnit =
-  | "second"
-  | "minute"
-  | "hour"
-  | "day"
-  | "week"
-  | "month"
-  | "year"
-  | "decade";
+  "second" | "minute" | "hour" | "day" | "week" | "month" | "year" | "decade";
 
 export interface EvidenceQuestionField {
   key: string;
