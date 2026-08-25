@@ -1,7 +1,9 @@
 import type {
+  DurationUnit,
   EvidenceQuestionField,
   EvidenceQuestionFieldType,
   EvidenceQuestionResponse,
+  FieldPresentation,
 } from "./types";
 
 const CPE_PATTERN = String.raw`^cpe:2\.3:(?:(?:\\.|[^:])*:){10}(?:\\.|[^:])*$`;
@@ -10,13 +12,36 @@ const FIELD_TYPES = new Set<EvidenceQuestionFieldType>([
   "text",
   "textarea",
   "date",
+  "date-time",
+  "date-range",
+  "time",
+  "month",
+  "week",
   "url",
+  "tel",
   "boolean",
   "select",
   "multiselect",
   "cpe-2.3",
   "package-url",
+  "number",
+  "duration",
 ]);
+export const DURATION_UNITS = new Set<DurationUnit>([
+  "second",
+  "minute",
+  "hour",
+  "day",
+  "week",
+  "month",
+  "year",
+  "decade",
+]);
+const PRESENTATION_TYPES: Record<FieldPresentation, EvidenceQuestionFieldType> = {
+  checkbox: "boolean",
+  radio: "select",
+  range: "number",
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -36,6 +61,15 @@ const validOptions = (value: unknown): boolean =>
       option.label.length > 0,
   );
 
+const optionalNumber = (value: unknown): boolean =>
+  value === undefined || typeof value === "number";
+
+const validAllowedUnits = (value: unknown): boolean =>
+  Array.isArray(value) &&
+  value.length > 0 &&
+  new Set(value).size === value.length &&
+  value.every((unit) => DURATION_UNITS.has(unit as DurationUnit));
+
 const validField = (value: unknown): value is EvidenceQuestionField => {
   if (!isRecord(value)) return false;
   const type = value.type as EvidenceQuestionFieldType;
@@ -48,6 +82,10 @@ const validField = (value: unknown): value is EvidenceQuestionField => {
     typeof value.required !== "boolean" ||
     !optionalString(value.hint) ||
     !optionalString(value.pattern) ||
+    !optionalNumber(value.min) ||
+    !optionalNumber(value.max) ||
+    (value.step !== undefined &&
+      (typeof value.step !== "number" || value.step <= 0)) ||
     (value.rows !== undefined &&
       (typeof value.rows !== "number" ||
         !Number.isInteger(value.rows) ||
@@ -61,6 +99,27 @@ const validField = (value: unknown): value is EvidenceQuestionField => {
   if (needsOptions && !validOptions(value.options)) return false;
   if (type === "cpe-2.3" && value.pattern !== CPE_PATTERN) return false;
   if (type === "package-url" && value.pattern !== PURL_PATTERN) return false;
+  const numericOnly = type === "number";
+  if (
+    !numericOnly &&
+    (value.min !== undefined || value.max !== undefined || value.step !== undefined)
+  ) {
+    return false;
+  }
+  if (type !== "duration" && value.allowedUnits !== undefined) return false;
+  if (
+    type === "duration" &&
+    value.allowedUnits !== undefined &&
+    !validAllowedUnits(value.allowedUnits)
+  ) {
+    return false;
+  }
+  if (
+    value.presentation !== undefined &&
+    PRESENTATION_TYPES[value.presentation as FieldPresentation] !== type
+  ) {
+    return false;
+  }
   return true;
 };
 

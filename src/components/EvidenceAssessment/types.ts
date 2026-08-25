@@ -8,12 +8,38 @@ export type EvidenceQuestionFieldType =
   | "text"
   | "textarea"
   | "date"
+  | "date-time"
+  | "date-range"
+  | "time"
+  | "month"
+  | "week"
   | "url"
+  | "tel"
   | "boolean"
   | "select"
   | "multiselect"
   | "cpe-2.3"
-  | "package-url";
+  | "package-url"
+  | "number"
+  | "duration";
+
+// A widget hint for a type whose stored value and meaning don't change:
+// checkbox for boolean, radio for select, range for number. Not a separate
+// type, so a consumer switching on `type` still only sees one shape.
+export type FieldPresentation = "checkbox" | "radio" | "range";
+
+// Canonical duration units. Answers normalize to seconds using fixed
+// (Julian-year-based) multipliers, not calendar-variable arithmetic, so two
+// implementations agree on what a stored value means. See DURATION_UNIT_SECONDS.
+export type DurationUnit =
+  | "second"
+  | "minute"
+  | "hour"
+  | "day"
+  | "week"
+  | "month"
+  | "year"
+  | "decade";
 
 export interface EvidenceQuestionField {
   key: string;
@@ -23,6 +49,11 @@ export interface EvidenceQuestionField {
   hint?: string;
   rows?: number;
   pattern?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  allowedUnits?: DurationUnit[];
+  presentation?: FieldPresentation;
   options?: { value: string; label: string }[];
 }
 

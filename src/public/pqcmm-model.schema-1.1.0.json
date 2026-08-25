@@ -86,6 +86,10 @@
         "label": { "type": "string", "minLength": 1 }
       }
     },
+    "durationUnit": {
+      "description": "Canonical duration units. Answers are normalized to seconds using fixed multipliers (Julian year of 365.25 days; month = year / 12), not calendar-variable arithmetic, so stored values are reproducible across implementations.",
+      "enum": ["second", "minute", "hour", "day", "week", "month", "year", "decade"]
+    },
     "responseField": {
       "type": "object",
       "additionalProperties": false,
@@ -94,22 +98,36 @@
         "key": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
         "label": { "type": "string", "minLength": 1 },
         "type": {
+          "description": "date and date-time answers are stored and processed in UTC; the runtime converts to the viewer's local time only for display, never for storage.",
           "enum": [
             "text",
             "textarea",
             "date",
+            "date-time",
             "url",
             "boolean",
             "select",
             "multiselect",
             "cpe-2.3",
-            "package-url"
+            "package-url",
+            "number",
+            "duration"
           ]
         },
         "required": { "type": "boolean" },
         "hint": { "type": "string" },
         "rows": { "type": "integer", "minimum": 1, "maximum": 12 },
         "pattern": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "step": { "type": "number", "exclusiveMinimum": 0 },
+        "allowedUnits": {
+          "description": "Restricts which duration units this question offers. Omit to allow every unit in $defs/durationUnit.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/durationUnit" }
+        },
         "options": {
           "type": "array",
           "minItems": 2,
@@ -130,6 +148,14 @@
         {
           "if": { "properties": { "type": { "const": "package-url" } } },
           "then": { "properties": { "pattern": { "const": "^pkg:[a-z][a-z0-9.+-]*/[^\\s/]+(?:/[^\\s/]+)*(?:@[^\\s?#]+)?(?:\\?[^\\s#]+)?(?:#[^\\s]+)?$" } }, "required": ["pattern"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "number" } } },
+          "else": { "not": { "anyOf": [{ "required": ["min"] }, { "required": ["max"] }, { "required": ["step"] }] } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "duration" } } },
+          "else": { "not": { "required": ["allowedUnits"] } }
         }
       ]
     },
@@ -209,6 +235,17 @@
         "text": { "$ref": "#/$defs/markdown" }
       }
     },
+    "levelSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "body"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[0-5]\\.s\\.[1-9][0-9]*$" },
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "$ref": "#/$defs/markdown" },
+        "placement": { "enum": ["after-criteria", "after-assessment", "after-evidence-checklist"], "default": "after-criteria" }
+      }
+    },
     "level": {
       "type": "object",
       "additionalProperties": false,
@@ -232,6 +269,10 @@
               "items": { "$ref": "#/$defs/criterion" }
             }
           }
+        },
+        "sections": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/levelSection" }
         },
         "assessment": {
           "type": "object",
