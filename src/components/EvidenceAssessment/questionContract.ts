@@ -71,59 +71,94 @@ const validAllowedUnits = (value: unknown): boolean =>
   new Set(value).size === value.length &&
   value.every((unit) => DURATION_UNITS.has(unit as DurationUnit));
 
+const validRows = (value: unknown): boolean =>
+  value === undefined ||
+  (typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= 12);
+
+const validStep = (value: unknown): boolean =>
+  value === undefined || (typeof value === "number" && value > 0);
+
+// key, label, type, required, and the scalar constraint properties that
+// apply regardless of type (hint, pattern, min, max, step, rows). Type-
+// specific pairing (which properties a given type actually allows) is
+// checked separately, this only validates each property's own shape.
+const hasValidBasicShape = (
+  value: Record<string, unknown>,
+  type: EvidenceQuestionFieldType,
+): boolean =>
+  typeof value.key === "string" &&
+  /^[a-z][a-zA-Z0-9]*$/.test(value.key) &&
+  typeof value.label === "string" &&
+  value.label.length > 0 &&
+  FIELD_TYPES.has(type) &&
+  typeof value.required === "boolean" &&
+  optionalString(value.hint) &&
+  optionalString(value.pattern) &&
+  optionalNumber(value.min) &&
+  optionalNumber(value.max) &&
+  validStep(value.step) &&
+  validRows(value.rows);
+
+const hasValidOptions = (
+  value: Record<string, unknown>,
+  type: EvidenceQuestionFieldType,
+): boolean => {
+  const needsOptions = type === "select" || type === "multiselect";
+  if (needsOptions !== (value.options !== undefined)) return false;
+  return !needsOptions || validOptions(value.options);
+};
+
+const hasValidIdentifierPattern = (
+  value: Record<string, unknown>,
+  type: EvidenceQuestionFieldType,
+): boolean => {
+  if (type === "cpe-2.3") return value.pattern === CPE_PATTERN;
+  if (type === "package-url") return value.pattern === PURL_PATTERN;
+  return true;
+};
+
+// min/max/step only mean anything on "number"; reject them everywhere else
+// rather than silently ignoring a constraint the type can't act on.
+const hasValidNumericScope = (
+  value: Record<string, unknown>,
+  type: EvidenceQuestionFieldType,
+): boolean =>
+  type === "number" ||
+  (value.min === undefined &&
+    value.max === undefined &&
+    value.step === undefined);
+
+const hasValidDurationScope = (
+  value: Record<string, unknown>,
+  type: EvidenceQuestionFieldType,
+): boolean => {
+  if (type !== "duration") return value.allowedUnits === undefined;
+  return (
+    value.allowedUnits === undefined || validAllowedUnits(value.allowedUnits)
+  );
+};
+
+// A presentation hint must pair with exactly the type it's a widget for
+// (checkbox implies boolean, radio implies select, range implies number).
+const hasValidPresentation = (
+  value: Record<string, unknown>,
+  type: EvidenceQuestionFieldType,
+): boolean =>
+  value.presentation === undefined ||
+  PRESENTATION_TYPES[value.presentation as FieldPresentation] === type;
+
 const validField = (value: unknown): value is EvidenceQuestionField => {
   if (!isRecord(value)) return false;
   const type = value.type as EvidenceQuestionFieldType;
-  if (
-    typeof value.key !== "string" ||
-    !/^[a-z][a-zA-Z0-9]*$/.test(value.key) ||
-    typeof value.label !== "string" ||
-    value.label.length === 0 ||
-    !FIELD_TYPES.has(type) ||
-    typeof value.required !== "boolean" ||
-    !optionalString(value.hint) ||
-    !optionalString(value.pattern) ||
-    !optionalNumber(value.min) ||
-    !optionalNumber(value.max) ||
-    (value.step !== undefined &&
-      (typeof value.step !== "number" || value.step <= 0)) ||
-    (value.rows !== undefined &&
-      (typeof value.rows !== "number" ||
-        !Number.isInteger(value.rows) ||
-        value.rows < 1 ||
-        value.rows > 12))
-  ) {
-    return false;
-  }
-  const needsOptions = type === "select" || type === "multiselect";
-  if (needsOptions !== (value.options !== undefined)) return false;
-  if (needsOptions && !validOptions(value.options)) return false;
-  if (type === "cpe-2.3" && value.pattern !== CPE_PATTERN) return false;
-  if (type === "package-url" && value.pattern !== PURL_PATTERN) return false;
-  const numericOnly = type === "number";
-  if (
-    !numericOnly &&
-    (value.min !== undefined ||
-      value.max !== undefined ||
-      value.step !== undefined)
-  ) {
-    return false;
-  }
-  if (type !== "duration" && value.allowedUnits !== undefined) return false;
-  if (
-    type === "duration" &&
-    value.allowedUnits !== undefined &&
-    !validAllowedUnits(value.allowedUnits)
-  ) {
-    return false;
-  }
-  if (
-    value.presentation !== undefined &&
-    PRESENTATION_TYPES[value.presentation as FieldPresentation] !== type
-  ) {
-    return false;
-  }
-  return true;
+  if (!hasValidBasicShape(value, type)) return false;
+  if (!hasValidOptions(value, type)) return false;
+  if (!hasValidIdentifierPattern(value, type)) return false;
+  if (!hasValidNumericScope(value, type)) return false;
+  if (!hasValidDurationScope(value, type)) return false;
+  return hasValidPresentation(value, type);
 };
 
 const validEvidenceRequest = (value: unknown): boolean =>
