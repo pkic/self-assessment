@@ -648,7 +648,7 @@ describe("generateURL — §11 size acceptance (fully-populated full assessment)
     // silently shrinks/grows the fixture is visible in a failing assertion
     // here rather than just a drifting, unexplained url.length below.
     expect(categoryCount).toBe(16);
-    expect(requirementCount).toBe(76);
+    expect(requirementCount).toBe(77);
 
     const url = generateURL({
       progress,
