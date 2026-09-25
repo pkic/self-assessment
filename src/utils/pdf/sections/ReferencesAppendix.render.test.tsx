@@ -25,7 +25,10 @@ describe("ReferencesAppendix section real render", () => {
 
     expect(txt).toContain("References");
     expect(ctx.references.length).toBeGreaterThan(0);
-    expect(txt).toContain(ctx.references[0].title);
+    // Long titles wrap across lines in the PDF, so compare with whitespace
+    // collapsed rather than against the raw extracted text.
+    const collapse = (s: string) => s.replace(/\s+/g, " ");
+    expect(collapse(txt)).toContain(collapse(ctx.references[0].title));
   });
 
   it("returns null when there are no references", () => {
