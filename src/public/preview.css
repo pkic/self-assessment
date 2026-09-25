@@ -1,0 +1,122 @@
+:root {
+  color: #202124;
+  background: #f7f8fa;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.preview-controls {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.8fr) minmax(24rem, 1.2fr);
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.25rem max(1rem, calc((100% - 86rem) / 2));
+  color: #fff;
+  background: #17152a;
+  border-bottom: 4px solid #7b3fe4;
+}
+
+.preview-controls h1,
+.preview-controls p {
+  margin: 0;
+}
+
+.preview-controls h1 {
+  font-size: 1.5rem;
+}
+
+.preview-controls__eyebrow {
+  color: #b998ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-controls form,
+.preview-controls label,
+.preview-controls__external {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.preview-controls form {
+  gap: 0.75rem;
+}
+
+.preview-controls label,
+.preview-controls summary {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.preview-controls input,
+.preview-controls select,
+.preview-controls button {
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #77738a;
+  border-radius: 0.35rem;
+  font: inherit;
+}
+
+.preview-controls details {
+  padding: 0.7rem;
+  background: #25223a;
+  border: 1px solid #45405f;
+  border-radius: 0.4rem;
+}
+
+.preview-controls summary {
+  cursor: pointer;
+}
+
+.preview-controls__external {
+  margin-top: 0.75rem;
+}
+
+.preview-controls__hint {
+  margin-top: 0.7rem !important;
+  color: #d4d0e4;
+  font-size: 0.78rem;
+}
+
+.preview-controls__actions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.preview-controls button {
+  color: #fff;
+  background: #6e35d5;
+  border-color: #9c78e7;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.preview-controls a {
+  color: #d8c5ff;
+}
+
+.preview-controls :focus-visible {
+  outline: 3px solid #d8c5ff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .preview-controls {
+    grid-template-columns: 1fr;
+  }
+}

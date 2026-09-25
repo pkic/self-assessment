@@ -1,4 +1,4 @@
-import { calculateOverallMaturityLevel } from "./maturityCalculations";
+import { calculateOverallMaturityLevel } from "../assessment-engine/methodologies/weightedMaturity";
 import { calculateEffectiveCategoryLevel } from "./effectiveLevel";
 import type {
   ModuleData,

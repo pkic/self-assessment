@@ -18,7 +18,7 @@ import { yamlParser } from "../utils/yamlParser";
 import {
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
-} from "../utils/maturityCalculations";
+} from "../assessment-engine/methodologies/weightedMaturity";
 import {
   buildReportData,
   buildReportCompleteness,

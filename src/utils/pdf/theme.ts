@@ -1,5 +1,5 @@
 import { Font, StyleSheet } from "@react-pdf/renderer";
-import type { OverlayOperation } from "../maturityCalculations";
+import type { OverlayOperation } from "../../assessment-engine/methodologies/weightedMaturity";
 import RobotoRegular from "../../assets/fonts/Roboto-Regular.ttf";
 import RobotoBold from "../../assets/fonts/Roboto-Bold.ttf";
 

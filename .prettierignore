@@ -7,3 +7,7 @@ src/public/pkimm-references.yaml
 src/public/pkimm-model.schema-*.json
 src/public/pkimm-references.schema-*.json
 src/public/extension.schema-*.json
+
+# Vendored from pkic.org — keep byte-identical to the canonical release data.
+src/public/pqcmm-model-*.yaml
+src/public/pqcmm-model.schema-*.json
