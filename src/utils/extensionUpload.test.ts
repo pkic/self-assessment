@@ -2,6 +2,7 @@ import {
   parseExtensionFile,
   computeIncompatibleExtensionIds,
 } from "./extensionUpload";
+import { ImportTooLargeError, MAX_IMPORT_LENGTH } from "./inputLimits";
 import type { ExtensionData } from "../types/types";
 
 const VALID = `schemaVersion: 1.0.0
@@ -40,6 +41,45 @@ test("extension missing schemaVersion → not ok (validateSchema would no-op)", 
 test("schema-invalid extension (missing required overlays) → not ok", () => {
   const noOverlays = VALID.replace(/overlays:\n  modules: \[\]\n/, "");
   expect(parseExtensionFile(noOverlays).ok).toBe(false);
+});
+
+test("rejects a file over the import limit before parsing it", () => {
+  const r = parseExtensionFile("x".repeat(MAX_IMPORT_LENGTH + 1)); // valid YAML; any other error would mean it was parsed
+  expect(r).toEqual(
+    expect.objectContaining({
+      ok: false,
+      error: new ImportTooLargeError().message,
+    }),
+  );
+});
+
+test("rejects a small file whose aliases expand past the import limit", () => {
+  const lines = [`l0: &l0 "${"x".repeat(1_000)}"`];
+  for (let i = 1; i <= 20; i++)
+    lines.push(`l${i}: &l${i} [*l${i - 1}, *l${i - 1}]`);
+  const r = parseExtensionFile(`${VALID}\n${lines.join("\n")}\n`);
+  expect(r).toEqual(
+    expect.objectContaining({
+      ok: false,
+      error: new ImportTooLargeError().message,
+    }),
+  );
+});
+
+test("refuses YAML-only types such as binary data", () => {
+  expect(parseExtensionFile(`${VALID}\nextra: !!binary SGVsbG8=\n`).ok).toBe(
+    false,
+  );
+});
+
+test("accepts a file that uses an anchor", () => {
+  const validWithAnchor = VALID.replace("name: PQC", "name: &n PQC").replace(
+    "description: d",
+    "description: *n",
+  );
+  const r = parseExtensionFile(validWithAnchor);
+  expect(r.ok).toBe(true);
+  expect(r.ok && r.extension.extension.description).toBe("PQC");
 });
 
 test("computeIncompatibleExtensionIds flags by model version", () => {

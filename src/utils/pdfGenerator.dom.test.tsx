@@ -5,6 +5,7 @@ import {
   ExtensionData,
   ModuleData,
   PkiEnvironment,
+  ProgressData,
   RequirementProgress,
 } from "../types/types";
 
@@ -64,7 +65,19 @@ jest.mock("./urlGenerator", () => ({
 // Imported after the mocks above so the mocked modules are in place before
 // pdfGenerator (and its pdf/* dependencies) evaluate their module bodies.
 import { pdf } from "@react-pdf/renderer";
-import { exportExtensionPDF, exportToPDF } from "./pdfGenerator";
+import QRCode from "qrcode";
+import {
+  exportExtensionPDF,
+  exportToPDF,
+  type ExportPdfOptions,
+} from "./pdfGenerator";
+import {
+  exceedsSize,
+  MAX_REPORT_TEXT_LENGTH,
+  MAX_TEXT_LENGTH,
+  REPORT_LINE_BREAK_WEIGHT,
+  ReportTooLargeError,
+} from "./inputLimits";
 import { PdfDocument } from "./pdf/CoreReportDocument";
 import { ReportDocument } from "./pdf/ReportDocument";
 import {
@@ -74,6 +87,29 @@ import {
 } from "./pdf/sections/registry";
 import type { SectionContext } from "./pdf/sections/SectionContext";
 import { buildRequirementDetailRows } from "./reportData";
+
+// `count` progress entries, each holding `text` as notes.
+const notesOf = (count: number, text: string): Record<string, ProgressData> => {
+  const progress: Record<string, ProgressData> = {};
+  for (let i = 0; i < count; i++) {
+    progress[`G.c${i}`] = {
+      level: 1,
+      result: "",
+      description: "",
+      applicability: true,
+      notes: text,
+    };
+  }
+  return progress;
+};
+
+// `count` progress entries, each holding `length` characters of notes.
+const notes = (count: number, length: number): Record<string, ProgressData> =>
+  notesOf(count, "n".repeat(length));
+
+// Notes of short lines: 9,999 characters but 3,333 line breaks, so each counts
+// 9,999 + 3,333 x 50 = 176,649 toward MAX_REPORT_TEXT_LENGTH.
+const SHORT_LINES = "ab\n".repeat(3_333);
 
 describe("exportExtensionPDF", () => {
   const coreModules: ModuleData[] = [
@@ -95,7 +131,21 @@ describe("exportExtensionPDF", () => {
     relevance: { modules: [] },
   };
 
+  const extensionOptions: Parameters<typeof exportExtensionPDF>[0] = {
+    progress: {},
+    extension,
+    coreModules,
+    assessmentName: "My Assessment",
+    assessorName: "Jane Assessor",
+    useCaseDescription: "Use case",
+    version: "2.7.0-widget",
+    dataVersion: "2.0.0",
+    chartImgData: "data:image/png;base64,chart",
+    requirementProgress: {},
+  };
+
   beforeEach(() => {
+    (pdf as jest.Mock).mockClear();
     generateURLMock.mockClear();
     // exportExtensionPDF creates an object URL and triggers an anchor
     // download; jsdom doesn't implement createObjectURL/revokeObjectURL.
@@ -121,6 +171,59 @@ describe("exportExtensionPDF", () => {
     const callArg = generateURLMock.mock.calls[0][0];
     expect(callArg.dataVersion).toBe("2.0.0");
     expect(callArg.stateSchemaVersion).toBe(1);
+  });
+
+  describe("text limits", () => {
+    it("cuts the extension description but never cuts or counts the chart image", async () => {
+      const chartImgData = `data:image/png;base64,${"A".repeat(MAX_REPORT_TEXT_LENGTH + 100_000)}`;
+      await exportExtensionPDF({
+        ...extensionOptions,
+        chartImgData,
+        extension: {
+          ...extension,
+          extension: {
+            ...extension.extension,
+            description: "d".repeat(MAX_TEXT_LENGTH + 1),
+          },
+        },
+      });
+      const props = (pdf as jest.Mock).mock.calls[0][0].props;
+      expect(props.chartImgData).toBe(chartImgData);
+      expect(props.extension.extension.description).toHaveLength(
+        MAX_TEXT_LENGTH + 3,
+      );
+    });
+
+    it("refuses an extension report over MAX_REPORT_TEXT_LENGTH", async () => {
+      await expect(
+        exportExtensionPDF({
+          ...extensionOptions,
+          progress: notes(101, MAX_TEXT_LENGTH),
+        }),
+      ).rejects.toBeInstanceOf(ReportTooLargeError);
+      expect(pdf).not.toHaveBeenCalled();
+    });
+
+    it("refuses an extension report whose line breaks push it over MAX_REPORT_TEXT_LENGTH", async () => {
+      expect(20 * SHORT_LINES.length).toBeLessThan(MAX_REPORT_TEXT_LENGTH); // under the limit as plain characters
+      await expect(
+        exportExtensionPDF({
+          ...extensionOptions,
+          progress: notesOf(20, SHORT_LINES),
+        }),
+      ).rejects.toBeInstanceOf(ReportTooLargeError);
+      expect(pdf).not.toHaveBeenCalled();
+    });
+
+    it("renders an extension report whose line breaks keep it under MAX_REPORT_TEXT_LENGTH", async () => {
+      await expect(
+        exportExtensionPDF({
+          ...extensionOptions,
+          progress: notesOf(5, SHORT_LINES), // 5 x 176,649 = 883,245
+        }),
+      ).resolves.toBeUndefined();
+      expect(pdf).toHaveBeenCalledTimes(1);
+    });
   });
 });
 
@@ -792,6 +895,163 @@ describe("exportToPDF", () => {
       const { container } = render(renderedElement);
       expect(container.textContent).not.toContain("Timeline");
       expect(container.textContent).not.toContain("PKI Environment");
+    });
+  });
+
+  describe("text limits", () => {
+    let selfOptions: ExportPdfOptions;
+    let assessmentOptions: ExportPdfOptions;
+
+    // Built per test so they hold the chartElement the outer beforeEach creates.
+    beforeEach(() => {
+      assessmentOptions = {
+        reportTier: "assessment",
+        isTransient: false,
+        progress: {},
+        chartElement,
+        overallMaturityLevel: 0,
+        moduleMaturityLevels: [],
+        modules,
+        assessmentName: "My Assessment",
+        assessorName: "Jane Assessor",
+        useCaseDescription: "Use case",
+        assessmentUrl: "https://example.test/#progress=stub",
+        version: "2.7.0-widget",
+        dataVersion: "2.0.0",
+        requirementProgress: {},
+        organizationName: "",
+        assessorCompany: "",
+        assessorPosition: "",
+        assessmentType: "",
+        startDate: "",
+        targetDate: "",
+        finishDate: "",
+        pkiEnvironment,
+        reportCompleteness: emptyCompleteness,
+      };
+      selfOptions = { ...assessmentOptions, reportTier: "self" };
+    });
+
+    it("cuts text longer than MAX_TEXT_LENGTH before rendering (self tier)", async () => {
+      await exportToPDF({
+        ...selfOptions,
+        assessmentName: "a".repeat(MAX_TEXT_LENGTH + 1),
+      });
+      expect((pdf as jest.Mock).mock.calls[0][0].props.assessmentName).toBe(
+        `${"a".repeat(MAX_TEXT_LENGTH)}...`,
+      );
+    });
+
+    it("cuts text longer than MAX_TEXT_LENGTH before rendering (full tier)", async () => {
+      await exportToPDF({
+        ...assessmentOptions,
+        useCaseDescription: "u".repeat(MAX_TEXT_LENGTH + 1),
+      });
+      expect(
+        (pdf as jest.Mock).mock.calls[0][0].props.ctx.useCaseDescription,
+      ).toHaveLength(MAX_TEXT_LENGTH + 3);
+    });
+
+    it("keeps the share link exactly as given", async () => {
+      const assessmentUrl = `https://example.test/#progress=${"p".repeat(MAX_TEXT_LENGTH)}`;
+      await exportToPDF({ ...assessmentOptions, assessmentUrl });
+      expect((pdf as jest.Mock).mock.calls[0][0].props.ctx.assessmentUrl).toBe(
+        assessmentUrl,
+      );
+      expect(QRCode.toDataURL).toHaveBeenLastCalledWith(
+        assessmentUrl,
+        expect.anything(),
+      );
+    });
+
+    it("counts the share link toward MAX_REPORT_TEXT_LENGTH", async () => {
+      await expect(
+        exportToPDF({
+          ...assessmentOptions,
+          assessmentUrl: `https://example.test/#progress=${"p".repeat(MAX_REPORT_TEXT_LENGTH)}`,
+        }),
+      ).rejects.toBeInstanceOf(ReportTooLargeError);
+      expect(pdf).not.toHaveBeenCalled();
+    });
+
+    it("refuses a report over MAX_REPORT_TEXT_LENGTH without rendering it", async () => {
+      await expect(
+        exportToPDF({
+          ...assessmentOptions,
+          progress: notes(101, MAX_TEXT_LENGTH),
+        }),
+      ).rejects.toBeInstanceOf(ReportTooLargeError);
+      expect(pdf).not.toHaveBeenCalled();
+    });
+
+    it("renders a report holding about 500,000 characters", async () => {
+      await expect(
+        exportToPDF({
+          ...assessmentOptions,
+          progress: notes(50, MAX_TEXT_LENGTH),
+        }),
+      ).resolves.toBeUndefined();
+      expect(pdf).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses a report whose line breaks push it over MAX_REPORT_TEXT_LENGTH without rendering it", async () => {
+      expect(20 * SHORT_LINES.length).toBeLessThan(MAX_REPORT_TEXT_LENGTH); // under the limit as plain characters
+      await expect(
+        exportToPDF({
+          ...assessmentOptions,
+          progress: notesOf(20, SHORT_LINES),
+        }),
+      ).rejects.toBeInstanceOf(ReportTooLargeError);
+      expect(pdf).not.toHaveBeenCalled();
+    });
+
+    it("refuses a report whose action plans list many short items without rendering it", async () => {
+      const objectives = Array.from({ length: 6_000 }, (_, i) => ({
+        id: `o${i}`,
+        text: "x",
+      }));
+      const options: ExportPdfOptions = {
+        ...assessmentOptions,
+        actionPlans: {
+          categories: { "G.cat-1": { targetLevel: 2, objectives } },
+        },
+      };
+      // Under half the limit as plain characters, and within it if a list
+      // item weighed only as much as a line break; refused because each item
+      // is its own unit in the layout.
+      expect(exceedsSize(options, MAX_REPORT_TEXT_LENGTH / 2)).toBe(false);
+      expect(
+        exceedsSize(
+          options,
+          MAX_REPORT_TEXT_LENGTH,
+          REPORT_LINE_BREAK_WEIGHT,
+          REPORT_LINE_BREAK_WEIGHT,
+        ),
+      ).toBe(false);
+      await expect(exportToPDF(options)).rejects.toBeInstanceOf(
+        ReportTooLargeError,
+      );
+      expect(pdf).not.toHaveBeenCalled();
+    });
+
+    it("renders a report whose line breaks keep it about 12% under MAX_REPORT_TEXT_LENGTH", async () => {
+      await expect(
+        exportToPDF({
+          ...assessmentOptions,
+          progress: notesOf(5, SHORT_LINES), // 5 x 176,649 = 883,245 of notes, about 884,300 in all
+        }),
+      ).resolves.toBeUndefined();
+      expect(pdf).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses a report whose line breaks put it about 6% over MAX_REPORT_TEXT_LENGTH", async () => {
+      await expect(
+        exportToPDF({
+          ...assessmentOptions,
+          progress: notesOf(6, SHORT_LINES), // 6 x 176,649 = 1,059,894 of notes, about 1,061,000 in all
+        }),
+      ).rejects.toBeInstanceOf(ReportTooLargeError);
+      expect(pdf).not.toHaveBeenCalled();
     });
   });
 });

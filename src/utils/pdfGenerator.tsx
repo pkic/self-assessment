@@ -13,6 +13,11 @@ import {
 import "../index.module.scss";
 import { generateURL } from "./urlGenerator";
 import {
+  exceedsReportLimit,
+  limitTextLength,
+  ReportTooLargeError,
+} from "./inputLimits";
+import {
   calculateExtensionWeightedPKIMMScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
@@ -73,7 +78,20 @@ export interface ExportPdfOptions {
   requirementFilter?: RequirementFilterState;
 }
 
-export const exportToPDF = async (opts: ExportPdfOptions) => {
+export const exportToPDF = async (options: ExportPdfOptions) => {
+  // Cut long text and refuse an oversized report before doing any work; each
+  // line break and each list item counts extra (see exceedsReportLimit)
+  // because it starts a new line in the layout. The share link is a link
+  // target and QR input, never laid out as text, so it is kept exact (but
+  // still counted).
+  const opts = {
+    ...limitTextLength(options),
+    assessmentUrl: options.assessmentUrl,
+  };
+  if (exceedsReportLimit(opts)) {
+    throw new ReportTooLargeError();
+  }
+
   const {
     progress,
     chartElement,
@@ -253,19 +271,29 @@ interface ExportExtensionPDFOptions {
   requirementProgress?: Record<string, RequirementProgress>;
 }
 
-export const exportExtensionPDF = async ({
-  progress,
-  extension,
-  coreModules,
-  references = [],
-  assessmentName,
-  assessorName,
-  useCaseDescription,
-  version,
-  dataVersion,
-  chartImgData,
-  requirementProgress,
-}: ExportExtensionPDFOptions) => {
+export const exportExtensionPDF = async (
+  options: ExportExtensionPDFOptions,
+) => {
+  // The chart image is binary data, never laid out as text: neither cut nor
+  // counted. Everything else is cut, and an oversized report is refused.
+  const { chartImgData, ...rest } = options;
+  const data = limitTextLength(rest);
+  if (exceedsReportLimit(data)) {
+    throw new ReportTooLargeError();
+  }
+
+  const {
+    progress,
+    extension,
+    coreModules,
+    references = [],
+    assessmentName,
+    assessorName,
+    useCaseDescription,
+    version,
+    dataVersion,
+    requirementProgress,
+  } = data;
   const extId = extension.extension.id;
 
   const reportData = buildReportData({

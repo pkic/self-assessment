@@ -10,6 +10,7 @@ import {
 } from "../../utils/scopeTree";
 import type { ScopeTemplate } from "../../utils/scopeTree";
 import { buildScopeCoverage } from "../../utils/reportData";
+import { readImportFile } from "../../utils/inputLimits";
 import { Button, Card, IconButton, Select, StatusPill, TextArea } from "../ui";
 import type { StatusPillTone } from "../ui";
 import { useHelp } from "../Help/HelpProvider";
@@ -354,7 +355,10 @@ export const ScopeView: React.FC<ScopeViewProps> = ({
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
-              void file.text().then((text) => onImportTemplateFile(text));
+              void readImportFile(file).then(
+                (text) => onImportTemplateFile(text),
+                (error: Error) => globalThis.alert(error.message),
+              );
               e.target.value = "";
             }}
           />

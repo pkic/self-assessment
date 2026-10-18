@@ -6,6 +6,7 @@ import type {
   ReconciliationRow,
 } from "../../utils/comparison";
 import LevelResult from "../../enums/LevelResult";
+import { readImportFile } from "../../utils/inputLimits";
 import { Button, Card, LevelBadge, Select } from "../ui";
 import "./Comparison.module.scss";
 
@@ -147,7 +148,10 @@ export const ComparisonPanel: React.FC<ComparisonPanelProps> = ({
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    void file.text().then((text) => onSelectFile(text));
+    void readImportFile(file).then(
+      (text) => onSelectFile(text),
+      (error: Error) => globalThis.alert(error.message),
+    );
     e.target.value = "";
   };
 
