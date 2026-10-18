@@ -285,11 +285,10 @@ describe("Custom report composition (full-tier real render)", () => {
   // never leave a blank content page behind. ReportDocument's rendered-length
   // guard (see ReportDocument.tsx) means no cover was picked and no body
   // section actually rendered, so the whole Document has zero pages — this
-  // must not throw. Uses renderPdfBuffer (skips the pdf-parse text-extraction
-  // round trip) rather than renderPdfText: pdf-parse's bundled 2017-era pdfjs
-  // is unreliable specifically on a genuinely zero-page PDF, and there is no
-  // text to extract from one anyway — the assertion that actually matters
-  // (rendering a fully self-gated pick doesn't throw) doesn't need it.
+  // must not throw. Uses renderPdfBuffer rather than renderPdfText: a
+  // zero-page PDF has no text to extract, so the test checks the
+  // preconditions, that rendering does not throw, and that the buffer is
+  // non-empty.
   it("does not throw for a self-gated custom section with no baseline (zero pages)", async () => {
     const ctx = toSectionContext(emptyFixture, {
       reportTitle: "Custom Report",

@@ -1,5 +1,4 @@
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import github from "eslint-plugin-github";
 import typescriptParser from "@typescript-eslint/parser";
 import path from "node:path";
 
@@ -11,7 +10,6 @@ export default [
     files: ["**/*.ts", "**/*.tsx"],
     plugins: {
       "@typescript-eslint": typescriptEslint,
-      github,
     },
     languageOptions: {
       parser: typescriptParser,

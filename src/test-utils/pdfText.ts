@@ -1,78 +1,68 @@
-import ReactPDF, { Document, Page, Text } from "@react-pdf/renderer";
+import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import type { TextItem } from "pdfjs-dist/types/src/display/api";
 import type React from "react";
-import { createElement as h } from "react";
 
-// The first `renderToBuffer` in a fresh Jest process, fired right after
-// theme.ts's module-load `Font.register`, can race fontkit's async TTF parse
-// and emit a font table that pdf-parse's bundled (2017-era) pdfjs rejects
-// ("bad XRef entry"). A single throwaway render warms the font pipeline; every
-// render after that is stable. We do it ONCE, lazily, inside the harness so no
-// individual test file has to remember a beforeAll. (Not a product concern:
-// the browser export path awaits Font.load() and uses a modern PDF renderer.)
-let warmed: Promise<unknown> | null = null;
-const warmUp = (): Promise<unknown> =>
-  (warmed ??= ReactPDF.renderToBuffer(
-    h(
-      Document,
-      null,
-      h(Page, null, h(Text, null, ".")),
-    ) as unknown as React.ReactElement<ReactPDF.DocumentProps>,
-  ));
-
-// Render a @react-pdf document to a real PDF and extract its text layer, so
-// tests can assert headings/labels appear intact (catches glyph drops) and
-// that rendering does not throw (catches pdfkit invalid-input aborts, e.g. a
-// zero-length SVG arc). This is the one place in the test suite that calls
-// the real @react-pdf/renderer pipeline end to end rather than mocking it.
-const renderOnce = async (doc: React.ReactElement): Promise<string> => {
-  const buf = await ReactPDF.renderToBuffer(
-    doc as unknown as React.ReactElement<ReactPDF.DocumentProps>,
+// Render a @react-pdf document to a real PDF and read back each page's text
+// items with pdf.js (pdfjs-dist, legacy build for Node), so tests can assert
+// headings/labels appear intact (catches glyph drops) and that rendering does
+// not throw (catches pdfkit invalid-input aborts, e.g. a zero-length SVG arc).
+// This is the shared helper for real-render tests, which run the actual
+// @react-pdf/renderer pipeline end to end rather than mocking it.
+const renderPageItems = async (
+  doc: React.ReactElement,
+): Promise<TextItem[][]> => {
+  const buf = await renderToBuffer(
+    doc as unknown as React.ReactElement<DocumentProps>,
   );
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require("pdf-parse") as (
-    b: Buffer,
-  ) => Promise<{ text: string }>;
-  const parsed = await pdfParse(buf);
-  return parsed.text;
+  // pdf.js rejects a Node Buffer, so it gets a plain Uint8Array copy.
+  const loadingTask = getDocument({ data: new Uint8Array(buf), verbosity: 0 });
+  try {
+    const pdf = await loadingTask.promise;
+    const pages: TextItem[][] = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n);
+      const content = await page.getTextContent();
+      // Default options yield text items only (marked content is opt-in).
+      pages.push(content.items as TextItem[]);
+      page.cleanup();
+    }
+    return pages;
+  } finally {
+    await loadingTask.destroy();
+  }
 };
 
-// Total attempts after the warm-up render. Under heavy parallelism (many
-// jest workers competing for the same CPU cores) the font-parse race can
-// still lose on a second attempt often enough to flake a real-render suite,
-// so this retries a couple more times before giving up; a genuine render bug
-// (not a race) fails identically on every attempt.
-const MAX_ATTEMPTS = 3;
+// Runs on the same baseline are joined and a baseline change starts a new
+// line. This is the line-joining rule the helper has always used, `!lastY`
+// included (it also treats a 0 baseline as unset). pdf.js puts a space between
+// runs on one line that have a gap between them.
+const pageText = (items: TextItem[]): string => {
+  let lastY: number | undefined;
+  let text = "";
+  for (const item of items) {
+    const y = item.transform[5];
+    text += !lastY || lastY === y ? item.str : `\n${item.str}`;
+    lastY = y;
+  }
+  return text;
+};
 
+// The document's text: each page's text, prefixed with a blank line.
 export const renderPdfText = async (
   doc: React.ReactElement,
 ): Promise<string> => {
-  await warmUp();
-  let lastError: unknown;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    try {
-      return await renderOnce(doc);
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError;
+  const pages = await renderPageItems(doc);
+  return pages.map((items) => `\n\n${pageText(items)}`).join("");
 };
 
-// Renders straight to a Buffer with no pdf-parse round trip. pdf-parse's
-// bundled 2017-era pdfjs is unreliable specifically on a genuinely zero-page
-// PDF (an intermittent "bad XRef entry" on a doc with no content at all,
-// reproducible even in total isolation — a quirk of that vendored parser, not
-// of @react-pdf/renderer or this widget's report code). Use this instead of
-// renderPdfText when a test's Document is expected to render with no pages/
-// text to extract, so the assertion doesn't depend on parsing content that
-// isn't there anyway.
+// Renders straight to a Buffer with no text extraction. Use this instead of
+// renderPdfText when a test's Document is expected to render with no pages,
+// so the assertion is only that rendering does not throw.
 export const renderPdfBuffer = async (
   doc: React.ReactElement,
 ): Promise<Buffer> => {
-  await warmUp();
-  return ReactPDF.renderToBuffer(
-    doc as unknown as React.ReactElement<ReactPDF.DocumentProps>,
-  );
+  return renderToBuffer(doc as unknown as React.ReactElement<DocumentProps>);
 };
 
 // One positioned text run from a rendered page. Coordinates are PDF user
@@ -87,47 +77,17 @@ export interface PdfTextItem {
 // Render a document and return every page's positioned text runs, so a test
 // can assert real LAYOUT quality — e.g. that no page is blank/sparse and no
 // section heading is stranded near a page bottom with nothing under it —
-// rather than only the concatenated text. Uses pdf-parse's pagerender hook
-// (its bundled pdfjs exposes getTextContent per page) with the same warm-up
-// + retry the plain-text helper uses.
+// rather than only the concatenated text. Reads the same per-page items the
+// plain-text helper assembles.
 export const renderPdfPageItems = async (
   doc: React.ReactElement,
 ): Promise<PdfTextItem[][]> => {
-  await warmUp();
-  let lastError: unknown;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    try {
-      const buf = await ReactPDF.renderToBuffer(
-        doc as unknown as React.ReactElement<ReactPDF.DocumentProps>,
-      );
-      const pages: PdfTextItem[][] = [];
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require("pdf-parse") as (
-        b: Buffer,
-        o: { pagerender: (pageData: unknown) => Promise<string> },
-      ) => Promise<{ text: string }>;
-      await pdfParse(buf, {
-        pagerender: async (pageData: unknown) => {
-          const page = pageData as {
-            getTextContent: () => Promise<{
-              items: { str: string; transform: number[] }[];
-            }>;
-          };
-          const tc = await page.getTextContent();
-          pages.push(
-            tc.items.map((it) => ({
-              str: it.str,
-              x: it.transform[4],
-              y: it.transform[5],
-            })),
-          );
-          return tc.items.map((it) => it.str).join(" ");
-        },
-      });
-      return pages;
-    } catch (err) {
-      lastError = err;
-    }
-  }
-  throw lastError;
+  const pages = await renderPageItems(doc);
+  return pages.map((items) =>
+    items.map((it) => ({
+      str: it.str,
+      x: it.transform[4],
+      y: it.transform[5],
+    })),
+  );
 };

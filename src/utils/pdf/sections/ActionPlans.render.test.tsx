@@ -38,11 +38,6 @@ const oneRow: ActionPlanReportRow = {
 const FORBIDDEN_GLYPHS = /[→▲▼✓−]/;
 
 describe("ActionPlans section real render", () => {
-  // A single renderPdfText call covers every assertion below: pdf-parse's
-  // underlying pdfjs has a documented flakiness (see LevelPill.render.test.tsx)
-  // with repeated real renders of near-identical rounded/padded Views (this
-  // card's LevelPills) in one process, so this section is rendered once and
-  // every assertion runs against that one extraction.
   it("renders a structured plan card with heading, progression, objectives, and tasks", async () => {
     const base = toSectionContext(fullFixture, {
       reportTitle: "Detailed Report",
