@@ -19,15 +19,16 @@ const renderPageItems = async (
   const loadingTask = getDocument({ data: new Uint8Array(buf), verbosity: 0 });
   try {
     const pdf = await loadingTask.promise;
-    const pages: TextItem[][] = [];
-    for (let n = 1; n <= pdf.numPages; n++) {
-      const page = await pdf.getPage(n);
-      const content = await page.getTextContent();
-      // Default options yield text items only (marked content is opt-in).
-      pages.push(content.items as TextItem[]);
-      page.cleanup();
-    }
-    return pages;
+    const pageNumbers = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
+    return await Promise.all(
+      pageNumbers.map(async (n) => {
+        const page = await pdf.getPage(n);
+        const content = await page.getTextContent();
+        page.cleanup();
+        // Default options yield text items only (marked content is opt-in).
+        return content.items as TextItem[];
+      }),
+    );
   } finally {
     await loadingTask.destroy();
   }
@@ -56,14 +57,10 @@ export const renderPdfText = async (
   return pages.map((items) => `\n\n${pageText(items)}`).join("");
 };
 
-// Renders straight to a Buffer with no text extraction. Use this instead of
-// renderPdfText when a test's Document is expected to render with no pages,
-// so the assertion is only that rendering does not throw.
-export const renderPdfBuffer = async (
-  doc: React.ReactElement,
-): Promise<Buffer> => {
-  return renderToBuffer(doc as unknown as React.ReactElement<DocumentProps>);
-};
+// Renders straight to a Buffer with no text extraction, for tests whose
+// Document is expected to render with no pages.
+export const renderPdfBuffer = (doc: React.ReactElement): Promise<Buffer> =>
+  renderToBuffer(doc as unknown as React.ReactElement<DocumentProps>);
 
 // One positioned text run from a rendered page. Coordinates are PDF user
 // space: origin at the page's BOTTOM-left, so y decreases toward the page
