@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
+import { deflateSync, inflateSync, strToU8 } from "fflate";
 import {
   generateURL,
   decodeProgressHash,
@@ -11,6 +12,10 @@ import {
   decodeFullParam,
 } from "./urlGenerator";
 import { yamlParser } from "./yamlParser";
+import {
+  MAX_FULL_PARAM_DECODED_LENGTH,
+  MAX_FULL_PARAM_LENGTH,
+} from "./inputLimits";
 import type {
   AssessmentData,
   ModuleData,
@@ -219,21 +224,104 @@ describe("encodeFullParam / decodeFullParam", () => {
     expect(decodeFullParam("")).toBeNull();
   });
 
+  // Packs any payload the way encodeFullParam does: JSON, raw DEFLATE, base64.
+  const packFull = (payload: unknown): string => {
+    let binary = "";
+    for (const b of deflateSync(strToU8(JSON.stringify(payload)))) {
+      binary += String.fromCharCode(b);
+    }
+    return btoa(binary);
+  };
+
+  // The decoded bytes of a `full` parameter.
+  const unpackFull = (encoded: string): Uint8Array =>
+    inflateSync(Uint8Array.from(atob(encoded), (c) => c.charCodeAt(0)));
+
   it("returns null for a well-formed payload with hashVersion !== 2", () => {
     const legacyPayload = {
       hashVersion: 1,
       dataVersion: "2.0.0",
       requirementProgress: { "G.c.r1": { level: 4, applicability: true } },
     };
-    // Build the same way encodeFullParam does, but with hashVersion 1.
-    const { deflateSync, strToU8 } = jest.requireActual("fflate");
-    const bytes: Uint8Array = deflateSync(
-      strToU8(JSON.stringify(legacyPayload)),
-    );
-    let binary = "";
-    for (const b of bytes) binary += String.fromCharCode(b);
-    const encoded = btoa(binary);
+    expect(decodeFullParam(packFull(legacyPayload))).toBeNull();
+  });
+
+  it("ignores a full parameter that decodes to more than MAX_FULL_PARAM_DECODED_LENGTH", () => {
+    const payload = (padding: number) => ({
+      hashVersion: 2,
+      dataVersion: "2.0.0",
+      requirementProgress: { "G.c.r1": { level: 4, applicability: true } },
+      padding: "x".repeat(padding),
+    });
+    const room =
+      MAX_FULL_PARAM_DECODED_LENGTH - JSON.stringify(payload(0)).length;
+    const atLimit = packFull(payload(room));
+    const overLimit = packFull(payload(room + 1));
+    expect(unpackFull(atLimit)).toHaveLength(MAX_FULL_PARAM_DECODED_LENGTH);
+    expect(overLimit.length).toBeLessThan(MAX_FULL_PARAM_LENGTH);
+    expect(decodeFullParam(atLimit)?.requirementProgress).toEqual({
+      "G.c.r1": { level: 4, applicability: true, notes: "", evidence: "" },
+    });
+    expect(decodeFullParam(overLimit)).toBeNull();
+  });
+
+  it.each([
+    ["a string", "x".repeat(1_000)],
+    ["an array", new Array(1_000).fill({ level: 4, applicability: true })],
+    ["null", null],
+    ["a number", 4],
+    ["missing", undefined],
+  ])(
+    "ignores a full parameter whose requirementProgress is %s",
+    (_, requirementProgress) => {
+      const encoded = packFull({
+        hashVersion: 2,
+        dataVersion: "2.0.0",
+        requirementProgress,
+      });
+      expect(decodeFullParam(encoded)).toBeNull();
+    },
+  );
+
+  it("ignores a full parameter longer than MAX_FULL_PARAM_LENGTH", () => {
+    const requirementProgress: Record<string, RequirementProgress> = {};
+    let seed = 1;
+    for (let i = 0; i < 4_000; i++) {
+      seed = (seed * 1_103_515_245 + 12_345) % 2 ** 31; // varied keys, so the payload does not compress away
+      requirementProgress[`G.c.${seed.toString(36)}`] = rp(3, true);
+    }
+    const encoded = encodeFullParam("2.0.0", requirementProgress);
+    expect(encoded.length).toBeGreaterThan(MAX_FULL_PARAM_LENGTH);
     expect(decodeFullParam(encoded)).toBeNull();
+  });
+
+  it("decodes a fully rated assessment of the bundled 2.0.0 model", () => {
+    // every requirement of src/public/pkimm-model-2.0.0.yaml rated (77 today)
+    const modelPath = path.join(
+      __dirname,
+      "..",
+      "public",
+      "pkimm-model-2.0.0.yaml",
+    );
+    const model = yamlParser(
+      fs.readFileSync(modelPath, "utf8"),
+    ) as AssessmentData;
+    const allRequirementsRated: Record<string, RequirementProgress> = {};
+    for (const m of model.modules) {
+      for (const c of m.categories) {
+        for (const r of c.requirements) {
+          allRequirementsRated[`${m.id}.${c.id}.${r.id}`] = rp(5, true);
+        }
+      }
+    }
+    const encoded = encodeFullParam("2.0.0", allRequirementsRated);
+    expect(encoded.length).toBeLessThan(MAX_FULL_PARAM_LENGTH);
+    expect(unpackFull(encoded).length).toBeLessThan(
+      MAX_FULL_PARAM_DECODED_LENGTH,
+    );
+    expect(
+      Object.keys(decodeFullParam(encoded)?.requirementProgress ?? {}),
+    ).toHaveLength(Object.keys(allRequirementsRated).length);
   });
 });
 

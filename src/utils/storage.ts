@@ -1,4 +1,3 @@
-import yaml from "js-yaml";
 import type {
   ActionPlans,
   Assessment,
@@ -17,6 +16,7 @@ import {
   hasV2Content,
 } from "./stateSchema";
 import { normalizeAssessmentActionPlans } from "./actionPlans";
+import { loadImportYaml } from "./inputLimits";
 export { WIDGET_MAX_STATE_SCHEMA_VERSION } from "./stateSchema";
 
 export type ParseResult =
@@ -160,7 +160,7 @@ const isJsonEnvelope = (parsed: unknown): boolean =>
     "formatVersion" in (parsed as object));
 
 export const importYAMLFile = (text: string): Assessment => {
-  const parsed = yaml.load(text);
+  const parsed = loadImportYaml(text);
   const now = new Date().toISOString();
   if (isJsonEnvelope(parsed)) {
     throw new Error(
@@ -218,10 +218,10 @@ export const importYAMLFile = (text: string): Assessment => {
  *  chooser. A legacy 1.0.0 payload always mints a fresh id via `newId()`
  *  (no stable id to collide on).
  *
- *  Never throws: `importYAMLFile` can throw (malformed YAML, an
- *  unsupported `.pkimm.json` envelope, or a forward-incompatible
- *  `stateSchemaVersion`) — all are caught here and surfaced via
- *  `ParseResult` so callers only ever branch on it. */
+ *  Never throws: `importYAMLFile` can throw (malformed YAML, a file over
+ *  the import size limit, an unsupported `.pkimm.json` envelope, or a
+ *  forward-incompatible `stateSchemaVersion`) — all are caught here and
+ *  surfaced via `ParseResult` so callers only ever branch on it. */
 export const importAssessmentFile = (text: string): ParseResult => {
   try {
     const assessment = importYAMLFile(text);

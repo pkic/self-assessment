@@ -91,7 +91,7 @@ export const ActionPlans: SectionComponent = (ctx) => {
 
         // A responsibility short enough for the 50/50 row stays beside the
         // target date; a long one becomes its own label + paragraph units so
-        // the two-column row never has unbounded height.
+        // the two-column row never holds arbitrarily long text.
         const responsibilityLong = isLongText(row.responsibility);
         if ((row.responsibility && !responsibilityLong) || row.targetDate) {
           units.push(

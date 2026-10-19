@@ -4,6 +4,7 @@ import {
   parseScopeTemplateFile,
   analyzeTemplateAgainstModel,
 } from "./scopeTemplateFile";
+import { ImportTooLargeError, MAX_IMPORT_LENGTH } from "./inputLimits";
 import type { ScopeTemplate } from "./scopeTree";
 import type { ModuleData } from "../types/types";
 
@@ -77,6 +78,8 @@ describe("buildScopeTemplateFile", () => {
 });
 
 describe("parseScopeTemplateFile", () => {
+  const valid = yaml.dump(buildScopeTemplateFile(template, "2.0.0"));
+
   it("round-trips build → dump → parse", () => {
     const built = buildScopeTemplateFile(template, "2.0.0");
     const text = yaml.dump(built);
@@ -123,6 +126,49 @@ describe("parseScopeTemplateFile", () => {
     expect(
       parseScopeTemplateFile(yaml.dump({ ...base, formatVersion: 2 })).ok,
     ).toBe(false); // future
+  });
+
+  it("rejects a file over the import limit before parsing it", () => {
+    const r = parseScopeTemplateFile("x".repeat(MAX_IMPORT_LENGTH + 1)); // valid YAML; any other error would mean it was parsed
+    expect(r).toEqual(
+      expect.objectContaining({
+        ok: false,
+        error: new ImportTooLargeError().message,
+      }),
+    );
+  });
+
+  it("rejects a small file whose aliases expand past the import limit", () => {
+    const lines = [`l0: &l0 "${"x".repeat(1_000)}"`];
+    for (let i = 1; i <= 20; i++)
+      lines.push(`l${i}: &l${i} [*l${i - 1}, *l${i - 1}]`);
+    const r = parseScopeTemplateFile(`${valid}\n${lines.join("\n")}\n`);
+    expect(r).toEqual(
+      expect.objectContaining({
+        ok: false,
+        error: new ImportTooLargeError().message,
+      }),
+    );
+  });
+
+  it("refuses YAML-only types such as binary data", () => {
+    expect(
+      parseScopeTemplateFile(`${valid}\nextra: !!binary SGVsbG8=\n`).ok,
+    ).toBe(false);
+  });
+
+  it("accepts a file that uses an anchor", () => {
+    const validWithAnchor = `
+kind: pkimm-scope-template
+formatVersion: 1
+dataVersion: "2.0.0"
+name: Retail scope
+outOfScopeCategoryKeys: &keys [G.a]
+outOfScopeRequirementKeys: *keys
+`;
+    const r = parseScopeTemplateFile(validWithAnchor);
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.file.outOfScopeRequirementKeys).toEqual(["G.a"]);
   });
 });
 

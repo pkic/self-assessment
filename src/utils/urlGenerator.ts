@@ -12,6 +12,10 @@ import type {
 } from "../types/types";
 import { assertSupportedStateSchemaVersion, hasV2Content } from "./stateSchema";
 import { calculateEffectiveCategoryLevel } from "./effectiveLevel";
+import {
+  MAX_FULL_PARAM_DECODED_LENGTH,
+  MAX_FULL_PARAM_LENGTH,
+} from "./inputLimits";
 
 const utf8ToBase64 = (str: string): string => {
   const bytes = new TextEncoder().encode(str);
@@ -83,21 +87,30 @@ export const encodeFullParam = (
   return bytesToBase64(deflated);
 };
 
+// A JSON object: not null, an array or a primitive.
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 /** Decodes the `full` URL param produced by encodeFullParam. Never throws —
  *  returns null on any malformed input or an unexpected hashVersion, so a
  *  corrupted/foreign `full` param degrades to the plain `progress` param
- *  instead of breaking the share link entirely. */
+ *  instead of breaking the share link entirely. A param longer than
+ *  MAX_FULL_PARAM_LENGTH, one that inflates to more than
+ *  MAX_FULL_PARAM_DECODED_LENGTH bytes, or one whose requirementProgress is
+ *  not a JSON object is ignored like any other malformed one. */
 export const decodeFullParam = (
   encoded: string,
 ): { requirementProgress: Record<string, RequirementProgress> } | null => {
+  if (encoded.length > MAX_FULL_PARAM_LENGTH) return null;
   try {
-    const json = strFromU8(inflateSync(base64ToBytes(encoded)));
-    const parsed = JSON.parse(json) as Partial<FullParamPayload>;
+    // Checked as bytes, before they become a string.
+    const inflated = inflateSync(base64ToBytes(encoded));
+    if (inflated.length > MAX_FULL_PARAM_DECODED_LENGTH) return null;
+    const parsed = JSON.parse(strFromU8(inflated)) as Partial<FullParamPayload>;
     if (parsed.hashVersion !== 2) return null;
+    if (!isJsonObject(parsed.requirementProgress)) return null;
     const requirementProgress: Record<string, RequirementProgress> = {};
-    for (const [key, entry] of Object.entries(
-      parsed.requirementProgress ?? {},
-    )) {
+    for (const [key, entry] of Object.entries(parsed.requirementProgress)) {
       requirementProgress[key] = {
         level: entry.level,
         applicability: entry.applicability,
