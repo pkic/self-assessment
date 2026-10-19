@@ -57,13 +57,8 @@ describe("LevelPill", () => {
   // (b) real-render assertion — renders inside an actual <Document><Page>
   // through @react-pdf/renderer and extracts the resulting PDF's text layer,
   // pinning the exact labels and proving no forbidden glyph ever reaches a
-  // PDF text run. All four representative pills are rendered in a single
-  // Document/Page and a single renderPdfText call: pdf-parse's underlying
-  // pdfjs has a documented-elsewhere-in-this-repo flakiness with repeated
-  // real renders in one process, and a rounded+padded View (this component's
-  // exact shape) can trigger it deterministically on a second separate parse
-  // even though the underlying PDF bytes differ correctly — rendering once
-  // and asserting every label against that one extraction sidesteps it.
+  // PDF text run. All four representative pills share one Document/Page and
+  // one renderPdfText call; every label is asserted against that extraction.
   describe("real-render labels", () => {
     let txt: string;
 

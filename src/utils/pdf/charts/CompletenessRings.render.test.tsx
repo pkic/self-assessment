@@ -1,5 +1,5 @@
 import React from "react";
-import ReactPDF, { Document, Page } from "@react-pdf/renderer";
+import { Document, Page, renderToBuffer } from "@react-pdf/renderer";
 import { CompletenessRings } from "./CompletenessRings";
 import { buildReportCompleteness } from "../../reportData";
 import { fullFixture } from "../../../test-utils/reportFixtures";
@@ -15,7 +15,7 @@ const renderDoc = (completeness: {
   total: number;
   perModule: { module: string; assessed: number; total: number }[];
 }) =>
-  ReactPDF.renderToBuffer(
+  renderToBuffer(
     <Document>
       <Page>
         <CompletenessRings completeness={completeness} />

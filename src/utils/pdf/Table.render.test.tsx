@@ -10,8 +10,6 @@ import {
 } from "./Table";
 import { renderPdfText } from "../../test-utils/pdfText";
 
-// renderPdfText warms the font pipeline once internally, so no per-file
-// warm-up is needed here.
 const wrap = (children: React.ReactNode) =>
   renderPdfText(
     <Document>
