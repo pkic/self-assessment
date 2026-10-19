@@ -6,6 +6,8 @@ const transform = {
   "^.+\\.ttf$": "<rootDir>/src/test-utils/ttfTransform.js",
 };
 module.exports = {
+  // Real-render PDF tests can take several seconds each on CI runners.
+  testTimeout: 30000,
   projects: [
     {
       displayName: "node",
