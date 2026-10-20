@@ -129,3 +129,9 @@ CI workflows do this on every build. To try an extension, open the running widge
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Refresh canonical PQCMM development data
+
+`pnpm run sync:pqcmm` reads the stable model, profile, and schema files from a canonical PQCMM checkout. Set `PQCMM_ROOT` to that checkout to select the draft or maintained release branch you want to test. Output asset names come from the documents' own independent versions, so switching between minor and major drafts does not require editing the sync script.
+
+The command validates both documents against their canonical schemas and checks the profile's model reference before writing development assets. It preserves their exact source text. Syncing a working draft is not release approval or publication. Run `pnpm run test:sync:pqcmm` to check this synchronization behavior.

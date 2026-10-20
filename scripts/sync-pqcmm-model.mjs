@@ -1,32 +1,85 @@
-import { copyFileSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { load } from "js-yaml";
+import Ajv2020 from "ajv/dist/2020.js";
+import addFormats from "ajv-formats";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const pqcmmRoot = resolve(
-  process.env.PQCMM_ROOT ?? join(repositoryRoot, "..", "pqcmm"),
-);
-const targetDirectory = join(repositoryRoot, "src", "public");
-const files = [
-  ["model/pqcmm-model-1.1.0.yaml", "pqcmm-model-1.1.0.yaml"],
-  ["schemas/pqcmm-model.schema-1.1.0.json", "pqcmm-model.schema-1.1.0.json"],
-  [
-    "profiles/pqcmm-self-assessment-profile-1.1.0.yaml",
-    "pqcmm-self-assessment-profile-1.1.0.yaml",
-  ],
-  [
-    "schemas/assessment-profile.schema-1.1.0.json",
-    "assessment-profile.schema-1.1.0.json",
-  ],
-];
-
-for (const [sourcePath, targetName] of files) {
-  const source = join(pqcmmRoot, sourcePath);
-  if (!existsSync(source)) {
-    throw new Error(
-      `PQCMM source not found: ${source}. Set PQCMM_ROOT to the canonical PQCMM checkout.`,
-    );
+function fileVersion(value, label) {
+  if (typeof value !== "string" || !/^\d+\.\d+\.\d+$/.test(value)) {
+    throw new Error(`Invalid ${label} version for an asset filename`);
   }
-  copyFileSync(source, join(targetDirectory, targetName));
-  console.log(`Synced ${targetName}`);
+  return value;
+}
+
+/** Read one canonical checkout; validate the complete set before writing any development assets. */
+export function syncPqcmmModel(pqcmmRoot, targetDirectory) {
+  const read = (path) => {
+    const source = join(pqcmmRoot, path);
+    try {
+      return readFileSync(source, "utf8");
+    } catch (error) {
+      throw new Error(
+        `Cannot read PQCMM source ${source}. Set PQCMM_ROOT to a canonical checkout with the stable working files.`,
+        { cause: error },
+      );
+    }
+  };
+  const modelSource = read("model/pqcmm-model.yaml");
+  const profileSource = read("profiles/pqcmm-self-assessment-profile.yaml");
+  const modelSchemaSource = read("schemas/pqcmm-model.schema.json");
+  const profileSchemaSource = read("schemas/assessment-profile.schema.json");
+  const model = load(modelSource);
+  const profile = load(profileSource);
+  const ajv = new Ajv2020({ allErrors: true, strict: false });
+  addFormats(ajv);
+  for (const [schema, value, label] of [
+    [JSON.parse(modelSchemaSource), model, "model"],
+    [JSON.parse(profileSchemaSource), profile, "profile"],
+  ]) {
+    const validate = ajv.compile(schema);
+    if (!validate(value)) {
+      throw new Error(
+        `PQCMM ${label} is invalid: ${ajv.errorsText(validate.errors)}`,
+      );
+    }
+  }
+  if (
+    model.model.id !== "pqcmm" ||
+    profile.profile.model.id !== model.model.id ||
+    profile.profile.model.version !== model.model.version
+  ) {
+    throw new Error("PQCMM profile reference does not match the model");
+  }
+  const modelVersion = fileVersion(model.model.version, "model");
+  const profileVersion = fileVersion(profile.profile.version, "profile");
+  const modelSchemaVersion = fileVersion(model.schemaVersion, "model schema");
+  const profileSchemaVersion = fileVersion(
+    profile.schemaVersion,
+    "profile schema",
+  );
+  const files = [
+    [`pqcmm-model-${modelVersion}.yaml`, modelSource],
+    [`pqcmm-self-assessment-profile-${profileVersion}.yaml`, profileSource],
+    [`pqcmm-model.schema-${modelSchemaVersion}.json`, modelSchemaSource],
+    [
+      `assessment-profile.schema-${profileSchemaVersion}.json`,
+      profileSchemaSource,
+    ],
+  ];
+  mkdirSync(targetDirectory, { recursive: true });
+  for (const [name, source] of files)
+    writeFileSync(join(targetDirectory, name), source);
+  return files.map(([name]) => name);
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  const source = resolve(process.env.PQCMM_ROOT ?? join(root, "..", "pqcmm"));
+  for (const name of syncPqcmmModel(source, join(root, "src", "public"))) {
+    console.log(`Synced ${name}`);
+  }
 }
