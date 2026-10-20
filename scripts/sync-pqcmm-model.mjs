@@ -14,7 +14,17 @@ function fileVersion(value, label) {
 
 /** Read one canonical checkout; validate the complete set before writing any development assets. */
 export function syncPqcmmModel(pqcmmRoot, targetDirectory) {
-  const read = (path) => readFileSync(join(pqcmmRoot, path), "utf8");
+  const read = (path) => {
+    const source = join(pqcmmRoot, path);
+    try {
+      return readFileSync(source, "utf8");
+    } catch (error) {
+      throw new Error(
+        `Cannot read PQCMM source ${source}. Set PQCMM_ROOT to a canonical checkout with the stable working files.`,
+        { cause: error },
+      );
+    }
+  };
   const modelSource = read("model/pqcmm-model.yaml");
   const profileSource = read("profiles/pqcmm-self-assessment-profile.yaml");
   const modelSchemaSource = read("schemas/pqcmm-model.schema.json");
@@ -29,7 +39,9 @@ export function syncPqcmmModel(pqcmmRoot, targetDirectory) {
   ]) {
     const validate = ajv.compile(schema);
     if (!validate(value)) {
-      throw new Error(`PQCMM ${label} is invalid: ${ajv.errorsText(validate.errors)}`);
+      throw new Error(
+        `PQCMM ${label} is invalid: ${ajv.errorsText(validate.errors)}`,
+      );
     }
   }
   if (
@@ -42,19 +54,29 @@ export function syncPqcmmModel(pqcmmRoot, targetDirectory) {
   const modelVersion = fileVersion(model.model.version, "model");
   const profileVersion = fileVersion(profile.profile.version, "profile");
   const modelSchemaVersion = fileVersion(model.schemaVersion, "model schema");
-  const profileSchemaVersion = fileVersion(profile.schemaVersion, "profile schema");
+  const profileSchemaVersion = fileVersion(
+    profile.schemaVersion,
+    "profile schema",
+  );
   const files = [
     [`pqcmm-model-${modelVersion}.yaml`, modelSource],
     [`pqcmm-self-assessment-profile-${profileVersion}.yaml`, profileSource],
     [`pqcmm-model.schema-${modelSchemaVersion}.json`, modelSchemaSource],
-    [`assessment-profile.schema-${profileSchemaVersion}.json`, profileSchemaSource],
+    [
+      `assessment-profile.schema-${profileSchemaVersion}.json`,
+      profileSchemaSource,
+    ],
   ];
   mkdirSync(targetDirectory, { recursive: true });
-  for (const [name, source] of files) writeFileSync(join(targetDirectory, name), source);
+  for (const [name, source] of files)
+    writeFileSync(join(targetDirectory, name), source);
   return files.map(([name]) => name);
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const source = resolve(process.env.PQCMM_ROOT ?? join(root, "..", "pqcmm"));
   for (const name of syncPqcmmModel(source, join(root, "src", "public"))) {

@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { syncPqcmmModel } from "./sync-pqcmm-model.mjs";
@@ -12,7 +19,10 @@ function fixture(modelVersion, profileVersion, schemaVersion = "1.1.0") {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       required: ["schemaVersion", key],
-      properties: { schemaVersion: { const: schemaVersion }, [key]: { type: "object" } },
+      properties: {
+        schemaVersion: { const: schemaVersion },
+        [key]: { type: "object" },
+      },
     });
   const files = {
     "model/pqcmm-model.yaml": `schemaVersion: ${schemaVersion}\nmodel:\n  id: pqcmm\n  version: ${modelVersion}\n`,
@@ -41,7 +51,10 @@ for (const [modelVersion, profileVersion] of [
         "pqcmm-model.schema-1.1.0.json",
         "assessment-profile.schema-1.1.0.json",
       ]);
-      assert.equal(readFileSync(join(target, names[0]), "utf8"), files["model/pqcmm-model.yaml"]);
+      assert.equal(
+        readFileSync(join(target, names[0]), "utf8"),
+        files["model/pqcmm-model.yaml"],
+      );
       assert.equal(
         readFileSync(join(target, names[1]), "utf8"),
         files["profiles/pqcmm-self-assessment-profile.yaml"],
