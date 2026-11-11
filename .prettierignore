@@ -8,6 +8,8 @@ src/public/pkimm-model.schema-*.json
 src/public/pkimm-references.schema-*.json
 src/public/extension.schema-*.json
 
-# Vendored from pkic.org — keep byte-identical to the canonical release data.
+# Synced from pkic/pqcmm — keep byte-identical to the canonical source.
 src/public/pqcmm-model-*.yaml
 src/public/pqcmm-model.schema-*.json
+src/public/pqcmm-self-assessment-profile-*.yaml
+src/public/assessment-profile.schema-*.json

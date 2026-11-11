@@ -33,10 +33,10 @@ interface InjectedRowProps {
 
 // The length above which user-entered free text must NOT render inside a
 // narrow table column. A multi-column row is always atomic (see TableRow) —
-// so a cell holding unbounded text would make the whole row unbounded, and an
-// atomic row taller than a page overflows instead of moving. Callers compare
-// their user-text fields against this and, when long, emit a compact atomic
-// meta row followed by a TableTextRow carrying the full text.
+// so a cell holding arbitrarily long text would make the whole row as tall,
+// and an atomic row taller than a page overflows instead of moving. Callers
+// compare their user-text fields against this and, when long, emit a compact
+// atomic meta row followed by a TableTextRow carrying the full text.
 export const LONG_TEXT_CHARS = 280;
 
 export const isLongText = (...parts: (string | undefined)[]): boolean =>
@@ -46,8 +46,8 @@ export const isLongText = (...parts: (string | undefined)[]): boolean =>
 // splits a flex-row across a page boundary, the continuation fragment renders
 // its left cells empty and can slice pill Views mid-row — the "wrong values
 // and columns" artifact. A row that doesn't fit the remaining space moves to
-// the next page whole. Unbounded user text therefore never belongs in a cell
-// — pair the row with a TableTextRow instead (see LONG_TEXT_CHARS above).
+// the next page whole. Arbitrarily long user text therefore never belongs in a
+// cell — pair the row with a TableTextRow instead (see LONG_TEXT_CHARS above).
 export const TableRow: React.FC<
   {
     children: React.ReactNode;
@@ -68,9 +68,9 @@ export const TableRow: React.FC<
 );
 
 // The one breakable table row: a single full-width text cell, used for
-// unbounded user text (long notes/evidence/reasons/values) directly under its
-// atomic meta row. Because it has exactly one column, a page-boundary split
-// cannot misalign anything — the text simply flows on, with the row's
+// arbitrarily long user text (long notes/evidence/reasons/values) directly
+// under its atomic meta row. Because it has exactly one column, a page-boundary
+// split cannot misalign anything — the text simply flows on, with the row's
 // left/right borders continuing on the next page. `label` renders as a bold
 // inline lead ("Notes: …"). Emit it as an array sibling of its meta row
 // (never inside a Fragment — Table inspects its direct children).
@@ -161,9 +161,9 @@ export const Table: React.FC<{
 
   // Keep the lead-in + header glued to the first row when that row is atomic,
   // so neither can strand alone at a page bottom. A TableTextRow first row is
-  // excluded: its height is unbounded, and a wrap={false} group taller than
-  // the page overflows instead of moving to the next one. (By convention a
-  // TableTextRow never leads a table — it always follows its meta row.)
+  // excluded: its height can exceed a page, and a wrap={false} group taller
+  // than the page overflows instead of moving to the next one. (By convention
+  // a TableTextRow never leads a table — it always follows its meta row.)
   const firstRowAtomic =
     body.length > 0 &&
     React.isValidElement(body[0]) &&

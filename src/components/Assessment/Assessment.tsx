@@ -117,6 +117,7 @@ import {
 } from "../../utils/storage";
 import { reclassifyUntouchedLevelOne } from "../../utils/legacyReclassify";
 import { parseExtensionFile } from "../../utils/extensionUpload";
+import { readImportFile } from "../../utils/inputLimits";
 import { getStorageAdapter } from "../../utils/storageAdapter";
 import type { StorageBackend } from "../../utils/storageAdapter";
 import { Banner, Button } from "../ui";
@@ -147,7 +148,7 @@ import { deriveSaveStatus } from "../../utils/saveStatus";
 import { shouldNudgeExport } from "../../utils/durability";
 import { SaveStatusChip } from "../SaveStatusChip/SaveStatusChip";
 import { ReportGeneratingModal } from "../Report/ReportGeneratingModal/ReportGeneratingModal";
-import { runPdfGeneration } from "./runPdfGeneration";
+import { reportPdfExportError, runPdfGeneration } from "./runPdfGeneration";
 import { TabNav } from "./TabNav";
 
 interface AssessmentProps {
@@ -1024,7 +1025,13 @@ export const Assessment: React.FC<AssessmentProps> = ({
 
   const handleUploadExtension = async (file: File) => {
     setExtensionUploadError(undefined);
-    const text = await file.text();
+    let text: string;
+    try {
+      text = await readImportFile(file);
+    } catch (err) {
+      setExtensionUploadError((err as Error).message);
+      return;
+    }
     const result = parseExtensionFile(text);
     if (!result.ok) {
       setExtensionUploadError(result.error);
@@ -1151,7 +1158,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
           methodology: profile.runtime.methodology,
         });
       },
-      onError: (error) => console.error("Error exporting to PDF:", error),
+      onError: reportPdfExportError,
     });
   };
 
@@ -1187,8 +1194,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
           methodology: profile.runtime.methodology,
         });
       },
-      onError: (error) =>
-        console.error("Error exporting extension PDF:", error),
+      onError: reportPdfExportError,
     });
   };
 
@@ -1355,7 +1361,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
     setImportForwardIncompatible(null);
     let text: string;
     try {
-      text = await file.text();
+      text = await readImportFile(file);
     } catch (err) {
       console.error("Failed to read file:", err);
       globalThis.alert(

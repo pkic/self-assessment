@@ -1,5 +1,6 @@
 import yaml from "js-yaml";
 import type { ModuleData } from "../types/types";
+import { ImportTooLargeError, loadImportYaml } from "./inputLimits";
 import type { ScopeTemplate } from "./scopeTree";
 
 export interface ScopeTemplateFile {
@@ -48,8 +49,10 @@ export const parseScopeTemplateFile = (
 ): ScopeTemplateParseResult => {
   let doc: unknown;
   try {
-    doc = yaml.load(text);
-  } catch {
+    doc = loadImportYaml(text);
+  } catch (e) {
+    if (e instanceof ImportTooLargeError)
+      return { ok: false, error: e.message };
     return { ok: false, error: "This file is not valid YAML." };
   }
   if (typeof doc !== "object" || doc === null) {

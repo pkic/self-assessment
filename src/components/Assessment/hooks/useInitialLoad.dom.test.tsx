@@ -604,7 +604,9 @@ describe("useInitialLoad", () => {
     // loaded, not just a non-empty map).
     expect(
       result.current.referencesLookup.get("cab-baseline-requirements")?.title,
-    ).toBe("CA/B Forum baseline requirements");
+    ).toBe(
+      "CA/Browser Forum Baseline Requirements for the Issuance and Management of Publicly-Trusted TLS Server Certificates",
+    );
   });
 
   it("checks extension compatibility against the bundled default model version", async () => {

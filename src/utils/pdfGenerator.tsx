@@ -13,6 +13,11 @@ import {
 import "../index.module.scss";
 import { generateURL } from "./urlGenerator";
 import {
+  exceedsReportLimit,
+  limitTextLength,
+  ReportTooLargeError,
+} from "./inputLimits";
+import {
   calculateExtensionWeightedScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
@@ -75,7 +80,22 @@ export interface ExportPdfOptions {
   methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
-export const exportToPDF = async (opts: ExportPdfOptions) => {
+export const exportToPDF = async (options: ExportPdfOptions) => {
+  // Cut long text and refuse an oversized report before doing any work; each
+  // line break and each list item counts extra (see exceedsReportLimit)
+  // because it starts a new line in the layout. The share link is a link
+  // target and QR input, never laid out as text, so it is kept exact (but
+  // still counted). The scoring methodology is profile configuration, not
+  // report text, so it is kept exact too.
+  const opts = {
+    ...limitTextLength(options),
+    assessmentUrl: options.assessmentUrl,
+    methodology: options.methodology,
+  };
+  if (exceedsReportLimit(opts)) {
+    throw new ReportTooLargeError();
+  }
+
   const {
     progress,
     chartElement,
@@ -257,20 +277,30 @@ interface ExportExtensionPDFOptions {
   methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
-export const exportExtensionPDF = async ({
-  progress,
-  extension,
-  coreModules,
-  references = [],
-  assessmentName,
-  assessorName,
-  useCaseDescription,
-  version,
-  dataVersion,
-  chartImgData,
-  requirementProgress,
-  methodology,
-}: ExportExtensionPDFOptions) => {
+export const exportExtensionPDF = async (
+  options: ExportExtensionPDFOptions,
+) => {
+  // The chart image is binary data and the methodology is profile
+  // configuration: neither is laid out as report text, so neither is cut or
+  // counted. Everything else is cut, and an oversized report is refused.
+  const { chartImgData, methodology, ...rest } = options;
+  const data = limitTextLength(rest);
+  if (exceedsReportLimit(data)) {
+    throw new ReportTooLargeError();
+  }
+
+  const {
+    progress,
+    extension,
+    coreModules,
+    references = [],
+    assessmentName,
+    assessorName,
+    useCaseDescription,
+    version,
+    dataVersion,
+    requirementProgress,
+  } = data;
   const extId = extension.extension.id;
 
   const reportData = buildReportData({

@@ -1,4 +1,5 @@
-import { yamlParser, validateSchema } from "./yamlParser";
+import { validateSchema } from "./yamlParser";
+import { ImportTooLargeError, loadImportYaml } from "./inputLimits";
 import { isCompatibleVersion } from "./compatibility";
 import type { ExtensionData } from "../types/types";
 
@@ -9,8 +10,10 @@ export type ExtensionParseResult =
 export function parseExtensionFile(text: string): ExtensionParseResult {
   let parsed: unknown;
   try {
-    parsed = yamlParser(text);
+    parsed = loadImportYaml(text);
   } catch (e) {
+    if (e instanceof ImportTooLargeError)
+      return { ok: false, error: e.message };
     return {
       ok: false,
       error: `Could not parse the file as YAML: ${(e as Error).message}`,

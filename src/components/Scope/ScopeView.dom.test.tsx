@@ -3,6 +3,10 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { ScopeView, type ScopeViewProps } from "./ScopeView";
 import { AssessmentTargetProvider } from "../../contexts/AssessmentTargetContext";
+import {
+  ImportTooLargeError,
+  MAX_IMPORT_LENGTH,
+} from "../../utils/inputLimits";
 import type {
   ModuleData,
   ProgressData,
@@ -398,4 +402,25 @@ it("Import reads the chosen file's text and calls onImportTemplateFile", async (
     ),
   );
   expect(input.value).toBe("");
+});
+
+it("Import refuses a file over the import limit without reading it", async () => {
+  const alertSpy = jest.spyOn(globalThis, "alert").mockImplementation(noop);
+  const onImportTemplateFile = jest.fn();
+  renderScope({ onImportTemplateFile });
+  const input = screen.getByLabelText(
+    /import scope template/i,
+  ) as HTMLInputElement;
+  const file = new File([new Uint8Array(MAX_IMPORT_LENGTH + 1)], "t.yaml", {
+    type: "text/yaml",
+  }) as File & { text: () => Promise<string> };
+  file.text = jest.fn(() => Promise.resolve(""));
+  fireEvent.change(input, { target: { files: [file] } });
+  await waitFor(() =>
+    expect(alertSpy).toHaveBeenCalledWith(new ImportTooLargeError().message),
+  );
+  expect(file.text).not.toHaveBeenCalled();
+  expect(onImportTemplateFile).not.toHaveBeenCalled();
+  expect(input.value).toBe("");
+  alertSpy.mockRestore();
 });

@@ -77,7 +77,7 @@ describe("PQCMM model data", () => {
       "3.3.3": "Redacted or anonymized SBOM or CBOM",
       "3.4.1": "SPDX or CycloneDX SBOM for the assessed release",
       "3.4.3": "Current and previous release SBOMs",
-      "3.7.1": "HNDL exposure register",
+      "3.7.1": "Long-lived exposure register",
       "4.2.1": "Machine-readable CBOM for the assessed release",
       "5.3.1": "Quantum-safe performance benchmark report",
       "5.4.2": "Analyzed CBOM and cross-reference results",

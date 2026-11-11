@@ -6,6 +6,7 @@ import {
 } from "./storage";
 import { PKIMM_1_0_0_NAMES } from "../legacy/pkimm-model-1.0.0-names";
 import { buildYAMLExportPayload } from "./urlGenerator";
+import { ImportTooLargeError, MAX_IMPORT_LENGTH } from "./inputLimits";
 import yaml from "js-yaml";
 import type { Assessment } from "../types/types";
 
@@ -97,6 +98,19 @@ describe("importLegacyData", () => {
 });
 
 describe("importAssessmentFile", () => {
+  const newExportYaml = `
+stateSchemaVersion: 1
+dataVersion: "2.0.0"
+name: YAML export
+progress: {}
+enabledExtensions: []
+assessmentName: YAML export
+assessorName: ""
+useCaseDescription: ""
+sourceStructure:
+  byKey: {}
+`;
+
   it("still parses a v1-shaped legacy YAML payload, minting a fresh id (unchanged behavior)", () => {
     const legacyYaml = `
 progress:
@@ -118,18 +132,6 @@ enabledExtensions: []
   });
 
   it("still parses a new-export-shape YAML file (v1/2.0.0 export), minting a fresh id", () => {
-    const newExportYaml = `
-stateSchemaVersion: 1
-dataVersion: "2.0.0"
-name: YAML export
-progress: {}
-enabledExtensions: []
-assessmentName: YAML export
-assessorName: ""
-useCaseDescription: ""
-sourceStructure:
-  byKey: {}
-`;
     const result = importAssessmentFile(newExportYaml);
     expect(result.ok).toBe(true);
     expect(result.ok && result.assessment.dataVersion).toBe("2.0.0");
@@ -159,6 +161,53 @@ sourceStructure:
     const res = importAssessmentFile(yamlText);
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.assessment.id).toBe("keep-this-id");
+  });
+
+  it("rejects a file over the import limit before parsing it", () => {
+    const r = importAssessmentFile("x".repeat(MAX_IMPORT_LENGTH + 1)); // valid YAML; any other error would mean it was parsed
+    expect(r).toEqual(
+      expect.objectContaining({
+        ok: false,
+        error: new ImportTooLargeError().message,
+      }),
+    );
+  });
+
+  it("rejects a small file whose aliases expand past the import limit", () => {
+    const lines = [`l0: &l0 "${"x".repeat(1_000)}"`];
+    for (let i = 1; i <= 20; i++)
+      lines.push(`l${i}: &l${i} [*l${i - 1}, *l${i - 1}]`);
+    const r = importAssessmentFile(`${newExportYaml}\n${lines.join("\n")}\n`);
+    expect(r).toEqual(
+      expect.objectContaining({
+        ok: false,
+        error: new ImportTooLargeError().message,
+      }),
+    );
+  });
+
+  it("refuses YAML-only types such as binary data", () => {
+    expect(
+      importAssessmentFile(`${newExportYaml}\nextra: !!binary SGVsbG8=\n`).ok,
+    ).toBe(false);
+  });
+
+  it("accepts a file that uses an anchor", () => {
+    const validWithAnchor = `
+stateSchemaVersion: 1
+dataVersion: "2.0.0"
+name: Anchored
+progress: {}
+enabledExtensions: []
+assessorName: &who Jane
+assessmentName: *who
+useCaseDescription: ""
+sourceStructure:
+  byKey: {}
+`;
+    const result = importAssessmentFile(validWithAnchor);
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.assessment.assessmentName).toBe("Jane");
   });
 });
 

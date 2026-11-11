@@ -1,4 +1,5 @@
 import React from "react";
+import { MAX_TEXT_LENGTH } from "../../../utils/inputLimits";
 import "../field.module.scss";
 
 export interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -14,6 +15,7 @@ export const TextField: React.FC<TextFieldProps> = ({
   fieldClassName,
   hint,
   className,
+  maxLength = MAX_TEXT_LENGTH,
   "aria-describedby": ariaDescribedBy,
   "aria-label": ariaLabel,
   ...rest
@@ -43,6 +45,7 @@ export const TextField: React.FC<TextFieldProps> = ({
         className={["pkimm-field__control", className]
           .filter(Boolean)
           .join(" ")}
+        maxLength={maxLength}
         {...rest}
         aria-describedby={describedBy}
         aria-label={effectiveAriaLabel}

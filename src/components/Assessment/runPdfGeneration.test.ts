@@ -1,4 +1,5 @@
-import { runPdfGeneration } from "./runPdfGeneration";
+import { ReportTooLargeError } from "../../utils/inputLimits";
+import { reportPdfExportError, runPdfGeneration } from "./runPdfGeneration";
 
 describe("runPdfGeneration", () => {
   it("calls setGenerating(true) -> beginCapture -> generate -> endCapture -> setGenerating(false) on success", async () => {
@@ -79,5 +80,36 @@ describe("runPdfGeneration", () => {
     ).resolves.toBeUndefined();
     expect(endCapture).toHaveBeenCalledTimes(1);
     expect(setGenerating).toHaveBeenCalledWith(false);
+  });
+});
+
+describe("reportPdfExportError", () => {
+  // The node test environment has no alert, so install a stub for each test.
+  beforeEach(() => {
+    Object.defineProperty(globalThis, "alert", {
+      value: jest.fn(),
+      configurable: true,
+      writable: true,
+    });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    delete (globalThis as { alert?: unknown }).alert;
+    jest.restoreAllMocks();
+  });
+
+  it("logs every export error and shows a ReportTooLargeError to the user", () => {
+    reportPdfExportError(new ReportTooLargeError());
+    expect(globalThis.alert).toHaveBeenCalledWith(
+      new ReportTooLargeError().message,
+    );
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  it("only logs other export errors", () => {
+    reportPdfExportError(new Error("boom"));
+    expect(globalThis.alert).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalled();
   });
 });

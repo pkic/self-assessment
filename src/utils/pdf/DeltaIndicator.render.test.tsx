@@ -112,11 +112,7 @@ describe("DeltaIndicator", () => {
   // Svg-bearing cases (up/down) go through this real render; the no-triangle
   // cases (same / Not Applicable / new) have their exact label strings pinned
   // by the element-tree assertions above, and "— no change" is additionally
-  // exercised end-to-end by the ComparisonToBaseline legend real-render. (This
-  // suite keeps the real render to Svg-bearing indicators only: mixing an
-  // Svg-bearing and a plain-Text indicator on one bare page has tripped
-  // pdf-parse's bundled pdfjs under this harness, though the PDF bytes are
-  // valid outside Jest.)
+  // exercised end-to-end by the ComparisonToBaseline legend real-render.
   describe("real-render labels", () => {
     let txt: string;
 

@@ -16,6 +16,10 @@ import type {
   ComparisonResult,
   ReconciliationRow,
 } from "../../utils/comparison";
+import {
+  ImportTooLargeError,
+  MAX_IMPORT_LENGTH,
+} from "../../utils/inputLimits";
 
 expect.extend(toHaveNoViolations);
 
@@ -132,6 +136,27 @@ test("choosing a file reads its text and fires onSelectFile(text)", async () => 
     expect(onSelectFile).toHaveBeenCalledWith("hello baseline"),
   );
   expect(input.value).toBe("");
+});
+
+test("choosing a file over the import limit shows the size message without reading it", async () => {
+  const alertSpy = jest.spyOn(globalThis, "alert").mockImplementation(noop);
+  const onSelectFile = jest.fn();
+  renderPanel({ onSelectFile });
+  const input = screen.getByLabelText(/Compare to a file/i) as HTMLInputElement;
+  const file = new File(
+    [new Uint8Array(MAX_IMPORT_LENGTH + 1)],
+    "baseline.yaml",
+    { type: "text/yaml" },
+  ) as File & { text: () => Promise<string> };
+  file.text = jest.fn(() => Promise.resolve(""));
+  fireEvent.change(input, { target: { files: [file] } });
+  await waitFor(() =>
+    expect(alertSpy).toHaveBeenCalledWith(new ImportTooLargeError().message),
+  );
+  expect(file.text).not.toHaveBeenCalled();
+  expect(onSelectFile).not.toHaveBeenCalled();
+  expect(input.value).toBe("");
+  alertSpy.mockRestore();
 });
 
 test("Clear comparison button fires onClear when a baseline is active", () => {

@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { axe } from "jest-axe";
+import { MAX_TEXT_LENGTH } from "../../../utils/inputLimits";
 import { TextArea } from "./TextArea";
 
 describe("TextArea", () => {
@@ -101,5 +102,33 @@ describe("TextArea", () => {
     expect(screen.getByLabelText("Answer")).not.toHaveAttribute(
       "aria-describedby",
     );
+  });
+
+  it("limits typing to MAX_TEXT_LENGTH by default", () => {
+    render(<TextArea label="Notes" value="" onChange={() => {}} />);
+    expect(screen.getByLabelText("Notes")).toHaveAttribute(
+      "maxlength",
+      String(MAX_TEXT_LENGTH),
+    );
+  });
+
+  it("keeps an explicit maxLength", () => {
+    render(
+      <TextArea label="Notes" maxLength={1500} value="" onChange={() => {}} />,
+    );
+    expect(screen.getByLabelText("Notes")).toHaveAttribute("maxlength", "1500");
+  });
+
+  it("still shows a stored value longer than the limit in full", () => {
+    render(
+      <TextArea
+        label="Notes"
+        value={"x".repeat(MAX_TEXT_LENGTH + 1)}
+        onChange={() => {}}
+      />,
+    );
+    expect(
+      (screen.getByLabelText("Notes") as HTMLTextAreaElement).value,
+    ).toHaveLength(MAX_TEXT_LENGTH + 1);
   });
 });

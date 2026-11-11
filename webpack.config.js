@@ -10,6 +10,14 @@ module.exports = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
+    alias: {
+      // png-js inflates PNGs with fflate's `unzlib`, which spawns a Web Worker
+      // from a blob: URL that a strict CSP blocks — hanging the PDF export.
+      // Route it to a main-thread stand-in. The trailing `$` matches only the
+      // bare specifier, so the shim's own `fflate/browser` import still
+      // resolves to the real package.
+      fflate$: path.resolve(__dirname, "src/utils/pdf/fflateNoWorker.ts"),
+    },
   },
   module: {
     rules: [
