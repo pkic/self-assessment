@@ -1,31 +1,34 @@
 import React from "react";
 import { suggestedSubjectValue } from "../../assessment-engine/subject-convenience";
-import type {
-  AssessmentSubjectField,
-  AssessmentSubjectRule,
-} from "../../assessment-engine/types";
+import type { AssessmentSubjectField } from "../../assessment-engine/types";
 import { Button, TextArea, TextField } from "../ui";
-import { fieldRequirementNote, RuleNote } from "./fieldRequirement";
 
 interface Props {
   field: AssessmentSubjectField;
   subject: Record<string, string>;
-  rules?: readonly AssessmentSubjectRule[];
+  /** Muted marker after the label, such as "optional". */
+  labelNote?: string;
+  /** A problem with the current value, shown under the field. */
+  error?: string;
   onChange: (field: string, value: string) => void;
 }
 
 export const SubjectField: React.FC<Props> = ({
   field,
   subject,
-  rules,
+  labelNote,
+  error,
   onChange,
 }) => {
   const value = subject[field.key] ?? "";
   const suggested = suggestedSubjectValue(field, subject);
+  const errorId = `subject-${field.key}-error`;
   const common = {
     label: field.label,
     required: field.required,
-    labelNote: fieldRequirementNote(field, rules),
+    labelNote,
+    "aria-invalid": error ? true : undefined,
+    "aria-errormessage": error ? errorId : undefined,
     hint: field.hint,
     value,
     onChange: (
@@ -35,7 +38,6 @@ export const SubjectField: React.FC<Props> = ({
 
   return (
     <div className="evidence-assessment-subject-field">
-      <RuleNote field={field.key} rules={rules} />
       {field.component === "textarea" ? (
         <TextArea {...common} rows={field.rows ?? 3} />
       ) : (
@@ -44,6 +46,11 @@ export const SubjectField: React.FC<Props> = ({
           type={field.component === "date" ? "date" : "text"}
         />
       )}
+      {error ? (
+        <p id={errorId} className="evidence-scope__error">
+          {error}
+        </p>
+      ) : null}
       {suggested && suggested !== value ? (
         <div className="evidence-assessment-subject-suggestion">
           <span>

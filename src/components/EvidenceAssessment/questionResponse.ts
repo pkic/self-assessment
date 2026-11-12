@@ -1,3 +1,4 @@
+import { questionFindingsExplicit } from "./assessmentView";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import {
   hasQuestionValue,
@@ -128,6 +129,7 @@ export const questionResponseIssues = (
     ...evidenceIssues(definition, progress, evidenceFiles),
   ];
   if (
+    questionFindingsExplicit(profile) &&
     profile.runtime.questions?.requiredForKinds.includes(kind) &&
     progress.finding === "not-assessed"
   ) {

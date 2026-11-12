@@ -79,6 +79,13 @@ export interface CumulativeGateParameters extends Record<string, unknown> {
   passingStatuses?: string[];
   evidenceRequiredFromLevel?: number;
   passingQuestionFindings?: string[];
+  /**
+   * How a linked question supports its criterion. "explicit" (the default)
+   * needs a recorded finding in passingQuestionFindings plus a complete
+   * answer; "derived" counts any complete answer as support, for profiles
+   * where the person answering is also the one drawing the conclusion.
+   */
+  questionFindingMode?: "explicit" | "derived";
 }
 
 export const emptyCriterionProgress = (): GatedCriterionProgress => ({
@@ -112,6 +119,7 @@ const cumulativeGates = (
   const passingQuestionFindings = new Set(
     parameters.passingQuestionFindings ?? [],
   );
+  const derivedFindings = parameters.questionFindingMode === "derived";
   const orderedLevels = [...model.levels].sort((a, b) => a.number - b.number);
   const questions = orderedLevels.flatMap((level) =>
     level.assessment.groups.flatMap((group) => group.questions),
@@ -148,9 +156,11 @@ const cumulativeGates = (
         !needsEvidence || criterionHasEvidence(progress, record.evidenceFiles);
       const questionBlockers = (criterion.assessmentQuestionIds ?? []).filter(
         (questionId) =>
-          !passingQuestionFindings.has(
-            record.questionProgress[questionId]?.finding ?? "not-assessed",
-          ) || !responseComplete(questionId),
+          !responseComplete(questionId) ||
+          (!derivedFindings &&
+            !passingQuestionFindings.has(
+              record.questionProgress[questionId]?.finding ?? "not-assessed",
+            )),
       );
       const questionsPass = questionBlockers.length === 0;
       const questionIds = criterion.assessmentQuestionIds ?? [];

@@ -41,17 +41,25 @@ export const EvidenceAttachments: React.FC<Props> = ({
   return (
     <div className="evidence-assessment-evidence-attachments">
       <div className="evidence-assessment-evidence-attachments__header">
-        <span>{label}</span>
+        <span>
+          {label}
+          {files.length > 0 ? (
+            <span className="evidence-assessment-evidence-attachments__count">
+              {" "}
+              ({files.length})
+            </span>
+          ) : null}
+        </span>
         <Button
           size="sm"
           variant="secondary"
           disabled={
             disabled || (maxFiles !== undefined && files.length >= maxFiles)
           }
-          aria-label={`Add files: ${label}`}
+          aria-label={`Attach files: ${label}`}
           onClick={() => inputRef.current?.click()}
         >
-          Add files
+          Attach files
         </Button>
         <input
           ref={inputRef}
@@ -71,11 +79,7 @@ export const EvidenceAttachments: React.FC<Props> = ({
           {description}
         </p>
       ) : null}
-      {files.length === 0 ? (
-        <p className="evidence-assessment-evidence-attachments__empty">
-          No files attached.
-        </p>
-      ) : (
+      {files.length === 0 ? null : (
         <ul className="evidence-assessment-evidence-attachments__list">
           {files.map((file) => (
             <li key={file.id}>

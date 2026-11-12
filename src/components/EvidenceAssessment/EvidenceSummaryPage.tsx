@@ -1,5 +1,6 @@
 import React from "react";
 import { Page, Text, View } from "@react-pdf/renderer";
+import { questionFindingsExplicit } from "./assessmentView";
 import type { GatedMaturityScore } from "../../assessment-engine/methodologies/cumulativeGates";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { buildMaturityGateVisualization } from "../../assessment-engine/visualizations/maturityGates";
@@ -55,7 +56,7 @@ export const EvidenceSummaryPage: React.FC<Props> = ({
           </View>
         ))}
       </View>
-      {profile.runtime.questions ? (
+      {profile.runtime.questions && questionFindingsExplicit(profile) ? (
         <>
           <Text style={styles.subheading}>Question findings</Text>
           {profile.runtime.questions.findings.map((finding) => (

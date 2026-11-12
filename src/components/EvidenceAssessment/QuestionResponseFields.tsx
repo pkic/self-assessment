@@ -4,8 +4,11 @@ import { DURATION_UNITS } from "../../assessment-engine/question-values";
 import { Select, TextArea, TextField } from "../ui";
 import { responseDefinition } from "./questionResponse";
 import { ChoiceGroup } from "./ChoiceGroup";
-import { fieldRequirementNote, RuleNote } from "./fieldRequirement";
-import { passingQuestionFindings } from "./assessmentView";
+import { fieldRequirementNote, groupFieldsByRule } from "./fieldRequirement";
+import {
+  passingQuestionFindings,
+  questionFindingsExplicit,
+} from "./assessmentView";
 import type {
   EvidenceQuestion,
   EvidenceQuestionField,
@@ -393,7 +396,12 @@ const renderFindingOptions = (
   progress: EvidenceQuestionProgress,
   onChange: (progress: Partial<EvidenceQuestionProgress>) => void,
 ): React.ReactElement | null => {
-  if (!profile.runtime.questions?.requiredForKinds.includes(kind)) return null;
+  if (
+    !questionFindingsExplicit(profile) ||
+    !profile.runtime.questions?.requiredForKinds.includes(kind)
+  ) {
+    return null;
+  }
   return (
     <ChoiceGroup
       legend="Assessment finding"
@@ -419,19 +427,30 @@ export const QuestionResponseFields: React.FC<Props> = ({
 
   return (
     <div className="evidence-assessment-question__response">
-      {renderFindingOptions(profile, kind, question.id, progress, onChange)}
-      {definition.fields.map((field) => (
-        <React.Fragment key={field.key}>
-          <RuleNote field={field.key} rules={definition.rules} />
-          {renderResponseField(
-            field,
-            progress.values[field.key],
+      {groupFieldsByRule(definition.fields, definition.rules).map((item) =>
+        item.kind === "field" ? (
+          renderResponseField(
+            item.field,
+            progress.values[item.field.key],
             updateValue,
             question.id,
-            fieldRequirementNote(field, definition.rules),
-          )}
-        </React.Fragment>
-      ))}
+            fieldRequirementNote(item.field, definition.rules),
+          )
+        ) : (
+          <fieldset key={item.message} className="evidence-field-group">
+            <legend>{item.message}</legend>
+            {item.fields.map((field) =>
+              renderResponseField(
+                field,
+                progress.values[field.key],
+                updateValue,
+                question.id,
+              ),
+            )}
+          </fieldset>
+        ),
+      )}
+      {renderFindingOptions(profile, kind, question.id, progress, onChange)}
     </div>
   );
 };

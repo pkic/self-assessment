@@ -1,6 +1,7 @@
 // Pure view helpers for the evidence assessment screen. They keep display
 // decisions out of the component so each one can be tested on its own.
 import type { GatedMaturityScore } from "../../assessment-engine/methodologies/cumulativeGates";
+import { validAssessmentFormat } from "../../assessment-engine/subject-validation";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 
 export const errorMessage = (error: unknown): string =>
@@ -16,23 +17,60 @@ export const exportBlockedReason = (
 };
 
 /** One-line summary of the scope card, for its collapsed header. */
+/**
+ * Short names for what the scope still needs: each empty required field, each
+ * field with an invalid value, and each unmet "at least one of" rule (named by
+ * the subject group that holds its fields, when there is one).
+ */
+export const subjectOutstanding = (
+  profile: AssessmentProfileData,
+  subject: Record<string, string>,
+): string[] => {
+  const outstanding = profile.runtime.subjectFields.flatMap((field) => {
+    const value = subject[field.key]?.trim() ?? "";
+    if (field.required && !value) return [field.label];
+    if (!validAssessmentFormat(field.format, value)) {
+      return [`a valid ${field.label}`];
+    }
+    return [];
+  });
+  for (const rule of profile.runtime.subjectRules ?? []) {
+    if (rule.fields.some((field) => subject[field]?.trim())) continue;
+    const group = profile.runtime.subjectGroups?.find((candidate) =>
+      rule.fields.every((field) => candidate.fields.includes(field)),
+    );
+    outstanding.push(group?.label ?? rule.message);
+  }
+  return outstanding;
+};
+
+const listNames = (names: string[]): string => {
+  if (names.length <= 3) {
+    return names.length > 1
+      ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`
+      : names.join("");
+  }
+  return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+};
+
 export const scopeSummary = (
   profile: AssessmentProfileData,
-  subject: Record<string, unknown>,
-  subjectIssues: string[],
+  subject: Record<string, string>,
 ): { complete: boolean; summary: string } => {
-  if (subjectIssues.length > 0) {
-    const plural = subjectIssues.length === 1 ? "" : "s";
+  const outstanding = subjectOutstanding(profile, subject);
+  if (outstanding.length > 0) {
     return {
       complete: false,
-      summary: `${subjectIssues.length} item${plural} to complete before export`,
+      summary: `Still needed: ${listNames(outstanding)}`,
     };
   }
-  const named = profile.runtime.subjectFields
-    .slice(0, 3)
-    .map((field) => subject[field.key])
+  const leadFields =
+    profile.runtime.subjectGroups?.[0]?.fields ??
+    profile.runtime.subjectFields.slice(0, 3).map(({ key }) => key);
+  const named = leadFields
+    .map((key) => subject[key])
     .filter((value): value is string => typeof value === "string" && !!value)
-    .join(" · ");
+    .join(", ");
   return { complete: true, summary: named || "Complete" };
 };
 
@@ -83,3 +121,24 @@ export const passingQuestionFindings = (
   profile: AssessmentProfileData,
 ): string[] =>
   stringList(profile.runtime.methodology.parameters?.passingQuestionFindings);
+
+/**
+ * Whether each linked question needs its own recorded finding. In "derived"
+ * mode a complete answer is the support, so no finding is asked for.
+ */
+export const questionFindingsExplicit = (
+  profile: AssessmentProfileData,
+): boolean =>
+  profile.runtime.methodology.parameters?.questionFindingMode !== "derived";
+
+/**
+ * Criterion statuses that open the linked questions. When the profile does
+ * not say, the questions are always shown.
+ */
+export const statusOpensQuestions = (
+  profile: AssessmentProfileData,
+  status: string,
+): boolean => {
+  const statuses = profile.runtime.criterion?.questionsForStatuses;
+  return statuses === undefined || statuses.includes(status);
+};

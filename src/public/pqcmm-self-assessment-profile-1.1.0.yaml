@@ -44,6 +44,9 @@ runtime:
       defaultBaselineStatus: met
       evidenceRequiredFromLevel: 1
       passingQuestionFindings: [supports]
+      # The person answering also draws the conclusion, so a complete answer
+      # to a linked question counts as support; no separate finding is asked.
+      questionFindingMode: derived
 
   # Details about the assessed product or service, asked before the assessment starts.
   subjectFields:
@@ -91,6 +94,7 @@ runtime:
       component: textarea
       rows: 3
       required: false
+      hint: Editions, deployment models (on-premises, cloud, embedded), and configurations this assessment covers.
 
     - key: assessorName
       label: Person completing the assessment
@@ -113,6 +117,25 @@ runtime:
     - kind: at-least-one
       fields: [cpe, purl]
       message: Provide at least one canonical CPE 2.3 name or package URL (pURL) so the assessed solution can be matched in inventories.
+
+  # How the details are grouped on the scope form, in order.
+  subjectGroups:
+    - id: subject
+      label: What you are assessing
+      fields: [productName, productVersion, vendorName]
+
+    - id: identifier
+      label: Inventory identifier
+      description: Give at least one, so the product can be matched in software inventories and vulnerability feeds.
+      fields: [cpe, purl]
+
+    - id: deployment
+      label: Deployment
+      fields: [deploymentScope]
+
+    - id: assessment
+      label: About this assessment
+      fields: [assessorName, assessorOrganization, assessmentDate, name]
 
   # How each assessment question is answered: the possible findings, and the
   # default answer field and evidence request for assessment and intake questions.
@@ -157,6 +180,9 @@ runtime:
         label: Partial
       - value: not-met
         label: Not met
+    # A Met or Partial conclusion is backed by answering the criterion's
+    # questions; Not met only asks what is missing.
+    questionsForStatuses: [met, partial]
     evidence:
       requiredForStatuses: [met]
       requiredFromLevel: 1

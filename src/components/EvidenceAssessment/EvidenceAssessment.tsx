@@ -52,9 +52,12 @@ import {
   exportBlockedReason,
   levelStatusLabel,
   passingStatuses,
+  questionFindingsExplicit,
   scopeSummary,
+  statusOpensQuestions,
 } from "./assessmentView";
-import { SubjectField } from "./SubjectField";
+import { ScopeForm } from "./ScopeForm";
+import { ExtraQuestions } from "./ExtraQuestions";
 import { updateSubjectWithDefaults } from "../../assessment-engine/subject-convenience";
 import { emptyQuestionProgress } from "./questionResponse";
 import "./EvidenceAssessment.module.scss";
@@ -400,7 +403,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
     subjectIssues,
   );
   const scopeExpanded = scopeOpen;
-  const scope = scopeSummary(profile, record.subject, subjectIssues);
+  const scope = scopeSummary(profile, record.subject);
   const {
     previous: previousLevelInModel,
     next: nextLevelInModel,
@@ -433,21 +436,20 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
       return {
         group,
         questions,
-        partial: questions.length < group.questions.length,
       };
     })
     .filter((entry) => entry.questions.length > 0);
   const renderQuestion = (
     question: (typeof level.assessment.groups)[number]["questions"][number],
     kind: (typeof level.assessment.groups)[number]["kind"],
-    nested: boolean,
+    layout: "step" | "panel",
   ) => (
     <QuestionCard
       key={question.id}
       question={question}
       kind={kind}
       profile={profile}
-      nested={nested}
+      layout={layout}
       progress={record.questionProgress[question.id]}
       evidenceFiles={record.evidenceFiles}
       onUpdate={(update) => updateQuestion(question.id, update)}
@@ -459,10 +461,11 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
       }
     />
   );
-  const findingOptions =
-    profile.runtime.questions?.findings.filter(
-      ({ value }) => value !== "not-assessed",
-    ) ?? [];
+  const findingOptions = questionFindingsExplicit(profile)
+    ? (profile.runtime.questions?.findings.filter(
+        ({ value }) => value !== "not-assessed",
+      ) ?? [])
+    : [];
 
   const exportJson = () => {
     if (!exportAvailable) {
@@ -634,24 +637,11 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                 Identify the {model.model.subjectLabel.toLowerCase()} this
                 assessment covers.
               </p>
-              <div className="evidence-assessment-field-grid">
-                {profile.runtime.subjectFields.map((field) => (
-                  <SubjectField
-                    key={field.key}
-                    field={field}
-                    subject={record.subject}
-                    rules={profile.runtime.subjectRules}
-                    onChange={updateSubjectField}
-                  />
-                ))}
-              </div>
-              {subjectIssues.length > 0 ? (
-                <ul className="evidence-assessment-scope-issues" role="alert">
-                  {subjectIssues.map((issue) => (
-                    <li key={issue}>{issue}</li>
-                  ))}
-                </ul>
-              ) : null}
+              <ScopeForm
+                profile={profile}
+                subject={record.subject}
+                onChange={updateSubjectField}
+              />
             </div>
           </Card>
 
@@ -713,6 +703,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             </div>
             <div className="evidence-assessment-criterion-list">
               {level.criteria.items.map((criterion) => {
+                const criterionProgress =
+                  record.criterionProgress[criterion.id] ??
+                  emptyCriterionProgress();
                 const linked = (criterion.assessmentQuestionIds ?? [])
                   .map((id) => questionsById.get(id))
                   .filter((entry) => entry !== undefined);
@@ -720,10 +713,11 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                   <CriterionCard
                     key={criterion.id}
                     criterion={criterion}
-                    progress={
-                      record.criterionProgress[criterion.id] ??
-                      emptyCriterionProgress()
-                    }
+                    progress={criterionProgress}
+                    supportOpen={statusOpensQuestions(
+                      profile,
+                      criterionProgress.status,
+                    )}
                     result={levelResult?.criteria?.find(
                       (entry) => entry.id === criterion.id,
                     )}
@@ -747,7 +741,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                   >
                     {linked.length > 0
                       ? linked.map(({ question, kind }) =>
-                          renderQuestion(question, kind, true),
+                          renderQuestion(question, kind, "step"),
                         )
                       : undefined}
                   </CriterionCard>
@@ -755,25 +749,15 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
               })}
             </div>
 
-            {otherQuestionGroups.length > 0 ? (
-              <div className="evidence-assessment-question-groups">
-                {otherQuestionGroups.map(({ group, questions, partial }) => (
-                  <section key={group.id}>
-                    <h4>
-                      {partial ? "Other questions at this level" : group.name}
-                    </h4>
-                    {!partial && group.introduction ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {group.introduction}
-                      </ReactMarkdown>
-                    ) : null}
-                    {questions.map((question) =>
-                      renderQuestion(question, group.kind, false),
-                    )}
-                  </section>
-                ))}
-              </div>
-            ) : null}
+            <ExtraQuestions
+              groups={otherQuestionGroups}
+              profile={profile}
+              questionProgress={record.questionProgress}
+              evidenceFiles={record.evidenceFiles}
+              renderQuestion={(question, kind) =>
+                renderQuestion(question, kind, "panel")
+              }
+            />
 
             {level.assessment.methodology ? (
               <details className="evidence-assessment-methodology">

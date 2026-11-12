@@ -75,6 +75,40 @@ describe("assessment profile trust boundaries", () => {
     );
   });
 
+  it("rejects subject groups that repeat or invent fields", () => {
+    const repeated = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.subjectGroups![1].fields.push(
+        profile.runtime.subjectGroups![0].fields[0],
+      );
+    });
+    expect(() => parseAssessmentProfile(repeated)).toThrow(
+      "A subject field may belong to one group only",
+    );
+
+    const unknown = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.subjectGroups![0].fields.push("notDeclared");
+    });
+    expect(() => parseAssessmentProfile(unknown)).toThrow(
+      "Subject group references unknown field",
+    );
+  });
+
+  it("rejects question gating and finding modes the profile cannot honor", () => {
+    const status = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.criterion!.questionsForStatuses = ["met", "verified"];
+    });
+    expect(() => parseAssessmentProfile(status)).toThrow(
+      "questionsForStatuses references unknown criterion status",
+    );
+
+    const mode = mutateProfile("pqcmm-self-assessment", (profile) => {
+      profile.runtime.methodology.parameters.questionFindingMode = "implicit";
+    });
+    expect(() => parseAssessmentProfile(mode)).toThrow(
+      "questionFindingMode must be",
+    );
+  });
+
   it("rejects unsafe subject convenience references", () => {
     const unknownDefault = mutateProfile("pqcmm-self-assessment", (profile) => {
       profile.runtime.subjectFields.find(

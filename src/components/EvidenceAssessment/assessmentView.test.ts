@@ -26,16 +26,30 @@ describe("assessment view helpers", () => {
   });
 
   it("summarises scope as outstanding items or the named subject", () => {
-    expect(scopeSummary(profile, {}, ["a", "b"])).toEqual({
+    expect(scopeSummary(profile, {})).toEqual({
       complete: false,
-      summary: "2 items to complete before export",
+      summary:
+        "Still needed: Product or service, Product version or release and 2 more",
     });
-    const fields = profile.runtime.subjectFields.slice(0, 2);
-    const subject = { [fields[0].key]: "First", [fields[1].key]: "Second" };
-    expect(scopeSummary(profile, subject, [])).toEqual({
-      complete: true,
-      summary: "First · Second",
+    expect(
+      scopeSummary(profile, {
+        productName: "Gateway",
+        productVersion: "4.2",
+        assessmentDate: "2026-11-12",
+      }),
+    ).toEqual({
+      complete: false,
+      summary: "Still needed: Inventory identifier",
     });
+    expect(
+      scopeSummary(profile, {
+        productName: "Gateway",
+        productVersion: "4.2",
+        vendorName: "Example",
+        purl: "pkg:generic/example/gateway@4.2",
+        assessmentDate: "2026-11-12",
+      }),
+    ).toEqual({ complete: true, summary: "Gateway, 4.2, Example" });
   });
 
   it("labels a level by its gate status", () => {

@@ -18,6 +18,17 @@ export interface AssessmentSubjectField {
   };
 }
 
+/**
+ * A labelled group of subject fields shown together on the scope form.
+ * Fields not listed in any group are shown after the groups.
+ */
+export interface AssessmentSubjectGroup {
+  id: string;
+  label: string;
+  description?: string;
+  fields: string[];
+}
+
 export interface AssessmentSubjectRule {
   kind: "at-least-one";
   fields: string[];
@@ -92,9 +103,15 @@ export interface AssessmentProfileData {
     };
     subjectFields: AssessmentSubjectField[];
     subjectRules?: AssessmentSubjectRule[];
+    subjectGroups?: AssessmentSubjectGroup[];
     questions?: AssessmentQuestionPolicy;
     criterion?: {
       statuses: AssessmentStatusOption[];
+      /**
+       * Statuses for which the criterion's linked questions are shown and
+       * must be answered. Omitted: always shown.
+       */
+      questionsForStatuses?: string[];
       evidence: {
         requiredForStatuses: string[];
         requiredFromLevel: number;

@@ -2,6 +2,7 @@ import React from "react";
 import { criterionLabel } from "./criterionLabel";
 import { Page, Text, View } from "@react-pdf/renderer";
 import { emptyCriterionProgress } from "../../assessment-engine/methodologies/cumulativeGates";
+import { questionFindingsExplicit } from "./assessmentView";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { ReportPageNumber } from "./ReportPageNumber";
 import { evidenceNames, plainReportText } from "./reportFormatting";
@@ -74,9 +75,11 @@ export const EvidenceLevelPage: React.FC<Props> = ({
           responseDefinition(question, group.kind, profile),
           progress,
         );
-        const finding = profile.runtime.questions?.findings.find(
-          (item) => item.value === progress.finding,
-        )?.label;
+        const finding = questionFindingsExplicit(profile)
+          ? profile.runtime.questions?.findings.find(
+              (item) => item.value === progress.finding,
+            )?.label
+          : undefined;
         return (
           <View key={question.id} style={styles.item} wrap={false}>
             <View style={styles.itemHeader}>

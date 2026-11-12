@@ -28,16 +28,26 @@ describe("EvidenceAssessment", () => {
     expect(
       screen.getByRole("heading", { name: "Level 0 · None" }),
     ).toBeInTheDocument();
+    // Questions that don't decide the level open in a side panel.
+    expect(screen.queryByLabelText("Target date for Level 1")).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Answer: By what date/ }),
+    );
     expect(screen.getByLabelText("Target date for Level 1")).toHaveAttribute(
       "type",
       "date",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /^Answer: Is a Software Bill/ }),
     );
     expect(screen.getByLabelText("SBOM or CBOM available")).toHaveRole(
       "combobox",
     );
     expect(
-      screen.getByRole("button", { name: "Add files: SBOM or CBOM file" }),
+      screen.getByRole("button", { name: "Attach files: SBOM or CBOM file" }),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(
       screen.getByRole("progressbar", {
         name: /level 1.*criteria completion/i,
@@ -50,9 +60,7 @@ describe("EvidenceAssessment", () => {
       ).getByRole("button", { name: /^Level 0 None: Established/ }),
     ).toHaveAttribute("aria-pressed", "true");
 
-    const criteria = container.querySelectorAll(
-      ".evidence-assessment-criterion",
-    );
+    const criteria = container.querySelectorAll(".evidence-criterion");
     expect(criteria).toHaveLength(2);
     for (const criterion of criteria) {
       expect(
@@ -145,6 +153,9 @@ describe("EvidenceAssessment", () => {
         )}
       />,
     );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /^Answer: By what date/ }),
+    );
     await screen.findByLabelText("Target date for Level 1");
     expect(screen.queryByText(/Date \(YYYY-MM-DD\)/)).not.toBeInTheDocument();
   });
@@ -164,17 +175,34 @@ describe("EvidenceAssessment", () => {
         screen.getByRole("complementary", { name: "Assessment progress" }),
       ).getByRole("button", { name: /^Level 1 Initial:/ }),
     );
-    const first = within(screen.getByRole("main"))
-      .getByLabelText("Criterion 1.1.1")
-      .closest("article")!;
-    expect(within(first).getByText("1.2.1")).toBeInTheDocument();
+    const first = within(screen.getByRole("main")).getByRole("article", {
+      name: /^Criterion 1\.1\.1:/,
+    });
+    // Nothing but the statement and the decision until a conclusion is set.
+    expect(within(first).queryByText(/Which quantum-safe/)).toBeNull();
+    expect(within(first).queryByLabelText(/Notes and gaps/)).toBeNull();
+
+    fireEvent.click(within(first).getByRole("radio", { name: "Met" }));
     expect(
-      within(first).getByRole("list", {
-        name: "What this criterion needs to count",
-      }),
-    ).toHaveTextContent("Questions support it (0 of 3)");
+      within(first).getByText(
+        "This counts as Met once it has 3 more answers and evidence.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(first).getByText(/Which quantum-safe/)).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Other questions at this level" }),
+      within(first).getByText("Met, not yet supported"),
+    ).toBeInTheDocument();
+    expect(await axe(first)).toHaveNoViolations();
+    // Self-assessment derives findings from complete answers.
+    expect(within(first).queryByText("Assessment finding")).toBeNull();
+
+    fireEvent.click(within(first).getByRole("radio", { name: "Not met" }));
+    expect(within(first).queryByText(/Which quantum-safe/)).toBeNull();
+    expect(
+      within(first).getByLabelText("What is missing?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "More detail for the report" }),
     ).toBeInTheDocument();
   });
 });

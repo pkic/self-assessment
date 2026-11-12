@@ -3,11 +3,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { evidenceCriterionPolicy } from "../../assessment-engine/profile";
 import type { GatedCriterionResult } from "../../assessment-engine/methodologies/cumulativeGates";
-import { ChoiceGroup, choiceTone } from "./ChoiceGroup";
-import { passingQuestionFindings } from "./assessmentView";
+import { ChoiceGroup } from "./ChoiceGroup";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { Button, Card, TextArea } from "../ui";
-import { criterionLabel, plainText } from "./criterionLabel";
+import { criterionLabel } from "./criterionLabel";
 import { EvidenceAttachments } from "./EvidenceAttachments";
 import { QuestionResponseFields } from "./QuestionResponseFields";
 import {
@@ -44,6 +43,11 @@ interface CriterionCardProps {
   passingStatuses: string[];
   /** Whether the methodology asks for evidence at this criterion's level. */
   evidenceRequired: boolean;
+  /**
+   * Whether the current status opens the support section (linked questions,
+   * evidence). Statuses that don't only ask what is missing.
+   */
+  supportOpen: boolean;
   evidenceFiles: AssessmentEvidenceFile[];
   onUpdate: (update: Partial<EvidenceCriterionProgress>) => void;
   onAddEvidence: (files: FileList) => Promise<void>;
@@ -52,30 +56,106 @@ interface CriterionCardProps {
   children?: React.ReactNode;
 }
 
-interface GateCheck {
-  label: string;
-  done: boolean;
-}
+const plural = (count: number, one: string, many: string): string =>
+  `${count} ${count === 1 ? one : many}`;
 
-const gateChecks = (
+/**
+ * What still stands between a claimed criterion and counting, as one
+ * sentence fragment list ("2 more answers", "evidence").
+ */
+const outstandingParts = (
   result: GatedCriterionResult | undefined,
-  passingLabel: string,
-): GateCheck[] => {
-  if (!result) return [];
-  const checks: GateCheck[] = [
-    { label: `Marked ${passingLabel}`, done: result.statusPasses },
-  ];
-  if (result.evidenceRequired) {
-    checks.push({ label: "Evidence recorded", done: result.evidencePasses });
+): string[] => {
+  if (!result?.statusPasses || result.met) return [];
+  const parts: string[] = [];
+  const unanswered =
+    result.questionIds.length - result.supportingQuestionIds.length;
+  if (unanswered > 0) {
+    parts.push(`${plural(unanswered, "more answer", "more answers")}`);
   }
-  if (result.questionIds.length > 0) {
-    checks.push({
-      label: `Questions support it (${result.supportingQuestionIds.length} of ${result.questionIds.length})`,
-      done: result.supportingQuestionIds.length === result.questionIds.length,
-    });
+  if (result.evidenceRequired && !result.evidencePasses) {
+    parts.push("evidence");
   }
-  return checks;
+  return parts;
 };
+
+/** The line that opens a criterion's support section, if any. */
+const supportIntroText = (
+  passing: boolean,
+  passingLabel: string,
+  outstanding: string[],
+  questionCount: number,
+): string | null => {
+  if (passing && outstanding.length > 0) {
+    return `This counts as ${passingLabel} once it has ${outstanding.join(" and ")}.`;
+  }
+  if (!passing && questionCount > 0) {
+    return "Answer the questions to record what is already in place.";
+  }
+  return null;
+};
+
+const StateChip: React.FC<{
+  result?: GatedCriterionResult;
+  status: string;
+  statusLabel?: string;
+  passingLabel: string;
+}> = ({ result, status, statusLabel, passingLabel }) => {
+  if (status === "not-assessed" || !statusLabel) return null;
+  if (result?.met) {
+    return (
+      <span className="evidence-criterion__chip evidence-criterion__chip--ok">
+        {passingLabel}
+      </span>
+    );
+  }
+  if (result?.statusPasses) {
+    return (
+      <span className="evidence-criterion__chip evidence-criterion__chip--warn">
+        {passingLabel}, not yet supported
+      </span>
+    );
+  }
+  return <span className="evidence-criterion__chip">{statusLabel}</span>;
+};
+
+const CriterionEvidence: React.FC<
+  Pick<
+    CriterionCardProps,
+    | "policy"
+    | "progress"
+    | "evidenceFiles"
+    | "onUpdate"
+    | "onAddEvidence"
+    | "onRemoveEvidence"
+  > & { criterionId: string }
+> = ({
+  criterionId,
+  policy,
+  progress,
+  evidenceFiles,
+  onUpdate,
+  onAddEvidence,
+  onRemoveEvidence,
+}) => (
+  <div className="evidence-criterion__evidence">
+    <TextArea
+      label={policy?.evidence.statementLabel ?? "Evidence"}
+      labelNote="or attach a file"
+      hint={policy?.evidence.statementHint}
+      rows={3}
+      value={progress.evidenceStatement}
+      onChange={(event) => onUpdate({ evidenceStatement: event.target.value })}
+    />
+    <EvidenceAttachments
+      ownerLabel={`criterion ${criterionId}`}
+      evidenceIds={progress.evidenceIds}
+      evidenceFiles={evidenceFiles}
+      onAdd={onAddEvidence}
+      onRemove={onRemoveEvidence}
+    />
+  </div>
+);
 
 export const CriterionCard: React.FC<CriterionCardProps> = ({
   criterion,
@@ -84,116 +164,124 @@ export const CriterionCard: React.FC<CriterionCardProps> = ({
   policy,
   passingStatuses,
   evidenceRequired,
+  supportOpen,
   evidenceFiles,
   onUpdate,
   onAddEvidence,
   onRemoveEvidence,
   children,
 }) => {
+  const statuses = policy?.statuses ?? [];
   const passingLabel =
-    policy?.statuses.find((option) => passingStatuses.includes(option.value))
-      ?.label ?? "Met";
-  const checks = gateChecks(result, passingLabel);
+    statuses.find((option) => passingStatuses.includes(option.value))?.label ??
+    "Met";
+  const statusLabel = statuses.find(
+    (option) => option.value === progress.status,
+  )?.label;
+  const decided = progress.status !== "not-assessed";
+  const passing = passingStatuses.includes(progress.status);
+  const outstanding = outstandingParts(result);
   const questionCount = result?.questionIds.length ?? 0;
+  const headingId = `criterion-${criterion.id}`;
+
+  const supportIntro = supportIntroText(
+    passing,
+    passingLabel,
+    outstanding,
+    questionCount,
+  );
+
   return (
-    <Card
-      as="article"
-      padding="lg"
-      className={`evidence-assessment-criterion evidence-assessment-criterion--${criterionState(result)}`}
+    <article
+      aria-labelledby={headingId}
+      className={`evidence-criterion evidence-criterion--${criterionState(result)}`}
     >
-      <div className="evidence-assessment-item-title">
+      <header className="evidence-criterion__header">
         <span
+          className="evidence-criterion__number"
           title={`Criterion ${criterion.id}`}
-          aria-label={`Criterion ${criterion.id}`}
         >
           {criterionLabel(criterion.id)}
         </span>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {criterion.text}
-        </ReactMarkdown>
-      </div>
+        <div className="evidence-criterion__statement" id={headingId}>
+          <span className="pkimm-visually-hidden">
+            Criterion {criterion.id}:{" "}
+          </span>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {criterion.text}
+          </ReactMarkdown>
+        </div>
+        <StateChip
+          result={result}
+          status={progress.status}
+          statusLabel={statusLabel}
+          passingLabel={passingLabel}
+        />
+      </header>
 
-      {children ? (
-        <section className="evidence-assessment-criterion__section">
-          <h5>
-            {questionCount === 1
-              ? "Question for this criterion"
-              : `Questions for this criterion (${questionCount})`}
-          </h5>
-          <div className="evidence-assessment-criterion__questions">
-            {children}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="evidence-assessment-criterion__section">
-        {children ? <h5>Your conclusion</h5> : null}
+      <div className="evidence-criterion__decision">
         <ChoiceGroup
-          legend="Criterion status"
+          legend="Your conclusion"
           name={`status-${criterion.id}`}
-          options={policy?.statuses ?? []}
+          options={statuses}
           value={progress.status}
           onChange={(status) => onUpdate({ status })}
           passingValues={passingStatuses}
         />
-        {evidenceRequired ? (
-          <>
-            <TextArea
-              label={policy?.evidence.statementLabel ?? "Evidence"}
-              labelNote="or attach a file"
-              hint={policy?.evidence.statementHint}
-              rows={3}
-              value={progress.evidenceStatement}
-              onChange={(event) =>
-                onUpdate({ evidenceStatement: event.target.value })
-              }
-            />
-            <EvidenceAttachments
-              ownerLabel={`criterion ${criterion.id}`}
-              evidenceIds={progress.evidenceIds}
-              evidenceFiles={evidenceFiles}
-              onAdd={onAddEvidence}
-              onRemove={onRemoveEvidence}
-            />
-          </>
-        ) : (
-          <p className="evidence-assessment-level-zero-note">
-            Evidence is not required at this level. Mark every criterion{" "}
-            {passingLabel} to establish it.
-          </p>
-        )}
-        <TextArea
-          label="Notes and gaps"
-          labelNote="optional"
-          rows={2}
-          value={progress.notes}
-          onChange={(event) => onUpdate({ notes: event.target.value })}
-        />
-      </section>
+      </div>
 
-      {checks.length > 1 ? (
-        <ul
-          className="evidence-assessment-gate-checks"
-          aria-label="What this criterion needs to count"
+      {decided && supportOpen ? (
+        <section
+          className="evidence-criterion__support"
+          aria-label={`Support for criterion ${criterion.id}`}
         >
-          {checks.map((check) => (
-            <li
-              key={check.label}
+          {supportIntro ? (
+            <p
               className={
-                check.done
-                  ? "evidence-assessment-gate-checks__done"
-                  : "evidence-assessment-gate-checks__open"
+                passing
+                  ? "evidence-criterion__intro evidence-criterion__intro--warn"
+                  : "evidence-criterion__intro"
               }
             >
-              <span className="pkimm-visually-hidden">
-                {check.done ? "Done: " : "Still needed: "}
-              </span>
-              {check.label}
-            </li>
-          ))}
-        </ul>
+              {supportIntro}
+            </p>
+          ) : null}
+          {children ? (
+            <ol className="evidence-criterion__questions">{children}</ol>
+          ) : null}
+          {evidenceRequired ? (
+            <CriterionEvidence
+              criterionId={criterion.id}
+              policy={policy}
+              progress={progress}
+              evidenceFiles={evidenceFiles}
+              onUpdate={onUpdate}
+              onAddEvidence={onAddEvidence}
+              onRemoveEvidence={onRemoveEvidence}
+            />
+          ) : null}
+          <TextArea
+            label="Notes and gaps"
+            labelNote="optional"
+            rows={2}
+            value={progress.notes}
+            onChange={(event) => onUpdate({ notes: event.target.value })}
+          />
+        </section>
       ) : null}
-    </Card>
+
+      {decided && !supportOpen ? (
+        <div className="evidence-criterion__support evidence-criterion__support--plain">
+          <TextArea
+            label="What is missing?"
+            labelNote="optional"
+            rows={2}
+            value={progress.notes}
+            onChange={(event) => onUpdate({ notes: event.target.value })}
+          />
+        </div>
+      ) : null}
+    </article>
   );
 };
 
@@ -211,11 +299,30 @@ interface QuestionCardProps {
   ) => Promise<void>;
   onRemoveEvidence: (id: string) => void;
   /**
-   * Shown inside its criterion: a collapsible row whose summary carries the
-   * question and its current finding, instead of a card of its own.
+   * "step": a numbered item inside its criterion's support section (an
+   * <li>). "panel": just the form, for a side panel that shows the question
+   * itself. "card": a card of its own.
    */
-  nested?: boolean;
+  layout?: "card" | "step" | "panel";
 }
+
+const QuestionStatus: React.FC<{
+  complete: boolean;
+  started: boolean;
+}> = ({ complete, started }) => {
+  if (complete) {
+    return (
+      <span className="evidence-question__status evidence-question__status--ok">
+        Answered
+      </span>
+    );
+  }
+  return (
+    <span className="evidence-question__status">
+      {started ? "In progress" : "To answer"}
+    </span>
+  );
+};
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
@@ -226,37 +333,35 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   onUpdate,
   onAddEvidence,
   onRemoveEvidence,
-  nested = false,
+  layout = "card",
 }) => {
   const progress = savedProgress ?? emptyQuestionProgress();
   const definition = responseDefinition(question, kind, profile);
-  const responseIssues = savedProgress
-    ? questionResponseIssues(question, kind, profile, progress, evidenceFiles)
-    : [];
+  const issues = questionResponseIssues(
+    question,
+    kind,
+    profile,
+    progress,
+    evidenceFiles,
+  );
+  const started = Boolean(savedProgress);
   const defaults = profile.runtime.questions?.defaults[kind];
   const acceptsEvidence = Boolean(definition.evidence) || kind === "assessment";
-  const findings = profile.runtime.questions?.findings ?? [];
-  const finding = findings.find((option) => option.value === progress.finding);
+  const headingId = `question-${question.id}`;
 
   const body = (
     <>
       {question.guidance ? (
-        <details className="evidence-assessment-question__guidance">
-          <summary>Assessment guidance</summary>
+        <div className="evidence-question__guidance">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {question.guidance}
           </ReactMarkdown>
-        </details>
+        </div>
       ) : null}
       {/* A profile-defined response form already shows what is expected. */}
       {question.expectedInput && !question.response ? (
-        <p>
-          <strong>Expected input:</strong> {question.expectedInput}
-        </p>
-      ) : null}
-      {question.purpose ? (
-        <p className="evidence-assessment-question__purpose">
-          <strong>Purpose:</strong> {question.purpose}
+        <p className="evidence-question__guidance">
+          Expected: {question.expectedInput}
         </p>
       ) : null}
       <QuestionResponseFields
@@ -266,16 +371,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         progress={progress}
         onChange={onUpdate}
       />
-      {responseIssues.length > 0 ? (
-        <div className="evidence-assessment-question__issues">
-          <p>To complete this answer</p>
-          <ul>
-            {responseIssues.map((issue) => (
-              <li key={issue}>{issue}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
       {acceptsEvidence ? (
         <EvidenceAttachments
           ownerLabel={`question ${question.id}`}
@@ -299,43 +394,52 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           maxFiles={definition.evidence?.maxFiles}
         />
       ) : null}
+      {started && issues.length > 0 ? (
+        <div className="evidence-question__issues">
+          <p>Still needed for this answer:</p>
+          <ul>
+            {issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </>
   );
 
-  if (nested) {
-    return (
-      <details className="evidence-assessment-question evidence-assessment-question--nested">
-        <summary>
-          <span className="evidence-assessment-question__id">
-            {question.id}
-          </span>
-          <span className="evidence-assessment-question__text">
-            {plainText(question.question)}
-          </span>
-          {finding ? (
-            <span
-              className={`evidence-assessment-question__finding evidence-assessment-question__finding--${choiceTone(
-                finding.value,
-                passingQuestionFindings(profile),
-              )}`}
-            >
-              {finding.label}
-            </span>
-          ) : null}
-        </summary>
-        <div className="evidence-assessment-question__body">{body}</div>
-      </details>
-    );
-  }
-
-  return (
-    <Card as="article" padding="lg" className="evidence-assessment-question">
-      <div className="evidence-assessment-item-title">
-        <span>{question.id}</span>
+  const header = (
+    <header className="evidence-question__header">
+      <div className="evidence-question__text" id={headingId}>
+        <span className="evidence-question__id">{question.id}</span>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {question.question}
         </ReactMarkdown>
       </div>
+      <QuestionStatus complete={issues.length === 0} started={started} />
+    </header>
+  );
+
+  if (layout === "panel") {
+    return <div className="evidence-question">{body}</div>;
+  }
+
+  if (layout === "step") {
+    return (
+      <li className="evidence-question" aria-labelledby={headingId}>
+        {header}
+        {body}
+      </li>
+    );
+  }
+
+  return (
+    <Card
+      as="article"
+      padding="lg"
+      className="evidence-question evidence-question--card"
+      aria-labelledby={headingId}
+    >
+      {header}
       {body}
     </Card>
   );

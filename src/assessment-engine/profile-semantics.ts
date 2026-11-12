@@ -63,6 +63,19 @@ const validateSubjectPolicy = (profile: AssessmentProfileData): void => {
     }
   }
 
+  const groups = profile.runtime.subjectGroups ?? [];
+  assertUnique(
+    groups.map(({ id }) => id),
+    "Subject group ids must be unique.",
+  );
+  const groupedFields = groups.flatMap((group) => group.fields);
+  assertUnique(groupedFields, "A subject field may belong to one group only.");
+  for (const field of groupedFields) {
+    if (!knownFields.has(field)) {
+      throw new Error(`Subject group references unknown field: ${field}`);
+    }
+  }
+
   for (const format of ["cpe-2.3", "package-url"] as const) {
     if (fields.filter((field) => field.format === format).length > 1) {
       throw new Error(`Only one ${format} subject field may be configured.`);
@@ -190,8 +203,19 @@ const validateGatedExperience = (profile: AssessmentProfileData): void => {
   const passingQuestionFindings = parameters.passingQuestionFindings;
   const questionFindingValues =
     profile.runtime.questions?.findings.map(({ value }) => value) ?? [];
+  const findingMode = parameters.questionFindingMode;
+  if (
+    findingMode !== undefined &&
+    findingMode !== "explicit" &&
+    findingMode !== "derived"
+  ) {
+    throw new Error(
+      'questionFindingMode must be "explicit" or "derived" when set.',
+    );
+  }
   const questionParametersMatch =
     profile.schemaVersion === "1.0.0" ||
+    findingMode === "derived" ||
     (Array.isArray(passingQuestionFindings) &&
       passingQuestionFindings.length > 0 &&
       passingQuestionFindings.every(
@@ -220,6 +244,14 @@ const validateGatedExperience = (profile: AssessmentProfileData): void => {
     throw new Error(
       "Cumulative gate parameters must match the declared criterion, question, evidence, and level policies.",
     );
+  }
+  const statusValues = new Set(criterion.statuses.map(({ value }) => value));
+  for (const status of criterion.questionsForStatuses ?? []) {
+    if (!statusValues.has(status)) {
+      throw new Error(
+        `questionsForStatuses references unknown criterion status: ${status}`,
+      );
+    }
   }
   validateEvidencePolicy(profile);
 };
