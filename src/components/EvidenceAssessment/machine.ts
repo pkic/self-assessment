@@ -33,8 +33,10 @@ import type {
   EvidenceAssessmentRecord,
   EvidenceModelData,
 } from "./types";
+import { questionFindingsExplicit } from "./assessmentView";
 import {
   emptyQuestionProgress,
+  exportedFinding,
   questionResponseSummary,
   responseDefinition,
 } from "./questionResponse";
@@ -382,13 +384,50 @@ const evidenceReviewStatus = (
     ? "provided-not-reviewed"
     : "not-provided";
 
+/**
+ * With derived findings, replaces each stored question finding with the one
+ * its answer implies, so the exported package, and the digest over it, carry
+ * the same per-question vocabulary as an assessment with explicit findings.
+ */
+const withDerivedFindings = (
+  model: EvidenceModelData,
+  profile: AssessmentProfileData,
+  record: EvidenceAssessmentRecord,
+): EvidenceAssessmentRecord => {
+  if (questionFindingsExplicit(profile)) return record;
+  const questionProgress = { ...record.questionProgress };
+  for (const level of model.levels) {
+    for (const group of level.assessment.groups) {
+      for (const question of group.questions) {
+        const progress = questionProgress[question.id];
+        if (!progress) continue;
+        questionProgress[question.id] = {
+          ...progress,
+          finding: exportedFinding(
+            profile,
+            question,
+            group.kind,
+            progress,
+            record.evidenceFiles,
+          ),
+        };
+      }
+    }
+  }
+  return { ...record, questionProgress };
+};
+
 export const buildAssessmentPackage = async (
   model: EvidenceModelData,
   profile: AssessmentProfileData,
   record: EvidenceAssessmentRecord,
   includeEvidenceContent: boolean,
 ): Promise<AssessmentPackage<AssessmentCredentialSubject>> => {
-  const normalized = normalizeEvidenceRecord(model, record);
+  const normalized = withDerivedFindings(
+    model,
+    profile,
+    normalizeEvidenceRecord(model, record),
+  );
   assertValidAssessmentSubject(profile, normalized.subject);
   currentAssuranceProfile(profile, normalized.assuranceProfileId);
   assertRecordEvidencePolicy(model, normalized, profile);
@@ -457,7 +496,8 @@ export const buildAssessmentPackage = async (
         level.assessment.groups.flatMap((group) =>
           group.questions.map((question) => {
             const progress =
-              record.questionProgress[question.id] ?? emptyQuestionProgress();
+              normalized.questionProgress[question.id] ??
+              emptyQuestionProgress();
             const definition = responseDefinition(
               question,
               group.kind,
@@ -623,7 +663,11 @@ export const parseAssessmentPackage = async (
     (await assessmentPayloadSha256(
       model.model.id,
       profile,
-      normalizeEvidenceRecord(model, restored),
+      withDerivedFindings(
+        model,
+        profile,
+        normalizeEvidenceRecord(model, restored),
+      ),
     )) !== subject.integrity.payloadSha256
   ) {
     throw new Error("Assessment payload digest mismatch.");

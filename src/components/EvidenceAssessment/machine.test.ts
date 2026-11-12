@@ -107,15 +107,18 @@ describe("PQCMM machine-readable assessments", () => {
     expect(restored.criterionProgress["1.1.1"]).toEqual(
       assessment.criterionProgress["1.1.1"],
     );
-    expect(restored.questionProgress["0.2.1"]).toEqual(
-      assessment.questionProgress["0.2.1"],
-    );
+    // A complete answer exports as "supports" without anyone setting a
+    // finding, so self and third-party packages share one vocabulary.
+    expect(restored.questionProgress["0.2.1"]).toEqual({
+      ...assessment.questionProgress["0.2.1"],
+      finding: "supports",
+    });
     expect(
       exported.credential.credentialSubject.responses.find(
         (response) => response.id === "0.2.1",
       ),
     ).toMatchObject({
-      finding: "not-assessed",
+      finding: "supports",
       values: { targetDate: "2027-06-30" },
     });
     expect(restored.evidenceFiles).toEqual(assessment.evidenceFiles);

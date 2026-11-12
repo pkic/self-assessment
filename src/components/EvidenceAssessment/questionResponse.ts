@@ -1,4 +1,7 @@
-import { questionFindingsExplicit } from "./assessmentView";
+import {
+  passingQuestionFindings,
+  questionFindingsExplicit,
+} from "./assessmentView";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import {
   hasQuestionValue,
@@ -163,3 +166,24 @@ export const questionResponseSummary = (
       return `${field.label}: ${rendered}`;
     })
     .join("\n");
+
+/**
+ * The finding written to an exported package. With explicit findings it is
+ * the one recorded; with derived findings it is the profile's first passing
+ * finding once the answer is complete, so every package carries the same
+ * per-question vocabulary whoever made the assessment.
+ */
+export const exportedFinding = (
+  profile: AssessmentProfileData,
+  question: EvidenceQuestion,
+  kind: EvidenceQuestionGroup["kind"],
+  progress: EvidenceQuestionProgress,
+  evidenceFiles: AssessmentEvidenceFile[],
+): string => {
+  if (questionFindingsExplicit(profile)) return progress.finding;
+  const supports = passingQuestionFindings(profile)[0];
+  return supports &&
+    questionIsAnswered(question, kind, profile, progress, evidenceFiles)
+    ? supports
+    : "not-assessed";
+};

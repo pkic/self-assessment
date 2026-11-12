@@ -4,6 +4,7 @@ import { parseAssessmentProfile } from "../../assessment-engine/profile";
 import { parseEvidenceModel } from "./model";
 import {
   emptyQuestionProgress,
+  exportedFinding,
   questionResponseIssues,
 } from "./questionResponse";
 import type { AssessmentEvidenceFile } from "./types";
@@ -138,5 +139,23 @@ describe("typed assessment question responses", () => {
         [file],
       ),
     ).toContain("SPDX or CycloneDX SBOM contains an unsupported file type.");
+  });
+});
+
+describe("exportedFinding", () => {
+  it("derives the finding from a complete answer instead of storing one", () => {
+    const { question: item, kind } = question("1.2.3");
+    const empty = emptyQuestionProgress();
+    expect(exportedFinding(profile, item, kind, empty, [])).toBe(
+      "not-assessed",
+    );
+    const answered = {
+      ...empty,
+      values: { details: "Available to every customer on the stable plan." },
+    };
+    expect(questionResponseIssues(item, kind, profile, answered, [])).toEqual(
+      [],
+    );
+    expect(exportedFinding(profile, item, kind, answered, [])).toBe("supports");
   });
 });

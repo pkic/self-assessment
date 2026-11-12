@@ -50,10 +50,17 @@
     -webkit-appearance: none;
     appearance: none;
     display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     min-height: 2.4rem;
     text-align: left;
   }
+  // The inner value box carries its own margin and centring on iOS; reset
+  // both so the control can't grow past the card edge.
   &::-webkit-date-and-time-value {
+    min-width: 0;
+    margin: 0;
     text-align: left;
   }
 
