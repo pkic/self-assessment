@@ -1,4 +1,19 @@
+# PQCMM self-assessment profile
+#
+# Settings for the PQCMM assessment tool: the details it asks about the
+# assessed product, how answers and evidence are recorded, which assurance
+# levels exist, and how the report is signed. The criteria and questions
+# themselves are in model/pqcmm-model.yaml; this profile only decides how the
+# tool presents and records them, so it has its own version.
+#
+# Every field is described in schemas/assessment-profile.schema.json.
+
 schemaVersion: 1.1.0
+
+# ============================================================================
+# Profile
+# ============================================================================
+# Which model and model version this profile assesses.
 profile:
   id: pqcmm-self-assessment
   version: 1.1.0
@@ -8,8 +23,16 @@ profile:
     version: 1.1.0
   title: PQCMM Assessment
   description: Product and service evidence assessment. Data never leaves this browser unless the user exports it.
+
+# ============================================================================
+# Assessment
+# ============================================================================
+# How the tool runs an assessment and what it records.
 runtime:
   experience: evidence-gated-maturity
+
+  # How the achieved level is calculated: levels build on each other, and from
+  # Level 1 a criterion can only be Met with evidence.
   methodology:
     strategy: cumulative-gates
     version: 1.0.0
@@ -21,21 +44,29 @@ runtime:
       defaultBaselineStatus: met
       evidenceRequiredFromLevel: 1
       passingQuestionFindings: [supports]
+
+  # Details about the assessed product or service, asked before the assessment starts.
   subjectFields:
-    - { key: name, label: Assessment name, component: text, required: false }
-    - {
-        key: productName,
-        label: Product or service,
-        component: text,
-        required: true,
-      }
-    - {
-        key: productVersion,
-        label: Product version or release,
-        component: text,
-        required: true,
-      }
-    - { key: vendorName, label: Vendor, component: text, required: false }
+    - key: name
+      label: Assessment name
+      component: text
+      required: false
+
+    - key: productName
+      label: Product or service
+      component: text
+      required: true
+
+    - key: productVersion
+      label: Product version or release
+      component: text
+      required: true
+
+    - key: vendorName
+      label: Vendor
+      component: text
+      required: false
+
     - key: cpe
       label: CPE 2.3 name
       component: text
@@ -47,53 +78,56 @@ runtime:
         vendorField: vendorName
         productField: productName
         versionField: productVersion
+
     - key: purl
       label: Package URL (pURL)
       component: text
       required: false
       format: package-url
       hint: Canonical package URL beginning with pkg:, for example pkg:maven/org.example/product@1.2.3.
+
     - key: deploymentScope
       label: Deployment scope and configurations
       component: textarea
       rows: 3
       required: false
-    - {
-        key: assessorName,
-        label: Person completing the assessment,
-        component: text,
-        required: false,
-      }
-    - {
-        key: assessorOrganization,
-        label: Assessor organization,
-        component: text,
-        required: false,
-        defaultFrom: vendorName,
-      }
-    - {
-        key: assessmentDate,
-        label: Assessment date,
-        component: date,
-        required: true,
-      }
+
+    - key: assessorName
+      label: Person completing the assessment
+      component: text
+      required: false
+
+    - key: assessorOrganization
+      label: Assessor organization
+      component: text
+      required: false
+      defaultFrom: vendorName
+
+    - key: assessmentDate
+      label: Assessment date
+      component: date
+      required: true
+
+  # Checks across those details.
   subjectRules:
     - kind: at-least-one
       fields: [cpe, purl]
       message: Provide at least one canonical CPE 2.3 name or package URL (pURL) so the assessed solution can be matched in inventories.
+
+  # How each assessment question is answered: the possible findings, and the
+  # default answer field and evidence request for assessment and intake questions.
   questions:
     findings:
-      - { value: not-assessed, label: Not assessed }
-      - { value: supports, label: Supports the assessment conclusion }
-      - {
-          value: partially-supports,
-          label: Partially supports the assessment conclusion,
-        }
-      - {
-          value: does-not-support,
-          label: Does not support the assessment conclusion,
-        }
-      - { value: not-applicable, label: Not applicable }
+      - value: not-assessed
+        label: Not assessed
+      - value: supports
+        label: Supports the assessment conclusion
+      - value: partially-supports
+        label: Partially supports the assessment conclusion
+      - value: does-not-support
+        label: Does not support the assessment conclusion
+      - value: not-applicable
+        label: Not applicable
     requiredForKinds: [assessment]
     defaults:
       assessment:
@@ -110,12 +144,19 @@ runtime:
         required: true
         evidenceLabel: Supporting document for this intake question
         evidenceDescription: Attach only the document requested by the question, when applicable.
+
+  # How each criterion is recorded: its possible statuses and the evidence a Met
+  # status requires.
   criterion:
     statuses:
-      - { value: not-assessed, label: Not assessed }
-      - { value: met, label: Met }
-      - { value: partial, label: Partial }
-      - { value: not-met, label: Not met }
+      - value: not-assessed
+        label: Not assessed
+      - value: met
+        label: Met
+      - value: partial
+        label: Partial
+      - value: not-met
+        label: Not met
     evidence:
       requiredForStatuses: [met]
       requiredFromLevel: 1
@@ -125,8 +166,16 @@ runtime:
       maxPackageBytes: 104857600
       acceptedMediaTypes: ["*/*"]
       validators: [sha256-integrity, reference-presence]
+
+# ============================================================================
+# Assurance
+# ============================================================================
+# Who stands behind the result. The browser tool only issues self-assessments;
+# third-party assessment and certification need the external PKI Consortium workflow.
 assurance:
   defaultProfile: self
+
+  # The assurance levels, from self-assessment to PKI Consortium certification.
   profiles:
     - id: self
       label: Self-assessment
@@ -141,46 +190,34 @@ assurance:
         signerRole: Accountable executive
         method: external-digital-signature
         declaration: I am an executive accountable for the assessed product or service. I accept accountability for this self-assessment and declare that, to the best of my knowledge, it was completed honestly, accurately, and without knowingly omitting material facts.
+
     - id: qualified-third-party
       label: Qualified third-party assessment
       reportLabel: Qualified third-party assessment
       availability: external-workflow
       independentVerification: true
       certification: false
-      requiredFacets:
-        [
-          identity,
-          organization-binding,
-          role-authority,
-          document-signature,
-          trusted-time,
-          evidence-review,
-          assessor-qualification,
-        ]
+      requiredFacets: [identity, organization-binding, role-authority, document-signature, trusted-time, evidence-review, assessor-qualification]
       notice: Qualification and assessor signature must be verified by the PKI Consortium service before this assurance label can be issued.
       attestation:
         enabled: true
         signerRole: Qualified assessor
         method: external-digital-signature
         declaration: I performed this assessment independently and attest that the report accurately records the evidence reviewed and conclusions reached.
+
     - id: pkic-certified
       label: PKI Consortium certified
       reportLabel: PKI Consortium certified assessment
       availability: external-workflow
       independentVerification: true
       certification: true
-      requiredFacets:
-        [
-          identity,
-          organization-binding,
-          role-authority,
-          document-signature,
-          trusted-time,
-          evidence-review,
-          assessor-qualification,
-          certification-issuance,
-        ]
+      requiredFacets: [identity, organization-binding, role-authority, document-signature, trusted-time, evidence-review, assessor-qualification, certification-issuance]
       notice: This status can only be issued by the future PKI Consortium review, signing, publication, and status service.
+
+# ============================================================================
+# Report
+# ============================================================================
+# The PDF report and its optional signatures.
 report:
   title: PQCMM Self-Assessment Report
   claimLabel: Claimed maturity level
@@ -188,6 +225,8 @@ report:
   includeEvidenceAttachments: true
   includeEvidenceManifest: true
   includeAttestation: true
+
+  # Signatures are applied outside the browser (PAdES); none are required.
   signing:
     format: PAdES
     fields:
@@ -204,6 +243,11 @@ report:
     trustedTime: signature-or-document-timestamp
     acceptedAuthorityEvidence:
       [vlei-oor, vlei-ecr, eudi-wallet-credential, manually-verified-authority]
+
+# ============================================================================
+# Future services
+# ============================================================================
+# Planned PKI Consortium submission service; not part of the tool yet.
 futureServices:
   pkicSubmission:
     implemented: false
