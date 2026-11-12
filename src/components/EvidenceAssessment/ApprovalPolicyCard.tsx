@@ -24,14 +24,12 @@ export const ApprovalPolicyCard: React.FC<Props> = ({
       <details className="evidence-assessment-assurance-details">
         <summary>
           <span className="evidence-assessment-disclosure__text">
-            <span
+            <h3
               id="evidence-assessment-assurance-heading"
               className="evidence-assessment-disclosure__title"
-              role="heading"
-              aria-level={3}
             >
               Assurance and formal approval
-            </span>
+            </h3>
             <span className="evidence-assessment-assurance-label">
               {assurance.reportLabel}
             </span>

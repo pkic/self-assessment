@@ -29,7 +29,14 @@
   border: 1px solid var(--pkimm-border-color);
   border-radius: var(--pkimm-border-radius-md);
   padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 
   &:is(textarea) {
     resize: vertical;

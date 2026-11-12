@@ -233,17 +233,25 @@
 }
 
 .evidence-progress__meter {
+  display: block;
+  width: 100%;
   height: 0.45rem;
   overflow: hidden;
+  appearance: none;
   background: color-mix(in srgb, var(--evidence-step-color) 18%, transparent);
+  border: 0;
   border-radius: var(--pkimm-border-radius-pill);
-
-  span {
-    display: block;
-    height: 100%;
-    background: var(--evidence-step-color);
-    border-radius: inherit;
-  }
+}
+.evidence-progress__meter::-webkit-progress-bar {
+  background: transparent;
+}
+.evidence-progress__meter::-webkit-progress-value {
+  background: var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-pill);
+}
+.evidence-progress__meter::-moz-progress-bar {
+  background: var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-pill);
 }
 
 .evidence-progress__outstanding {
@@ -499,5 +507,15 @@
   }
   .evidence-level-strip .evidence-progress__step--next button {
     border: 2px solid var(--evidence-step-color);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evidence-progress__bar,
+  .evidence-progress__fill {
+    transition: none;
+  }
+  .evidence-progress__step button:hover .evidence-progress__bar {
+    transform: none;
   }
 }

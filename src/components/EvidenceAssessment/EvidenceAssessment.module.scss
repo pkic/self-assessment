@@ -252,6 +252,7 @@
 .evidence-assessment-disclosure__title {
   font-size: 1.1rem;
   font-weight: 700;
+  margin: 0;
 }
 
 .evidence-assessment-disclosure__summary {
@@ -327,9 +328,6 @@
 .evidence-assessment-level-panel {
   display: grid;
   gap: var(--pkimm-space-lg);
-}
-
-.evidence-assessment-level-panel {
   scroll-margin-top: calc(var(--pkimm-sticky-top-offset) + 4.5rem);
 }
 
@@ -652,6 +650,13 @@
 }
 .evidence-assessment-checklist li > p {
   margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evidence-assessment-disclosure::after,
+  .evidence-assessment-assurance-details > summary::after {
+    transition: none;
+  }
 }
 
 @media (max-width: 1100px) {

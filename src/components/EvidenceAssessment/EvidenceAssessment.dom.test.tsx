@@ -42,7 +42,7 @@ describe("EvidenceAssessment", () => {
       screen.getByRole("progressbar", {
         name: /level 1.*criteria completion/i,
       }),
-    ).toHaveAttribute("aria-valuenow", "0");
+    ).toHaveAttribute("value", "0");
     expect(screen.getByText("Next: Level 1 · Initial")).toBeInTheDocument();
     expect(
       within(

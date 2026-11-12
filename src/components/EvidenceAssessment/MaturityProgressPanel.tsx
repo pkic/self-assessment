@@ -6,7 +6,7 @@ import {
 } from "../../assessment-engine/visualizations/maturityGates";
 import { Button } from "../ui";
 import "./MaturityProgressPanel.module.scss";
-import { criterionLabel } from "./criterionLabel";
+import { criterionLabel, plainText } from "./criterionLabel";
 
 export interface ProgressOption {
   value: string;
@@ -61,14 +61,6 @@ export const levelStyleVars = (colorIndex: number): React.CSSProperties =>
     "--evidence-step-color": levelColor(colorIndex),
     "--evidence-step-ink": levelInk(colorIndex),
   }) as React.CSSProperties;
-
-/** Strips the Markdown the model uses so criterion text reads as a label. */
-export const plainText = (markdown: string): string =>
-  markdown
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/[*_`>#]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
 
 const levelStyle = (
   level: MaturityGateLevel,
@@ -194,17 +186,13 @@ export const MaturityProgressPanel: React.FC<Props> = ({
               {next.criteriaMet} of {next.criteriaTotal} criteria met
             </span>
           </div>
-          <div
+          <progress
             className="evidence-progress__meter"
-            role="progressbar"
             aria-label={`Level ${next.level} ${next.name} criteria completion`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={next.completionPercentage}
             aria-valuetext={`${next.criteriaMet} of ${next.criteriaTotal} criteria met`}
-          >
-            <span style={{ width: `${next.completionPercentage}%` }} />
-          </div>
+            max={100}
+            value={next.completionPercentage}
+          />
           {next.outstanding.length > 0 ? (
             <>
               <p className="evidence-progress__subheading">Still needed</p>
@@ -239,7 +227,8 @@ export const MaturityProgressPanel: React.FC<Props> = ({
             </Button>
           ) : null}
         </div>
-      ) : claimed ? (
+      ) : null}
+      {!next && claimed ? (
         <p className="evidence-progress__complete">
           Every level is established.
         </p>
@@ -267,7 +256,7 @@ export const MaturityProgressPanel: React.FC<Props> = ({
       {findings.length > 0 ? (
         <details className="evidence-progress__findings">
           <summary>
-            Question findings
+            <span>Question findings</span>
             <span
               className="evidence-progress__findings-bar"
               aria-hidden="true"
