@@ -582,8 +582,8 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
               hidden={!scopeExpanded}
             >
               <p className="evidence-assessment-muted">
-                Identify one product or service, including the released version
-                and deployment modes covered.
+                Identify the {model.model.subjectLabel.toLowerCase()} this
+                assessment covers.
               </p>
               <div className="evidence-assessment-field-grid">
                 {profile.runtime.subjectFields.map((field) => (

@@ -62,8 +62,8 @@ export const EvidenceLevelPage: React.FC<Props> = ({
       );
     })}
     <Text style={styles.subheading}>
-      {level.number === 0
-        ? "Supplier intake questions"
+      {level.assessment.groups.every((group) => group.kind === "intake")
+        ? "Intake questions"
         : "Assessment questions"}
     </Text>
     {level.assessment.groups.flatMap((group) =>
