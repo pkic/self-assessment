@@ -26,6 +26,10 @@ interface Props {
 }
 
 const MAX_OUTSTANDING = 3;
+// The engine's reason for a criterion nobody has rated yet. It is the common
+// case, so it is not repeated under every outstanding criterion; only reasons
+// that say what to fix (missing evidence, unsupported questions) are shown.
+const NOT_ASSESSED = "not-assessed";
 
 const maturityToken = (slot: number): string =>
   `var(--pkimm-maturity-level-${slot})`;
@@ -216,7 +220,7 @@ export const MaturityProgressPanel: React.FC<Props> = ({
                     <span>
                       {plainText(criterionText.get(item.criterionId) ?? "")}
                     </span>
-                    {item.reason ? (
+                    {item.reason && item.reason !== NOT_ASSESSED ? (
                       <small>{reasonLabel(item.reason)}</small>
                     ) : null}
                   </li>
