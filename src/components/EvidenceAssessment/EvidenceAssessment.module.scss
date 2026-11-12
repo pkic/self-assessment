@@ -886,21 +886,74 @@
     grid-column: 1 / -1;
   }
 }
-.evidence-assessment-question__multi-select {
+/* Multiselect: options flow in columns; entries added by hand follow. */
+.evidence-multi {
   display: grid;
-  gap: var(--pkimm-space-xs);
+  gap: var(--pkimm-space-sm);
+  min-width: 0;
   margin: 0;
-  padding: var(--pkimm-space-sm);
-  border: 1px solid var(--pkimm-border-color);
-  border-radius: var(--pkimm-border-radius-sm);
-  legend {
-    padding: 0 var(--pkimm-space-xs);
+  padding: 0;
+  border: 0;
+
+  > legend {
+    margin-bottom: var(--pkimm-space-xs);
+    padding: 0;
+    font-size: 0.95rem;
     font-weight: 600;
   }
+}
+.evidence-multi__hint {
+  margin: 0;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.8rem;
+}
+.evidence-multi__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+  gap: var(--pkimm-space-2xs) var(--pkimm-space-md);
+
   label {
     display: flex;
-    align-items: center;
     gap: var(--pkimm-space-xs);
+    align-items: center;
+    min-height: 1.75rem;
+    font-size: 0.9rem;
+  }
+  input {
+    accent-color: var(--pkimm-primary-color);
+  }
+}
+.evidence-multi__custom {
+  display: grid;
+  gap: var(--pkimm-space-xs);
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pkimm-space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pkimm-space-2xs);
+    padding-left: var(--pkimm-space-sm);
+    background: var(--pkimm-surface-color-alt);
+    border: 1px solid var(--pkimm-border-color);
+    border-radius: var(--pkimm-border-radius-pill);
+    font-size: 0.9rem;
+  }
+}
+.evidence-multi__add {
+  display: flex;
+  gap: var(--pkimm-space-sm);
+  align-items: end;
+  max-width: 28rem;
+
+  > .pkimm-field {
+    flex: 1;
   }
 }
 /* What an answer still needs: guidance while the user works, not an error. */

@@ -48,6 +48,8 @@ export interface EvidenceQuestionField {
   allowedUnits?: DurationUnit[];
   presentation?: FieldPresentation;
   options?: { value: string; label: string }[];
+  /** A multiselect that also accepts entries not in its options. */
+  allowCustom?: boolean;
 }
 
 export interface EvidenceQuestionResponse {

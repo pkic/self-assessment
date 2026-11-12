@@ -308,20 +308,63 @@ levels:
           questions:
             - id: 1.2.1
               question: Which quantum-safe algorithms are available for testing and evaluation?
-              guidance: "Record exact algorithm names and parameter sets (e.g., ML-KEM-768, ML-DSA-65 — not just \"ML-KEM\" or \"PQC\"). Request two URLs: (a) the product documentation page describing the feature; (b) the release notes for the version that introduced it. Both must be accessible to the assessor and must cover the assessed product version — not a future or generic version. Record the product version, both URLs, and the date accessed."
+              guidance: "Record exact algorithm names and parameter sets (e.g., ML-KEM-768, ML-DSA-65 — not just \"ML-KEM\" or \"PQC\"). Request two URLs: (a) the product documentation page describing the feature; (b) the release notes for the version that introduced it. Both must be accessible to the assessor and must cover the assessed product version — not a future or generic version. Record both URLs and the date accessed."
               # Answer form shown by the assessment tool.
               response:
                 fields:
                   - key: algorithms
                     label: Algorithms and parameter sets available for evaluation
-                    type: textarea
-                    rows: 3
+                    type: multiselect
                     required: true
-                    hint: Record exact names such as ML-KEM-768 or ML-DSA-65, not "ML-KEM" or "PQC".
-                  - key: productVersion
-                    label: Product version covered
-                    type: text
-                    required: true
+                    allowCustom: true
+                    hint: Tick every parameter set that is available. Add anything not listed, such as other hybrid groups or composite signatures.
+                    options:
+                      - value: ML-KEM-512
+                        label: ML-KEM-512
+                      - value: ML-KEM-768
+                        label: ML-KEM-768
+                      - value: ML-KEM-1024
+                        label: ML-KEM-1024
+                      - value: ML-DSA-44
+                        label: ML-DSA-44
+                      - value: ML-DSA-65
+                        label: ML-DSA-65
+                      - value: ML-DSA-87
+                        label: ML-DSA-87
+                      - value: SLH-DSA-SHA2-128s
+                        label: SLH-DSA-SHA2-128s
+                      - value: SLH-DSA-SHA2-128f
+                        label: SLH-DSA-SHA2-128f
+                      - value: SLH-DSA-SHA2-192s
+                        label: SLH-DSA-SHA2-192s
+                      - value: SLH-DSA-SHA2-192f
+                        label: SLH-DSA-SHA2-192f
+                      - value: SLH-DSA-SHA2-256s
+                        label: SLH-DSA-SHA2-256s
+                      - value: SLH-DSA-SHA2-256f
+                        label: SLH-DSA-SHA2-256f
+                      - value: SLH-DSA-SHAKE-128s
+                        label: SLH-DSA-SHAKE-128s
+                      - value: SLH-DSA-SHAKE-128f
+                        label: SLH-DSA-SHAKE-128f
+                      - value: SLH-DSA-SHAKE-192s
+                        label: SLH-DSA-SHAKE-192s
+                      - value: SLH-DSA-SHAKE-192f
+                        label: SLH-DSA-SHAKE-192f
+                      - value: SLH-DSA-SHAKE-256s
+                        label: SLH-DSA-SHAKE-256s
+                      - value: SLH-DSA-SHAKE-256f
+                        label: SLH-DSA-SHAKE-256f
+                      - value: LMS/HSS
+                        label: LMS/HSS
+                      - value: XMSS/XMSS^MT
+                        label: XMSS/XMSS^MT
+                      - value: X25519MLKEM768
+                        label: X25519MLKEM768
+                      - value: SecP256r1MLKEM768
+                        label: SecP256r1MLKEM768
+                      - value: SecP384r1MLKEM1024
+                        label: SecP384r1MLKEM1024
                   - key: documentationUrl
                     label: Product documentation URL for the feature
                     type: url
@@ -384,17 +427,13 @@ levels:
 
             - id: 1.2.4
               question: Is the quantum-safe feature accessible without custom builds or source-code modification?
-              guidance: "The assessor should attempt to reproduce the access path using the standard product release, following the documented steps. Record: the steps followed, the product version, the environment, and whether the reproduction succeeded. A feature that cannot be accessed by following its published documentation fails this check."
+              guidance: "The assessor should attempt to reproduce the access path using the standard product release, following the documented steps. Record: the steps followed, the environment, and whether the reproduction succeeded. A feature that cannot be accessed by following its published documentation fails this check."
               # Answer form shown by the assessment tool.
               response:
                 fields:
                   - key: accessibleWithoutCustomBuild
                     label: Feature is accessible without custom builds or source-code modification
                     type: boolean
-                    required: true
-                  - key: productVersion
-                    label: Product version used for the reproduction attempt
-                    type: text
                     required: true
                   - key: environment
                     label: Environment type
@@ -681,19 +720,63 @@ levels:
           questions:
             - id: 2.2.1
               question: Which quantum-safe algorithms are available in the stable/production release? Name the specific algorithms and parameter sets.
-              guidance: Record exact names (e.g., ML-KEM-768, ML-DSA-65 — not "ML-KEM" or "full PQC support"). Request the release notes URL for the production release that introduced or confirmed GA status. Confirm the URL covers the assessed product version. Record the product version, release notes URL, and date accessed.
+              guidance: Record exact names (e.g., ML-KEM-768, ML-DSA-65 — not "ML-KEM" or "full PQC support"). Request the release notes URL for the production release that introduced or confirmed GA status. Confirm the URL covers the assessed product version. Record the release notes URL and date accessed.
               # Answer form shown by the assessment tool.
               response:
                 fields:
                   - key: algorithms
                     label: Algorithms and parameter sets in the production release
-                    type: textarea
-                    rows: 3
+                    type: multiselect
                     required: true
-                  - key: productVersion
-                    label: Production product version
-                    type: text
-                    required: true
+                    allowCustom: true
+                    hint: Tick every parameter set that is available. Add anything not listed, such as other hybrid groups or composite signatures.
+                    options:
+                      - value: ML-KEM-512
+                        label: ML-KEM-512
+                      - value: ML-KEM-768
+                        label: ML-KEM-768
+                      - value: ML-KEM-1024
+                        label: ML-KEM-1024
+                      - value: ML-DSA-44
+                        label: ML-DSA-44
+                      - value: ML-DSA-65
+                        label: ML-DSA-65
+                      - value: ML-DSA-87
+                        label: ML-DSA-87
+                      - value: SLH-DSA-SHA2-128s
+                        label: SLH-DSA-SHA2-128s
+                      - value: SLH-DSA-SHA2-128f
+                        label: SLH-DSA-SHA2-128f
+                      - value: SLH-DSA-SHA2-192s
+                        label: SLH-DSA-SHA2-192s
+                      - value: SLH-DSA-SHA2-192f
+                        label: SLH-DSA-SHA2-192f
+                      - value: SLH-DSA-SHA2-256s
+                        label: SLH-DSA-SHA2-256s
+                      - value: SLH-DSA-SHA2-256f
+                        label: SLH-DSA-SHA2-256f
+                      - value: SLH-DSA-SHAKE-128s
+                        label: SLH-DSA-SHAKE-128s
+                      - value: SLH-DSA-SHAKE-128f
+                        label: SLH-DSA-SHAKE-128f
+                      - value: SLH-DSA-SHAKE-192s
+                        label: SLH-DSA-SHAKE-192s
+                      - value: SLH-DSA-SHAKE-192f
+                        label: SLH-DSA-SHAKE-192f
+                      - value: SLH-DSA-SHAKE-256s
+                        label: SLH-DSA-SHAKE-256s
+                      - value: SLH-DSA-SHAKE-256f
+                        label: SLH-DSA-SHAKE-256f
+                      - value: LMS/HSS
+                        label: LMS/HSS
+                      - value: XMSS/XMSS^MT
+                        label: XMSS/XMSS^MT
+                      - value: X25519MLKEM768
+                        label: X25519MLKEM768
+                      - value: SecP256r1MLKEM768
+                        label: SecP256r1MLKEM768
+                      - value: SecP384r1MLKEM1024
+                        label: SecP384r1MLKEM1024
                   - key: releaseNotesUrl
                     label: Release notes URL confirming general availability
                     type: url
@@ -747,7 +830,7 @@ levels:
 
             - id: 2.2.5
               question: Has the vendor declared this feature generally available (GA) in the product's stable release channel?
-              guidance: "Record the release notes URL or changelog entry, the GA date, the product version, and the stable release channel identifier. The distinction between Level 1 and Level 2 is the **release channel**, not adoption: the feature must be present in a stable, generally available release available to all customers — not in a beta, preview, or experimental channel. A GA declaration without a dated, versioned written document reference is not independently verifiable."
+              guidance: "Record the release notes URL or changelog entry, the GA date, the first generally available version, and the stable release channel identifier. The distinction between Level 1 and Level 2 is the **release channel**, not adoption: the feature must be present in a stable, generally available release available to all customers — not in a beta, preview, or experimental channel. A GA declaration without a dated, versioned written document reference is not independently verifiable."
               # Answer form shown by the assessment tool.
               response:
                 fields:
@@ -760,7 +843,7 @@ levels:
                     type: date
                     required: true
                   - key: productVersion
-                    label: Product version at general availability
+                    label: First generally available version
                     type: text
                     required: true
                   - key: releaseChannel
@@ -1075,9 +1158,9 @@ levels:
                     label: Cryptographic inventory version
                     type: text
                     required: true
-                  - key: productVersion
-                    label: Product version covered
-                    type: text
+                  - key: coversAssessedVersion
+                    label: Covers the assessed product version
+                    type: boolean
                     required: true
                   - key: lastUpdated
                     label: Inventory last updated
@@ -1755,9 +1838,9 @@ levels:
                     label: CBOM generation date
                     type: date
                     required: true
-                  - key: productVersion
-                    label: Product version covered
-                    type: text
+                  - key: coversAssessedVersion
+                    label: Covers the assessed product version
+                    type: boolean
                     required: true
                 evidence:
                   label: Machine-readable CBOM for the assessed release
@@ -2209,14 +2292,10 @@ levels:
           questions:
             - id: 5.2.1
               question: What is the default algorithm configuration for each feature area in a fresh installation?
-              guidance: "The assessor should perform or observe a fresh installation. Record: product version, installation method (binary installer / container image / cloud deployment), environment (OS version, cloud provider, hardware type), and the configuration captured (exported configuration file, screenshot of settings UI, or API response for the default configuration endpoint — record which method was used). Verify that quantum-safe algorithms appear as the default without any manual modification. A finding based on documentation review only — without a fresh installation test — must be flagged as \"not independently reproduced\"."
+              guidance: "The assessor should perform or observe a fresh installation. Record: installation method (binary installer / container image / cloud deployment), environment (OS version, cloud provider, hardware type), and the configuration captured (exported configuration file, screenshot of settings UI, or API response for the default configuration endpoint — record which method was used). Verify that quantum-safe algorithms appear as the default without any manual modification. A finding based on documentation review only — without a fresh installation test — must be flagged as \"not independently reproduced\"."
               # Answer form shown by the assessment tool.
               response:
                 fields:
-                  - key: productVersion
-                    label: Product version installed
-                    type: text
-                    required: true
                   - key: installationMethod
                     label: Installation method
                     type: select

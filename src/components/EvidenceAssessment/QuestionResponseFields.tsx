@@ -4,6 +4,7 @@ import { DURATION_UNITS } from "../../assessment-engine/question-values";
 import { Select, TextArea, TextField } from "../ui";
 import { responseDefinition } from "./questionResponse";
 import { ChoiceGroup } from "./ChoiceGroup";
+import { MultiSelectField } from "./MultiSelectField";
 import { fieldRequirementNote, groupFieldsByRule } from "./fieldRequirement";
 import {
   passingQuestionFindings,
@@ -308,34 +309,15 @@ const renderMultiselect = (
   value: FieldValue,
   updateValue: UpdateValue,
   note?: string,
-): React.ReactElement => {
-  const selected = Array.isArray(value) ? value : [];
-  return (
-    <fieldset
-      key={field.key}
-      className="evidence-assessment-question__multi-select"
-    >
-      <FieldLegend label={field.label} note={note} />
-      {field.options?.map((option) => (
-        <label key={option.value}>
-          <input
-            type="checkbox"
-            checked={selected.includes(option.value)}
-            onChange={(event) =>
-              updateValue(
-                field.key,
-                event.target.checked
-                  ? [...selected, option.value]
-                  : selected.filter((item) => item !== option.value),
-              )
-            }
-          />
-          <span>{option.label}</span>
-        </label>
-      ))}
-    </fieldset>
-  );
-};
+): React.ReactElement => (
+  <MultiSelectField
+    key={field.key}
+    field={field}
+    value={Array.isArray(value) ? value : []}
+    note={note}
+    onChange={(next) => updateValue(field.key, next)}
+  />
+);
 
 const renderGenericField = (
   field: EvidenceQuestionField,

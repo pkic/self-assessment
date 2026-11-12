@@ -23,7 +23,8 @@ const record = (): Pick<
 const answerForField = (field: {
   type: string;
   options?: { value: string }[];
-}): string => {
+}): string | string[] => {
+  if (field.type === "multiselect") return [field.options?.[0]?.value ?? ""];
   if (field.type === "date") return "2027-06-30";
   if (field.type === "url") return "https://example.com/evidence";
   if (field.type === "cpe-2.3") {

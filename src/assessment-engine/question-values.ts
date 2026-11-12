@@ -42,6 +42,8 @@ export const durationToSeconds = (value: string): number | undefined => {
 export interface QuestionFieldPolicy {
   type: string;
   options?: { value: string }[];
+  /** A multiselect that also accepts entries not in its options. */
+  allowCustom?: boolean;
   min?: number;
   max?: number;
   allowedUnits?: string[];
@@ -137,17 +139,38 @@ const validHttpUrl = (value: string): boolean => {
   }
 };
 
+/** Longest entry a multiselect accepts beyond its listed options. */
+export const MAX_CUSTOM_ENTRY_LENGTH = 120;
+
+/** A custom multiselect entry: one trimmed line of ordinary text. */
+export const validCustomEntry = (item: string): boolean =>
+  item.length > 0 &&
+  item.length <= MAX_CUSTOM_ENTRY_LENGTH &&
+  item === item.trim() &&
+  ![...item].some((character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return code < 0x20 || code === 0x7f;
+  });
+
+/** A multiselect answer: a list of listed options or allowed custom entries. */
+const validMultiselectValue = (
+  field: QuestionFieldPolicy,
+  value: QuestionValue,
+): boolean =>
+  Array.isArray(value) &&
+  field.type === "multiselect" &&
+  value.every(
+    (item) =>
+      field.options?.some((option) => option.value === item) ||
+      (field.allowCustom === true && validCustomEntry(item)),
+  );
+
 export const validQuestionFieldValue = (
   field: QuestionFieldPolicy,
   value: QuestionValue,
 ): boolean => {
-  if (Array.isArray(value)) {
-    return (
-      field.type === "multiselect" &&
-      value.every((item) =>
-        field.options?.some((option) => option.value === item),
-      )
-    );
+  if (Array.isArray(value) || field.type === "multiselect") {
+    return validMultiselectValue(field, value);
   }
   if (field.type === "date") return validDate(value);
   if (field.type === "date-time") return validDateTime(value);
