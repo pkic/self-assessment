@@ -47,6 +47,7 @@ import {
 } from "./MaturityProgressPanel";
 import { levelColorIndex } from "../../assessment-engine/visualizations/maturityGates";
 import { QuestionResponseFields } from "./QuestionResponseFields";
+import { criterionLabel } from "./criterionLabel";
 import { SubjectField } from "./SubjectField";
 import { updateSubjectWithDefaults } from "../../assessment-engine/subject-convenience";
 import {
@@ -746,7 +747,12 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                     )}`}
                   >
                     <div className="evidence-assessment-item-title">
-                      <span>{criterion.id}</span>
+                      <span
+                        title={`Criterion ${criterion.id}`}
+                        aria-label={`Criterion ${criterion.id}`}
+                      >
+                        {criterionLabel(criterion.id)}
+                      </span>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {criterion.text}
                       </ReactMarkdown>

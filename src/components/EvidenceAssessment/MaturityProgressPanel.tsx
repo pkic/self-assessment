@@ -6,6 +6,7 @@ import {
 } from "../../assessment-engine/visualizations/maturityGates";
 import { Button } from "../ui";
 import "./MaturityProgressPanel.module.scss";
+import { criterionLabel } from "./criterionLabel";
 
 export interface ProgressOption {
   value: string;
@@ -26,17 +27,28 @@ interface Props {
 
 const MAX_OUTSTANDING = 3;
 
-export const levelColor = (colorIndex: number): string =>
-  colorIndex === 0
-    ? "var(--pkimm-text-color-muted)"
-    : `var(--pkimm-maturity-level-${colorIndex})`;
+const maturityToken = (slot: number): string =>
+  `var(--pkimm-maturity-level-${slot})`;
+
+/**
+ * CSS colour for a level's position on the maturity tokens. A position
+ * between two tokens (long scales) blends them, so a host theme still drives
+ * every colour.
+ */
+export const levelColor = (colorIndex: number): string => {
+  if (colorIndex <= 0) return "var(--pkimm-text-color-muted)";
+  const lower = Math.floor(colorIndex);
+  const share = Math.round((colorIndex - lower) * 100);
+  if (share === 0) return maturityToken(lower);
+  return `color-mix(in oklch, ${maturityToken(lower + 1)} ${share}%, ${maturityToken(lower)})`;
+};
 
 /**
  * Text colour that keeps contrast on a filled maturity colour: light text on
  * the neutral and darkest colour, dark text on the brighter ones.
  */
 export const levelInk = (colorIndex: number): string =>
-  colorIndex <= 1
+  Math.round(colorIndex) <= 1
     ? "var(--pkimm-text-color-light)"
     : "var(--pkimm-text-color-dark)";
 
@@ -195,7 +207,12 @@ export const MaturityProgressPanel: React.FC<Props> = ({
               <ul className="evidence-progress__outstanding">
                 {next.outstanding.slice(0, MAX_OUTSTANDING).map((item) => (
                   <li key={item.criterionId}>
-                    <code>{item.criterionId}</code>
+                    <code
+                      title={`Criterion ${item.criterionId}`}
+                      aria-label={`Criterion ${item.criterionId}`}
+                    >
+                      {criterionLabel(item.criterionId)}
+                    </code>
                     <span>
                       {plainText(criterionText.get(item.criterionId) ?? "")}
                     </span>

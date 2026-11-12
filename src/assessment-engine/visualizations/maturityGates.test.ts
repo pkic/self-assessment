@@ -159,9 +159,9 @@ describe("levelColorIndex", () => {
     expect(levelColorIndex(3, 3)).toBe(3);
   });
 
-  it("spreads longer scales across the five maturity colours", () => {
+  it("spreads longer scales evenly so neighbouring levels never share a colour", () => {
     expect(
       [1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => levelColorIndex(level, 9)),
-    ).toEqual([1, 2, 2, 3, 3, 4, 4, 5, 5]);
+    ).toEqual([1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]);
   });
 });

@@ -409,19 +409,30 @@
     box-shadow: var(--pkimm-shadow-sm);
     backdrop-filter: blur(6px);
 
+    // Shares the row with the level name; long scales shrink the buttons and
+    // then scroll rather than push past the screen edge.
     ol {
       display: flex;
+      flex: 0 1 auto;
       gap: var(--pkimm-space-2xs);
+      min-width: 0;
       margin: 0;
-      padding: 0;
+      padding: 4px;
+      overflow-x: auto;
       list-style: none;
+      scrollbar-width: none;
+    }
+
+    li {
+      flex: 0 1 2.1rem;
+      min-width: 1.7rem;
     }
 
     button {
       position: relative;
       display: grid;
       place-items: center;
-      width: 2.1rem;
+      width: 100%;
       height: 2.1rem;
       overflow: hidden;
       padding: 0;
@@ -449,8 +460,19 @@
     }
   }
 
+  // With more than seven levels the buttons need the whole row; the level
+  // heading below the strip already names the selected level.
+  .evidence-level-strip:has(li:nth-child(8)) .evidence-level-strip__label {
+    display: none;
+  }
+  .evidence-level-strip:has(li:nth-child(8)) ol {
+    flex: 1;
+    justify-content: space-between;
+  }
+
   .evidence-level-strip__label {
-    min-width: 0;
+    flex: 1 1 auto;
+    min-width: 4rem;
     overflow: hidden;
     font-size: 0.85rem;
     font-weight: 700;

@@ -1,4 +1,5 @@
 import React from "react";
+import { criterionLabel } from "./criterionLabel";
 import { Page, Text, View } from "@react-pdf/renderer";
 import { emptyCriterionProgress } from "../../assessment-engine/methodologies/cumulativeGates";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
@@ -37,7 +38,7 @@ export const EvidenceLevelPage: React.FC<Props> = ({
       return (
         <View key={criterion.id} style={styles.item} wrap={false}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemId}>{criterion.id}</Text>
+            <Text style={styles.itemId}>{criterionLabel(criterion.id)}</Text>
             <Text style={styles.itemText}>
               {plainReportText(criterion.text)}
             </Text>

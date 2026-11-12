@@ -17,8 +17,8 @@ export interface MaturityGateLevel {
   status: MaturityGateStatus;
   statusLabel: string;
   /**
-   * Maturity colour slot (1 to 5, matching the --pkimm-maturity-level-N
-   * tokens), or 0 for a baseline level that has no maturity colour.
+   * Position on the maturity colour tokens: 1 to 5 (possibly between two
+   * tokens on long scales), or 0 for a baseline level with no colour.
    */
   colorIndex: number;
   /** Criteria that still keep this level from being established. */
@@ -26,9 +26,11 @@ export interface MaturityGateLevel {
 }
 
 /**
- * Maps a level onto the five maturity colour tokens. Models with up to five
- * positive levels use the level number directly; longer scales are spread
- * evenly across the five colours. Level 0 and below stay neutral.
+ * Places a level on the five maturity colour tokens (--pkimm-maturity-level-1
+ * to -5). Models with up to five positive levels use the level number, so
+ * Level 3 has the same colour in every model. Longer scales are spread evenly
+ * from 1 to 5; the result can then fall between two tokens and is blended.
+ * Level 0 and below return 0 (neutral).
  */
 export const levelColorIndex = (
   level: number,
@@ -36,7 +38,7 @@ export const levelColorIndex = (
 ): number => {
   if (level < 1) return 0;
   if (maximumLevel <= 5) return Math.min(level, 5);
-  return Math.min(5, 1 + Math.round(((level - 1) * 4) / (maximumLevel - 1)));
+  return 1 + ((level - 1) * 4) / (maximumLevel - 1);
 };
 
 const parseBlocker = (blocker: string): OutstandingCriterion => {
