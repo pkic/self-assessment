@@ -152,7 +152,9 @@ export const MaturityProgressPanel: React.FC<Props> = ({
             >
               <span className="evidence-progress__bar" aria-hidden="true">
                 <span className="evidence-progress__fill" />
-                <span className="evidence-progress__number">{level.level}</span>
+              </span>
+              <span className="evidence-progress__number" aria-hidden="true">
+                {level.level}
               </span>
             </button>
           </li>

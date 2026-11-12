@@ -36,7 +36,7 @@ describe("EvidenceAssessment", () => {
       "combobox",
     );
     expect(
-      screen.getByRole("button", { name: "Add SBOM or CBOM file" }),
+      screen.getByRole("button", { name: "Add files: SBOM or CBOM file" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("progressbar", {
@@ -147,5 +147,34 @@ describe("EvidenceAssessment", () => {
     );
     await screen.findByLabelText("Target date for Level 1");
     expect(screen.queryByText(/Date \(YYYY-MM-DD\)/)).not.toBeInTheDocument();
+  });
+
+  it("shows each criterion's questions inside it and the rest after", async () => {
+    render(
+      <EvidenceAssessment
+        src={null}
+        profile={parseAssessmentProfile(
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+        )}
+      />,
+    );
+    await screen.findByRole("heading", { name: "PQCMM Assessment" });
+    fireEvent.click(
+      within(
+        screen.getByRole("complementary", { name: "Assessment progress" }),
+      ).getByRole("button", { name: /^Level 1 Initial:/ }),
+    );
+    const first = within(screen.getByRole("main"))
+      .getByLabelText("Criterion 1.1.1")
+      .closest("article")!;
+    expect(within(first).getByText("1.2.1")).toBeInTheDocument();
+    expect(
+      within(first).getByRole("list", {
+        name: "What this criterion needs to count",
+      }),
+    ).toHaveTextContent("Questions support it (0 of 3)");
+    expect(
+      screen.getByRole("heading", { name: "Other questions at this level" }),
+    ).toBeInTheDocument();
   });
 });

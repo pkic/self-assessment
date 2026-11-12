@@ -55,7 +55,7 @@
   display: flex;
   gap: var(--pkimm-space-2xs);
   align-items: flex-end;
-  height: 7.5rem;
+  height: 8rem;
   margin: var(--pkimm-space-xs) 0 0;
   padding: 0;
   list-style: none;
@@ -93,7 +93,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  height: var(--evidence-step-height);
+  // Leaves a fixed row under every bar for the level numbers, so the numbers
+  // share one baseline whatever the bar heights.
+  height: calc(var(--evidence-step-height) - 1.5rem);
   overflow: hidden;
   background: color-mix(in srgb, var(--evidence-step-color) 20%, transparent);
   border: 1px dashed var(--evidence-step-color);
@@ -122,19 +124,22 @@
 }
 
 .evidence-progress__number {
-  position: relative;
-  margin-top: var(--pkimm-space-2xs);
-  color: var(--pkimm-text-color-dark);
-  font-size: 0.9rem;
-  font-weight: 800;
+  display: block;
+  height: 1.25rem;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
 }
 
 .evidence-progress__step--established .evidence-progress__bar {
   border-style: solid;
   border-color: var(--evidence-step-color);
 }
-.evidence-progress__step--established .evidence-progress__number {
-  color: var(--evidence-step-ink);
+.evidence-progress__step--established .evidence-progress__number,
+.evidence-progress__step--next .evidence-progress__number {
+  color: var(--pkimm-text-color-dark);
 }
 .evidence-progress__step--next .evidence-progress__bar {
   border-style: solid;
@@ -150,6 +155,13 @@
     box-shadow:
       0 0 0 2px var(--pkimm-surface-color),
       0 0 0 4px var(--pkimm-text-color-dark);
+  }
+  .evidence-progress__number {
+    color: var(--pkimm-text-color-dark);
+    font-weight: 800;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
   }
 }
 
@@ -305,20 +317,27 @@
   gap: var(--pkimm-space-xs);
   margin: 0;
 
+  // The figure leads and the label sits under it, so the figures line up
+  // however the labels wrap.
   div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
     padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
     background: var(--pkimm-surface-color-alt);
     border-radius: var(--pkimm-border-radius-md);
   }
   dt {
+    margin-top: var(--pkimm-space-3xs);
     color: var(--pkimm-text-color-muted);
-    font-size: 0.72rem;
-    line-height: 1.2;
+    font-size: 0.75rem;
+    line-height: 1.25;
   }
   dd {
-    margin: var(--pkimm-space-3xs) 0 0;
-    font-size: 1.15rem;
+    margin: 0;
+    font-size: 1.2rem;
     font-weight: 700;
+    line-height: 1.2;
   }
 }
 
@@ -416,10 +435,11 @@
     gap: var(--pkimm-space-sm);
     align-items: center;
     justify-content: space-between;
-    margin: 0 calc(-1 * var(--pkimm-space-md));
-    padding: var(--pkimm-space-xs) var(--pkimm-space-md);
+    margin: 0;
+    padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
+    border: 1px solid var(--pkimm-border-color);
+    border-radius: var(--pkimm-border-radius-md);
     background: color-mix(in srgb, var(--pkimm-surface-color) 94%, transparent);
-    border-bottom: 1px solid var(--pkimm-border-color);
     box-shadow: var(--pkimm-shadow-sm);
     backdrop-filter: blur(6px);
 

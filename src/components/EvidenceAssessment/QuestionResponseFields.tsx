@@ -3,6 +3,8 @@ import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { DURATION_UNITS } from "../../assessment-engine/question-values";
 import { Select, TextArea, TextField } from "../ui";
 import { responseDefinition } from "./questionResponse";
+import { ChoiceGroup } from "./ChoiceGroup";
+import { passingQuestionFindings } from "./assessmentView";
 import type {
   EvidenceQuestion,
   EvidenceQuestionField,
@@ -354,21 +356,14 @@ const renderFindingOptions = (
 ): React.ReactElement | null => {
   if (!profile.runtime.questions?.requiredForKinds.includes(kind)) return null;
   return (
-    <fieldset className="evidence-assessment-status-options">
-      <legend>Assessment finding</legend>
-      {profile.runtime.questions.findings.map((option) => (
-        <label key={option.value}>
-          <input
-            type="radio"
-            name={`finding-${questionId}`}
-            value={option.value}
-            checked={progress.finding === option.value}
-            onChange={() => onChange({ finding: option.value })}
-          />
-          <span>{option.label}</span>
-        </label>
-      ))}
-    </fieldset>
+    <ChoiceGroup
+      legend="Assessment finding"
+      name={`finding-${questionId}`}
+      options={profile.runtime.questions.findings}
+      value={progress.finding}
+      onChange={(finding) => onChange({ finding })}
+      passingValues={passingQuestionFindings(profile)}
+    />
   );
 };
 

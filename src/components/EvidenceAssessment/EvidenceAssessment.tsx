@@ -51,6 +51,7 @@ import {
   evidenceRequiredFromLevel,
   exportBlockedReason,
   levelStatusLabel,
+  passingStatuses,
   scopeSummary,
 } from "./assessmentView";
 import { SubjectField } from "./SubjectField";
@@ -410,6 +411,54 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   );
   const levelStatus = levelStatusLabel(score, level.number);
   const evidenceFromLevel = evidenceRequiredFromLevel(profile);
+  const questionsById = new Map(
+    level.assessment.groups.flatMap((group) =>
+      group.questions.map(
+        (question) => [question.id, { question, kind: group.kind }] as const,
+      ),
+    ),
+  );
+  const linkedQuestionIds = new Set(
+    level.criteria.items.flatMap(
+      (criterion) => criterion.assessmentQuestionIds ?? [],
+    ),
+  );
+  // Questions no criterion links to (planning and intake questions, or
+  // assessment questions that inform the level as a whole).
+  const otherQuestionGroups = level.assessment.groups
+    .map((group) => {
+      const questions = group.questions.filter(
+        (question) => !linkedQuestionIds.has(question.id),
+      );
+      return {
+        group,
+        questions,
+        partial: questions.length < group.questions.length,
+      };
+    })
+    .filter((entry) => entry.questions.length > 0);
+  const renderQuestion = (
+    question: (typeof level.assessment.groups)[number]["questions"][number],
+    kind: (typeof level.assessment.groups)[number]["kind"],
+    nested: boolean,
+  ) => (
+    <QuestionCard
+      key={question.id}
+      question={question}
+      kind={kind}
+      profile={profile}
+      nested={nested}
+      progress={record.questionProgress[question.id]}
+      evidenceFiles={record.evidenceFiles}
+      onUpdate={(update) => updateQuestion(question.id, update)}
+      onAddEvidence={(owner, files) =>
+        addEvidence({ kind: "question", id: question.id, ...owner }, files)
+      }
+      onRemoveEvidence={(id) =>
+        removeEvidence({ kind: "question", id: question.id }, id)
+      }
+    />
+  );
   const findingOptions =
     profile.runtime.questions?.findings.filter(
       ({ value }) => value !== "not-assessed",
@@ -662,30 +711,68 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
               </ReactMarkdown>
             </div>
             <div className="evidence-assessment-criterion-list">
-              {level.criteria.items.map((criterion) => (
-                <CriterionCard
-                  key={criterion.id}
-                  criterion={criterion}
-                  progress={
-                    record.criterionProgress[criterion.id] ??
-                    emptyCriterionProgress()
-                  }
-                  gateBlocker={levelResult?.blockers.find((blocker) =>
-                    blocker.startsWith(`${criterion.id}:`),
-                  )}
-                  policy={criterionPolicy}
-                  evidenceRequired={level.number >= evidenceFromLevel}
-                  evidenceFiles={record.evidenceFiles}
-                  onUpdate={(update) => updateCriterion(criterion.id, update)}
-                  onAddEvidence={(files) =>
-                    addEvidence({ kind: "criterion", id: criterion.id }, files)
-                  }
-                  onRemoveEvidence={(id) =>
-                    removeEvidence({ kind: "criterion", id: criterion.id }, id)
-                  }
-                />
-              ))}
+              {level.criteria.items.map((criterion) => {
+                const linked = (criterion.assessmentQuestionIds ?? [])
+                  .map((id) => questionsById.get(id))
+                  .filter((entry) => entry !== undefined);
+                return (
+                  <CriterionCard
+                    key={criterion.id}
+                    criterion={criterion}
+                    progress={
+                      record.criterionProgress[criterion.id] ??
+                      emptyCriterionProgress()
+                    }
+                    result={levelResult?.criteria?.find(
+                      (entry) => entry.id === criterion.id,
+                    )}
+                    policy={criterionPolicy}
+                    passingStatuses={passingStatuses(profile)}
+                    evidenceRequired={level.number >= evidenceFromLevel}
+                    evidenceFiles={record.evidenceFiles}
+                    onUpdate={(update) => updateCriterion(criterion.id, update)}
+                    onAddEvidence={(files) =>
+                      addEvidence(
+                        { kind: "criterion", id: criterion.id },
+                        files,
+                      )
+                    }
+                    onRemoveEvidence={(id) =>
+                      removeEvidence(
+                        { kind: "criterion", id: criterion.id },
+                        id,
+                      )
+                    }
+                  >
+                    {linked.length > 0
+                      ? linked.map(({ question, kind }) =>
+                          renderQuestion(question, kind, true),
+                        )
+                      : undefined}
+                  </CriterionCard>
+                );
+              })}
             </div>
+
+            {otherQuestionGroups.length > 0 ? (
+              <div className="evidence-assessment-question-groups">
+                {otherQuestionGroups.map(({ group, questions, partial }) => (
+                  <section key={group.id}>
+                    <h4>
+                      {partial ? "Other questions at this level" : group.name}
+                    </h4>
+                    {!partial && group.introduction ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {group.introduction}
+                      </ReactMarkdown>
+                    ) : null}
+                    {questions.map((question) =>
+                      renderQuestion(question, group.kind, false),
+                    )}
+                  </section>
+                ))}
+              </div>
+            ) : null}
 
             {level.assessment.methodology ? (
               <details className="evidence-assessment-methodology">
@@ -695,42 +782,6 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                 </ReactMarkdown>
               </details>
             ) : null}
-
-            <div className="evidence-assessment-question-groups">
-              {level.assessment.groups.map((group) => (
-                <section key={group.id}>
-                  <h4>{group.name}</h4>
-                  {group.introduction ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {group.introduction}
-                    </ReactMarkdown>
-                  ) : null}
-                  {group.questions.map((question) => (
-                    <QuestionCard
-                      key={question.id}
-                      question={question}
-                      kind={group.kind}
-                      profile={profile}
-                      progress={record.questionProgress[question.id]}
-                      evidenceFiles={record.evidenceFiles}
-                      onUpdate={(update) => updateQuestion(question.id, update)}
-                      onAddEvidence={(owner, files) =>
-                        addEvidence(
-                          { kind: "question", id: question.id, ...owner },
-                          files,
-                        )
-                      }
-                      onRemoveEvidence={(id) =>
-                        removeEvidence(
-                          { kind: "question", id: question.id },
-                          id,
-                        )
-                      }
-                    />
-                  ))}
-                </section>
-              ))}
-            </div>
 
             {level.evidenceChecklist.items.length > 0 ? (
               <Card

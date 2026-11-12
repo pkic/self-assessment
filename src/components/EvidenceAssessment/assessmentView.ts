@@ -68,3 +68,18 @@ export const adjacentLevels = <Level extends { number: number }>(
     maximumLevel: Math.max(...levels.map((item) => item.number)),
   };
 };
+
+const stringList = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+
+/** Criterion statuses the methodology counts as passing. */
+export const passingStatuses = (profile: AssessmentProfileData): string[] =>
+  stringList(profile.runtime.methodology.parameters?.passingStatuses);
+
+/** Question findings the methodology counts as supporting a criterion. */
+export const passingQuestionFindings = (
+  profile: AssessmentProfileData,
+): string[] =>
+  stringList(profile.runtime.methodology.parameters?.passingQuestionFindings);

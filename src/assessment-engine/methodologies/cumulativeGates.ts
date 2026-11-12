@@ -34,6 +34,24 @@ export interface GatedMaturityRecord {
   evidenceFiles: EvidenceFile[];
 }
 
+/**
+ * How one criterion stands against its gate. Each part is reported separately
+ * so a screen or report can say exactly what is still missing.
+ */
+export interface GatedCriterionResult {
+  id: string;
+  /** The criterion counts towards its level. */
+  met: boolean;
+  /** Its status is a passing one (for example "met"). */
+  statusPasses: boolean;
+  /** Whether this level asks for evidence at all. */
+  evidenceRequired: boolean;
+  evidencePasses: boolean;
+  /** Linked assessment questions, and those that currently support it. */
+  questionIds: string[];
+  supportingQuestionIds: string[];
+}
+
 export interface GatedMaturityScore {
   achievedLevel: number | null;
   nextLevel: number | null;
@@ -49,6 +67,8 @@ export interface GatedMaturityScore {
     criteriaMet: number;
     criteriaTotal: number;
     blockers: string[];
+    /** Per-criterion detail; absent only in hand-built scores. */
+    criteria?: GatedCriterionResult[];
   }[];
 }
 
@@ -115,6 +135,7 @@ const cumulativeGates = (
 
   const levelResults = orderedLevels.map((level) => {
     const blockers: string[] = [];
+    const criteria: GatedCriterionResult[] = [];
     let levelMet = 0;
     for (const criterion of level.criteria.items) {
       criteriaTotal += 1;
@@ -132,6 +153,18 @@ const cumulativeGates = (
           ) || !responseComplete(questionId),
       );
       const questionsPass = questionBlockers.length === 0;
+      const questionIds = criterion.assessmentQuestionIds ?? [];
+      criteria.push({
+        id: criterion.id,
+        met: statusPasses && evidencePasses && questionsPass,
+        statusPasses,
+        evidenceRequired: needsEvidence,
+        evidencePasses,
+        questionIds,
+        supportingQuestionIds: questionIds.filter(
+          (questionId) => !questionBlockers.includes(questionId),
+        ),
+      });
       if (statusPasses && evidencePasses && questionsPass) {
         criteriaMet += 1;
         levelMet += 1;
@@ -151,6 +184,7 @@ const cumulativeGates = (
       criteriaMet: levelMet,
       criteriaTotal: level.criteria.items.length,
       blockers,
+      criteria,
     };
   });
 

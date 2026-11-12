@@ -57,6 +57,36 @@
     text-align: left;
   }
 
+  // Draw the select arrow ourselves so it sits inside the padding the same
+  // way in every browser, rather than hugging the native control's edge.
+  &:is(select) {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: calc(var(--pkimm-space-sm) * 2 + 0.75rem);
+    // Two short diagonal strokes form a chevron in the text colour.
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent 42%,
+        currentColor 42%,
+        currentColor 58%,
+        transparent 58%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 42%,
+        currentColor 42%,
+        currentColor 58%,
+        transparent 58%
+      );
+    background-position:
+      right calc(var(--pkimm-space-sm) + 0.32rem) center,
+      right var(--pkimm-space-sm) center;
+    background-repeat: no-repeat;
+    background-size: 0.4rem 0.4rem;
+    cursor: pointer;
+  }
+
   &:focus-visible {
     outline: 2px solid var(--pkimm-primary-color);
     outline-offset: 1px;

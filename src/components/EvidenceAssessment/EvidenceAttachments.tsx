@@ -48,9 +48,10 @@ export const EvidenceAttachments: React.FC<Props> = ({
           disabled={
             disabled || (maxFiles !== undefined && files.length >= maxFiles)
           }
+          aria-label={`Add files: ${label}`}
           onClick={() => inputRef.current?.click()}
         >
-          Add {label}
+          Add files
         </Button>
         <input
           ref={inputRef}

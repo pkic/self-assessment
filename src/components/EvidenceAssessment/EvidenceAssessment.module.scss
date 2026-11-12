@@ -424,83 +424,223 @@
 }
 
 .evidence-assessment-criterion {
+  display: grid;
+  gap: var(--pkimm-space-lg);
   border-left: 4px solid var(--pkimm-border-color);
 }
-.evidence-assessment-status-met {
+.evidence-assessment-criterion--met {
   border-left-color: var(--pkimm-success-border);
 }
-.evidence-assessment-status-partial {
+.evidence-assessment-criterion--progress {
   border-left-color: var(--pkimm-timing-warning-border);
-}
-.evidence-assessment-status-not-met {
-  border-left-color: var(--pkimm-danger-border);
-}
-.evidence-assessment-status-blocked {
-  border-left-color: var(--pkimm-danger-border);
 }
 
 .evidence-assessment-item-title {
   display: flex;
   gap: var(--pkimm-space-sm);
   align-items: baseline;
-  margin-bottom: var(--pkimm-space-md);
+  line-height: 1.45;
+
   > span {
     flex: 0 0 auto;
     color: var(--pkimm-primary-color);
+    font-family: "Roboto Mono", ui-monospace, monospace;
+    font-size: 0.95rem;
     font-weight: 700;
-    font-family: ui-monospace, monospace;
   }
   p {
     margin: 0;
+    font-size: 1.05rem;
     font-weight: 600;
   }
 }
 
-.evidence-assessment-status-options {
+.evidence-assessment-criterion__section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  max-width: 34rem;
-  margin: 0 0 var(--pkimm-space-md);
+  gap: var(--pkimm-space-md);
+
+  > h5 {
+    margin: 0;
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+.evidence-assessment-criterion__questions {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-md);
+}
+
+/* A linked question: one collapsible row inside its criterion. */
+.evidence-assessment-question--nested {
+  & + & {
+    border-top: 1px solid var(--pkimm-border-color);
+  }
+
+  > summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--pkimm-space-sm);
+    align-items: baseline;
+    padding: var(--pkimm-space-sm) var(--pkimm-space-md);
+    line-height: 1.45;
+    list-style: none;
+    cursor: pointer;
+  }
+  > summary::-webkit-details-marker {
+    display: none;
+  }
+  > summary:hover {
+    background: var(--pkimm-hover-bg-subtle);
+  }
+  > summary:focus-visible {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: -2px;
+  }
+  &[open] > summary {
+    background: var(--pkimm-surface-color-alt);
+    border-bottom: 1px solid var(--pkimm-border-color);
+  }
+}
+
+.evidence-assessment-question__id {
+  color: var(--pkimm-primary-color);
+  font-family: "Roboto Mono", ui-monospace, monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.evidence-assessment-question__text {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.evidence-assessment-question__finding {
+  align-self: center;
+  padding: var(--pkimm-space-3xs) var(--pkimm-space-xs);
+  overflow: hidden;
+  max-width: 16rem;
+  color: var(--pkimm-text-color-muted);
+  background: var(--pkimm-surface-color-alt);
+  border: 1px solid var(--pkimm-border-color);
+  border-radius: var(--pkimm-border-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evidence-assessment-question__finding--ok {
+  color: var(--pkimm-success-fg);
+  background: var(--pkimm-success-bg);
+  border-color: var(--pkimm-success-border);
+}
+.evidence-assessment-question__finding--warn {
+  color: var(--pkimm-timing-warning-fg);
+  background: var(--pkimm-timing-warning-bg);
+  border-color: var(--pkimm-timing-warning-border);
+}
+.evidence-assessment-question__finding--danger {
+  color: var(--pkimm-danger-fg);
+  background: var(--pkimm-danger-bg);
+  border-color: var(--pkimm-danger-border);
+}
+
+.evidence-assessment-question__body {
+  display: grid;
+  gap: var(--pkimm-space-md);
+  padding: var(--pkimm-space-md);
+
+  > p {
+    margin: 0;
+  }
+}
+
+/* What a criterion still needs before it counts. */
+.evidence-assessment-gate-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pkimm-space-xs);
+  margin: 0;
+  padding: var(--pkimm-space-sm) 0 0;
+  border-top: 1px solid var(--pkimm-border-color);
+  list-style: none;
+  font-size: 0.85rem;
+
+  li {
+    display: inline-flex;
+    gap: var(--pkimm-space-2xs);
+    align-items: center;
+    padding: var(--pkimm-space-3xs) var(--pkimm-space-sm);
+    border-radius: var(--pkimm-border-radius-pill);
+  }
+  li::before {
+    content: "";
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+  }
+}
+.evidence-assessment-gate-checks__done {
+  color: var(--pkimm-success-fg);
+  background: var(--pkimm-success-bg);
+
+  &::before {
+    background: currentColor;
+  }
+}
+.evidence-assessment-gate-checks__open {
+  color: var(--pkimm-text-color-muted);
+  background: var(--pkimm-surface-color-alt);
+}
+
+/* Radio choices: side-by-side segments for short labels, a stacked list
+   for long ones (see ChoiceGroup). */
+.evidence-choice {
+  margin: 0;
   padding: 0;
   border: 0;
+  min-width: 0;
+
   legend {
     margin-bottom: var(--pkimm-space-xs);
     padding: 0;
+    font-size: 0.95rem;
     font-weight: 600;
-  }
-  label {
-    display: flex;
-    min-width: 0;
-    cursor: pointer;
   }
   input {
     position: absolute;
     opacity: 0;
   }
+}
+
+.evidence-choice__options {
+  display: grid;
+}
+
+.evidence-choice__option {
+  display: flex;
+  min-width: 0;
+  cursor: pointer;
+
   span {
     display: flex;
     flex: 1;
+    gap: var(--pkimm-space-xs);
     align-items: center;
-    justify-content: center;
     min-height: 2.5rem;
-    padding: var(--pkimm-space-2xs) var(--pkimm-space-xs);
+    padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
     font-size: 0.9rem;
-    line-height: 1.2;
-    text-align: center;
+    line-height: 1.3;
     background: var(--pkimm-surface-color);
     border: 1px solid var(--pkimm-border-color);
-    margin-left: -1px;
   }
-  label:first-of-type span {
-    margin-left: 0;
-    border-radius: var(--pkimm-border-radius-md) 0 0
-      var(--pkimm-border-radius-md);
-  }
-  label:last-of-type span {
-    border-radius: 0 var(--pkimm-border-radius-md) var(--pkimm-border-radius-md)
-      0;
-  }
-  label:hover span {
+  &:hover span {
     background: var(--pkimm-hover-bg-subtle);
   }
   input:focus-visible + span {
@@ -511,25 +651,78 @@
   }
   input:checked + span {
     position: relative;
-    color: var(--pkimm-text-color-light);
-    background: var(--pkimm-primary-color);
-    border-color: var(--pkimm-primary-color);
+    z-index: 1;
+    color: var(--pkimm-text-color-dark);
+    background: var(--pkimm-surface-color-alt);
+    border-color: var(--pkimm-text-color-muted);
     font-weight: 600;
   }
-  input[value="met"]:checked + span {
-    color: var(--pkimm-success-fg);
-    background: var(--pkimm-success-bg);
-    border-color: var(--pkimm-success-border);
+}
+.evidence-choice__option--ok input:checked + span {
+  color: var(--pkimm-success-fg);
+  background: var(--pkimm-success-bg);
+  border-color: var(--pkimm-success-border);
+}
+.evidence-choice__option--warn input:checked + span {
+  color: var(--pkimm-timing-warning-fg);
+  background: var(--pkimm-timing-warning-bg);
+  border-color: var(--pkimm-timing-warning-border);
+}
+.evidence-choice__option--danger input:checked + span {
+  color: var(--pkimm-danger-fg);
+  background: var(--pkimm-danger-bg);
+  border-color: var(--pkimm-danger-border);
+}
+
+.evidence-choice--segments {
+  .evidence-choice__options {
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    max-width: 32rem;
   }
-  input[value="partial"]:checked + span {
-    color: var(--pkimm-timing-warning-fg);
-    background: var(--pkimm-timing-warning-bg);
-    border-color: var(--pkimm-timing-warning-border);
+  .evidence-choice__option span {
+    justify-content: center;
+    margin-left: -1px;
+    text-align: center;
   }
-  input[value="not-met"]:checked + span {
-    color: var(--pkimm-danger-fg);
-    background: var(--pkimm-danger-bg);
-    border-color: var(--pkimm-danger-border);
+  .evidence-choice__option:first-child span {
+    margin-left: 0;
+    border-radius: var(--pkimm-border-radius-md) 0 0
+      var(--pkimm-border-radius-md);
+  }
+  .evidence-choice__option:last-child span {
+    border-radius: 0 var(--pkimm-border-radius-md) var(--pkimm-border-radius-md)
+      0;
+  }
+}
+
+.evidence-choice--list {
+  .evidence-choice__options {
+    max-width: 34rem;
+  }
+  .evidence-choice__option span {
+    margin-top: -1px;
+  }
+  .evidence-choice__option span::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 2px solid var(--pkimm-border-color);
+    border-radius: 50%;
+    box-sizing: border-box;
+  }
+  .evidence-choice__option input:checked + span::before {
+    border: 4px solid currentColor;
+  }
+  .evidence-choice__option:first-child span {
+    margin-top: 0;
+    border-radius: var(--pkimm-border-radius-md) var(--pkimm-border-radius-md) 0
+      0;
+  }
+  .evidence-choice__option:last-child span {
+    border-radius: 0 0 var(--pkimm-border-radius-md)
+      var(--pkimm-border-radius-md);
   }
 }
 
@@ -547,7 +740,7 @@
 }
 
 .evidence-assessment-evidence-attachments {
-  margin: var(--pkimm-space-md) 0;
+  margin: 0;
   padding: var(--pkimm-space-sm);
   background: var(--pkimm-surface-color-alt);
   border: 1px solid var(--pkimm-border-color);
@@ -604,11 +797,21 @@
 
 .evidence-assessment-question-groups h4,
 .evidence-assessment-checklist h4 {
-  margin-bottom: 0;
+  margin: var(--pkimm-space-sm) 0 0;
   font-size: 1.2rem;
 }
-.evidence-assessment-question details {
-  margin-bottom: var(--pkimm-space-md);
+/* Question cards stack their parts on one rhythm instead of per-element
+   margins. */
+.evidence-assessment-question:not(.evidence-assessment-question--nested) {
+  display: grid;
+  gap: var(--pkimm-space-md);
+
+  > p {
+    margin: 0;
+  }
+}
+.evidence-assessment-question__guidance > summary {
+  color: var(--pkimm-primary-color);
 }
 .evidence-assessment-question__purpose {
   color: var(--pkimm-text-color-muted);
@@ -616,7 +819,7 @@
 }
 .evidence-assessment-question__response {
   display: grid;
-  gap: var(--pkimm-space-sm);
+  gap: var(--pkimm-space-md);
 }
 .evidence-assessment-question__multi-select {
   display: grid;
@@ -635,18 +838,24 @@
     gap: var(--pkimm-space-xs);
   }
 }
+/* What an answer still needs: guidance while the user works, not an error. */
 .evidence-assessment-question__issues {
-  margin: var(--pkimm-space-sm) 0 0;
-  padding: var(--pkimm-space-xs) var(--pkimm-space-sm) var(--pkimm-space-xs)
-    calc(var(--pkimm-space-lg) + var(--pkimm-space-xs));
-  color: var(--pkimm-danger-fg);
-  background: var(--pkimm-danger-bg);
+  margin: 0;
+  padding: var(--pkimm-space-sm) var(--pkimm-space-md);
+  color: var(--pkimm-timing-warning-fg);
+  background: var(--pkimm-timing-warning-bg);
+  border-left: 3px solid var(--pkimm-timing-warning-border);
   border-radius: var(--pkimm-border-radius-sm);
-}
-.evidence-assessment-criterion__question-links {
-  margin: 0 0 var(--pkimm-space-md);
-  color: var(--pkimm-text-color-muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+
+  p {
+    margin: 0 0 var(--pkimm-space-2xs);
+    font-weight: 600;
+  }
+  ul {
+    margin: 0;
+    padding-left: var(--pkimm-space-lg);
+  }
 }
 .evidence-assessment-question summary {
   cursor: pointer;
@@ -716,11 +925,19 @@
     height: 2.75rem;
     font-size: 1.3rem;
   }
-  .evidence-assessment-status-options {
+  .evidence-choice--segments .evidence-choice__options {
     max-width: none;
   }
-  .evidence-assessment-status-options span {
-    font-size: 0.8rem;
+  .evidence-choice--segments .evidence-choice__option span {
+    padding-inline: var(--pkimm-space-2xs);
+    font-size: 0.85rem;
+  }
+  .evidence-assessment-question--nested > summary {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .evidence-assessment-question__finding {
+    grid-column: 2;
+    justify-self: start;
   }
   .evidence-assessment-level-nav {
     flex-direction: column-reverse;

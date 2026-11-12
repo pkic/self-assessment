@@ -129,6 +129,32 @@ describe("PQCMM cumulative gate scoring", () => {
     );
   });
 
+  it("reports each part of a criterion's gate separately", () => {
+    const assessment = record();
+    setLevel(assessment, 1, "met");
+    assessment.questionProgress["1.2.1"].finding = "does-not-support";
+    const score = calculateGatedMaturityScore(model, assessment, methodology);
+    const criterion = score.levelResults[1].criteria!.find(
+      (item) => item.id === "1.1.1",
+    )!;
+    expect(criterion).toMatchObject({
+      met: false,
+      statusPasses: true,
+      evidenceRequired: true,
+      evidencePasses: true,
+    });
+    expect(criterion.questionIds).toContain("1.2.1");
+    expect(criterion.supportingQuestionIds).not.toContain("1.2.1");
+    expect(criterion.supportingQuestionIds).toHaveLength(
+      criterion.questionIds.length - 1,
+    );
+    expect(
+      score.levelResults[0].criteria!.every(
+        (item) => !item.evidenceRequired && item.questionIds.length === 0,
+      ),
+    ).toBe(true);
+  });
+
   it("does not count dangling evidence ids as evidence", () => {
     const assessment = record();
     setLevel(assessment, 1, "met", false);
