@@ -35,11 +35,12 @@ export const SubjectField: React.FC<Props> = ({ field, subject, onChange }) => {
       {suggested && suggested !== value ? (
         <div className="evidence-assessment-subject-suggestion">
           <span>
-            Suggested CPE: <code>{suggested}</code>. Confirm the vendor's CPE
-            naming before using it.
+            Suggested {field.label}: <code>{suggested}</code>. Generated from
+            the fields above, so confirm it against the official naming before
+            using it.
           </span>
           <Button size="sm" onClick={() => onChange(field.key, suggested)}>
-            Use suggested CPE
+            Use suggestion
           </Button>
         </div>
       ) : null}

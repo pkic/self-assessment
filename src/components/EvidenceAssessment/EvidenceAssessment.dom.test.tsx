@@ -83,10 +83,10 @@ describe("EvidenceAssessment", () => {
     expect(screen.getByLabelText("Assessor organization")).toHaveValue(
       "Example Corp",
     );
-    expect(screen.getByText(/suggested cpe:/i)).toHaveTextContent(
+    expect(screen.getByText(/suggested cpe 2\.3 name:/i)).toHaveTextContent(
       "cpe:2.3:a:example_corp:secure_gateway:2.0:*:*:*:*:*:*:*",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Use suggested CPE" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use suggestion" }));
     await waitFor(() =>
       expect(
         screen.getByRole("button", { name: "Download PDF report" }),

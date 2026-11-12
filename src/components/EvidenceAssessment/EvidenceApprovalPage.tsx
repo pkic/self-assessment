@@ -70,7 +70,7 @@ export const EvidenceApprovalPage: React.FC<Props> = ({
       <Text style={styles.detail}>
         Validate any applied signature, certificate chain, trusted time,
         organization binding, and role-authority evidence. Executive approval
-        does not turn this self-assessment into a PKI Consortium certification.
+        does not turn this self-assessment into a certification.
       </Text>
       <ReportPageNumber />
     </Page>

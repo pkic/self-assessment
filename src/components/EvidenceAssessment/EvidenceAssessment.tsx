@@ -650,7 +650,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    View approved model text
+                    Read this level in the model
                   </a>
                 ) : null}
               </div>
