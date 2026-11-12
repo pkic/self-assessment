@@ -179,7 +179,9 @@
     border-right: 2px solid var(--pkimm-text-color-muted);
     border-bottom: 2px solid var(--pkimm-text-color-muted);
     transform: rotate(45deg);
-    transition: transform 0.15s ease;
+    @media (prefers-reduced-motion: no-preference) {
+      transition: transform 0.15s ease;
+    }
   }
   &[open] > summary::after {
     transform: rotate(-135deg);
@@ -230,7 +232,9 @@
     border-right: 2px solid var(--pkimm-text-color-muted);
     border-bottom: 2px solid var(--pkimm-text-color-muted);
     transform: rotate(45deg);
-    transition: transform 0.15s ease;
+    @media (prefers-reduced-motion: no-preference) {
+      transition: transform 0.15s ease;
+    }
   }
   &[aria-expanded="true"]::after {
     transform: rotate(-135deg);
@@ -650,13 +654,6 @@
 }
 .evidence-assessment-checklist li > p {
   margin: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .evidence-assessment-disclosure::after,
-  .evidence-assessment-assurance-details > summary::after {
-    transition: none;
-  }
 }
 
 @media (max-width: 1100px) {
