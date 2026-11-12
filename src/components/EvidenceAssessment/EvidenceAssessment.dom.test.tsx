@@ -26,8 +26,8 @@ describe("EvidenceAssessment", () => {
     );
     await screen.findByRole("heading", { name: "PQCMM Assessment" });
     expect(
-      container.querySelector(".evidence-assessment-header__result"),
-    ).toHaveTextContent("Level 0");
+      screen.getByRole("heading", { name: "Level 0 · None" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Target date for Level 1")).toHaveAttribute(
       "type",
       "date",
@@ -40,10 +40,15 @@ describe("EvidenceAssessment", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("progressbar", {
-        name: /level 0.*criteria completion/i,
+        name: /level 1.*criteria completion/i,
       }),
-    ).toHaveAttribute("value", "100");
-    expect(screen.getByText("Next gate")).toBeInTheDocument();
+    ).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByText("Next: Level 1 · Initial")).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByRole("complementary", { name: "Assessment progress" }),
+      ).getByRole("button", { name: /^Level 0 None: Established/ }),
+    ).toHaveAttribute("aria-pressed", "true");
 
     const criteria = container.querySelectorAll(
       ".evidence-assessment-criterion",
@@ -56,7 +61,12 @@ describe("EvidenceAssessment", () => {
         }),
       ).toBeChecked();
     }
-    expect(screen.getByText("Established")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Established · 2 of 2 criteria met/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Assessment scope/ }),
+    ).toHaveAttribute("aria-expanded", "true");
 
     expect(
       screen.getByRole("button", { name: "Download PDF report" }),
@@ -82,6 +92,10 @@ describe("EvidenceAssessment", () => {
         screen.getByRole("button", { name: "Download PDF report" }),
       ).toBeEnabled(),
     );
+    // Completing the scope does not fold the form away mid-edit.
+    expect(
+      screen.getByRole("button", { name: /Assessment scope/ }),
+    ).toHaveAttribute("aria-expanded", "true");
 
     expect(
       screen.getByText(/external signing flow establishes each actual signer/i),
@@ -90,5 +104,48 @@ describe("EvidenceAssessment", () => {
       "optional",
     );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("moves between levels from the staircase and the level navigation", async () => {
+    render(
+      <EvidenceAssessment
+        src={null}
+        profile={parseAssessmentProfile(
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+        )}
+      />,
+    );
+    await screen.findByRole("heading", { name: "PQCMM Assessment" });
+    fireEvent.click(
+      within(
+        screen.getByRole("complementary", { name: "Assessment progress" }),
+      ).getByRole("button", { name: /^Level 2 Foundational:/ }),
+    );
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Foundational" }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to Level 3" }),
+    );
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Advanced" }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back to Level 2" }));
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Foundational" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the expected-input note when the response fields define it", async () => {
+    render(
+      <EvidenceAssessment
+        src={null}
+        profile={parseAssessmentProfile(
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+        )}
+      />,
+    );
+    await screen.findByLabelText("Target date for Level 1");
+    expect(screen.queryByText(/Date \(YYYY-MM-DD\)/)).not.toBeInTheDocument();
   });
 });

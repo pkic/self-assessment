@@ -36,6 +36,20 @@
     min-height: 2.75rem;
   }
 
+  // iOS Safari gives date and time inputs an intrinsic width that ignores
+  // width: 100% (so they overflow narrow cards) and centres the value. Drop
+  // the native appearance so they size and align like every other field.
+  &:is([type="date"], [type="datetime-local"], [type="time"], [type="month"]) {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    min-height: 2.4rem;
+    text-align: left;
+  }
+  &::-webkit-date-and-time-value {
+    text-align: left;
+  }
+
   &:focus-visible {
     outline: 2px solid var(--pkimm-primary-color);
     outline-offset: 1px;

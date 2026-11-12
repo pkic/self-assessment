@@ -86,8 +86,8 @@ body {
   margin-top: 0.75rem;
 }
 
-.preview-controls__hint {
-  margin-top: 0.7rem !important;
+.preview-controls p.preview-controls__hint {
+  margin-top: 0.7rem;
   color: #d4d0e4;
   font-size: 0.78rem;
 }

@@ -126,6 +126,33 @@ export const evidenceFromFile = async (
   });
 };
 
+/**
+ * Reads several uploaded files at once. The combined package limit is checked
+ * up front against every new file, so reading them in parallel cannot slip a
+ * batch past the limit that one-at-a-time reading would have caught.
+ */
+export const evidenceFromFiles = async (
+  files: File[],
+  existingFiles: AssessmentEvidenceFile[],
+  profile: AssessmentProfileData,
+  acceptedMediaTypes?: string[],
+): Promise<AssessmentEvidenceFile[]> => {
+  const { maxPackageBytes } = evidenceCriterionPolicy(profile).evidence;
+  const total =
+    existingFiles.reduce((sum, item) => sum + item.size, 0) +
+    files.reduce((sum, file) => sum + file.size, 0);
+  if (total > maxPackageBytes) {
+    throw new Error(
+      `The assessment evidence package cannot exceed ${Math.floor(maxPackageBytes / 1024 / 1024)} MB.`,
+    );
+  }
+  return Promise.all(
+    files.map((file) =>
+      evidenceFromFile(file, existingFiles, profile, acceptedMediaTypes),
+    ),
+  );
+};
+
 export const maxAssessmentPackageFileBytes = (
   profile: AssessmentProfileData,
 ): number => {
@@ -565,9 +592,8 @@ export const parseAssessmentPackage = async (
         },
       ]),
   );
-  const evidenceFiles: AssessmentEvidenceFile[] = [];
-  for (const attachment of data.attachments) {
-    const file = {
+  const evidenceFiles: AssessmentEvidenceFile[] = data.attachments.map(
+    (attachment) => ({
       id: attachment.id,
       name: attachment.fileName,
       mediaType: attachment.mediaType,
@@ -575,10 +601,9 @@ export const parseAssessmentPackage = async (
       sha256: attachment.sha256,
       addedAt: attachment.addedAt,
       dataBase64: attachment.dataBase64!,
-    };
-    await verifyEvidenceFile(file);
-    evidenceFiles.push(file);
-  }
+    }),
+  );
+  await Promise.all(evidenceFiles.map((file) => verifyEvidenceFile(file)));
 
   const restored: EvidenceAssessmentRecord = {
     stateSchemaVersion: 3,

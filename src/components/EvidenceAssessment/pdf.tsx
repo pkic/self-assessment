@@ -65,19 +65,22 @@ export const buildEvidenceAssessmentPdfBlob = async (
       description: "Machine-readable assessment credential draft and manifest",
     },
   );
-  for (const file of profile.report.includeEvidenceAttachments
+  const evidenceAttachments = profile.report.includeEvidenceAttachments
     ? record.evidenceFiles
-    : []) {
-    await document.attach(
-      base64ToBytes(file.dataBase64),
-      embeddedEvidenceName(file),
-      {
-        mimeType: file.mediaType,
-        description: `Assessment evidence: ${file.name}; SHA-256 ${file.sha256}`,
-        creationDate: new Date(file.addedAt),
-      },
-    );
-  }
+    : [];
+  await Promise.all(
+    evidenceAttachments.map((file) =>
+      document.attach(
+        base64ToBytes(file.dataBase64),
+        embeddedEvidenceName(file),
+        {
+          mimeType: file.mediaType,
+          description: `Assessment evidence: ${file.name}; SHA-256 ${file.sha256}`,
+          creationDate: new Date(file.addedAt),
+        },
+      ),
+    ),
+  );
   if (profile.report.includeAttestation && profile.report.signing) {
     const approvalPage = namedDestinationPageIndex(
       document,

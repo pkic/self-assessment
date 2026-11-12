@@ -5,11 +5,13 @@ import { bytesToBase64 } from "./encoding";
 import {
   buildAssessmentPackage,
   embeddedEvidenceName,
+  evidenceFromFiles,
   newEvidenceAssessment,
   parseAssessmentPackage,
 } from "./machine";
 import { parseEvidenceModel } from "./model";
 import { completePqcmmSubject } from "./testFixtures";
+import { evidenceCriterionPolicy } from "../../assessment-engine/profile";
 
 const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
 const profile = parseAssessmentProfile(
@@ -279,5 +281,25 @@ describe("PQCMM machine-readable assessments", () => {
         dataBase64: "",
       }),
     ).not.toMatch(/[()\s/]/);
+  });
+
+  it("reads a batch of evidence files and keeps their order", async () => {
+    const files = [
+      new File(["first"], "first.txt", { type: "text/plain" }),
+      new File(["second"], "second.txt", { type: "text/plain" }),
+    ];
+    const added = await evidenceFromFiles(files, [], profile);
+    expect(added.map(({ name }) => name)).toEqual(["first.txt", "second.txt"]);
+    expect(added.map(({ size }) => size)).toEqual([5, 6]);
+  });
+
+  it("rejects a batch that together exceeds the package limit", async () => {
+    const { maxPackageBytes } = evidenceCriterionPolicy(profile).evidence;
+    const half = Math.floor(maxPackageBytes / 2) + 1;
+    const fakeFile = (name: string) =>
+      ({ name, size: half, type: "text/plain" }) as unknown as File;
+    await expect(
+      evidenceFromFiles([fakeFile("a.txt"), fakeFile("b.txt")], [], profile),
+    ).rejects.toThrow("evidence package cannot exceed");
   });
 });

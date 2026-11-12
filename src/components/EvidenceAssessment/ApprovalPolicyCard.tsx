@@ -17,36 +17,48 @@ export const ApprovalPolicyCard: React.FC<Props> = ({
   return (
     <Card
       as="section"
-      padding="lg"
+      padding="none"
       className="evidence-assessment-assurance-card"
+      aria-labelledby="evidence-assessment-assurance-heading"
     >
-      <div className="evidence-assessment-section-heading">
-        <h3>Assurance and formal approval</h3>
-        <p>{assurance.notice}</p>
-      </div>
-      <p className="evidence-assessment-assurance-label">
-        {assurance.reportLabel}
-      </p>
-      {signing ? (
-        <ul>
-          {signing.fields.map((field) => (
-            <li key={field.name}>
-              {field.label}: {field.role} (
-              {field.required ? "required" : "optional"})
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <div className="evidence-assessment-attestation-actions">
-        <output>
-          The browser prepares signature fields but does not select or sign for
-          a person. The external signing flow establishes each actual signer at
-          signing time
-          {signing?.allowAdditionalSignatures
-            ? " and may add further signatures."
-            : "."}
-        </output>
-      </div>
+      <details className="evidence-assessment-assurance-details">
+        <summary>
+          <span className="evidence-assessment-disclosure__text">
+            <span
+              id="evidence-assessment-assurance-heading"
+              className="evidence-assessment-disclosure__title"
+              role="heading"
+              aria-level={3}
+            >
+              Assurance and formal approval
+            </span>
+            <span className="evidence-assessment-assurance-label">
+              {assurance.reportLabel}
+            </span>
+          </span>
+        </summary>
+        <div className="evidence-assessment-disclosure__body">
+          <p>{assurance.notice}</p>
+          {signing ? (
+            <ul>
+              {signing.fields.map((field) => (
+                <li key={field.name}>
+                  {field.label}: {field.role} (
+                  {field.required ? "required" : "optional"})
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="evidence-assessment-muted">
+            The browser prepares signature fields but does not select or sign
+            for a person. The external signing flow establishes each actual
+            signer at signing time
+            {signing?.allowAdditionalSignatures
+              ? " and may add further signatures."
+              : "."}
+          </p>
+        </div>
+      </details>
     </Card>
   );
 };

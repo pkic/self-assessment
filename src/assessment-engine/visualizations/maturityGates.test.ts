@@ -1,5 +1,8 @@
 import type { GatedMaturityScore } from "../methodologies/cumulativeGates";
-import { buildMaturityGateVisualization } from "./maturityGates";
+import {
+  buildMaturityGateVisualization,
+  levelColorIndex,
+} from "./maturityGates";
 
 const levels = [
   { number: 0, name: "Baseline" },
@@ -123,5 +126,42 @@ describe("buildMaturityGateVisualization", () => {
       status: "complete",
       statusLabel: "Criteria complete",
     });
+  });
+
+  it("lists the criteria that keep a level from being established", () => {
+    const visualization = buildMaturityGateVisualization(
+      score({
+        levelResults: [
+          {
+            level: 0,
+            met: false,
+            criteriaMet: 0,
+            criteriaTotal: 2,
+            blockers: ["0.1.1: not-assessed", "0.1.2: evidence is required"],
+          },
+        ],
+      }),
+      levels.slice(0, 1),
+    );
+
+    expect(visualization[0].outstanding).toEqual([
+      { criterionId: "0.1.1", reason: "not-assessed" },
+      { criterionId: "0.1.2", reason: "evidence is required" },
+    ]);
+  });
+});
+
+describe("levelColorIndex", () => {
+  it("keeps the baseline neutral and maps up to five levels directly", () => {
+    expect(
+      [0, 1, 2, 3, 4, 5].map((level) => levelColorIndex(level, 5)),
+    ).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(levelColorIndex(3, 3)).toBe(3);
+  });
+
+  it("spreads longer scales across the five maturity colours", () => {
+    expect(
+      [1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => levelColorIndex(level, 9)),
+    ).toEqual([1, 2, 2, 3, 3, 4, 4, 5, 5]);
   });
 });

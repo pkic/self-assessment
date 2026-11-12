@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getBundledAssessmentModelYaml } from "../../defaults/assessmentModels";
-import { Button, Card, Select, TextArea } from "../ui";
+import { Button, Card, Menu, Select, TextArea } from "../ui";
 import { evidenceCriterionPolicy } from "../../assessment-engine/profile";
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import { newAssessmentId } from "../../assessment-engine/id";
@@ -22,7 +22,7 @@ import {
 } from "./storage";
 import {
   downloadAssessmentPackage,
-  evidenceFromFile,
+  evidenceFromFiles,
   maxAssessmentPackageFileBytes,
   newEvidenceAssessment,
   parseAssessmentPackage,
@@ -35,13 +35,17 @@ import {
 import type {
   EvidenceAssessmentRecord,
   EvidenceCriterionProgress,
-  AssessmentEvidenceFile,
   EvidenceModelData,
   EvidenceQuestionProgress,
 } from "./types";
 import { EvidenceAttachments } from "./EvidenceAttachments";
 import { ApprovalPolicyCard } from "./ApprovalPolicyCard";
-import { MaturityGateChart } from "./MaturityGateChart";
+import {
+  levelStyleVars,
+  MaturityLevelStrip,
+  MaturityProgressPanel,
+} from "./MaturityProgressPanel";
+import { levelColorIndex } from "../../assessment-engine/visualizations/maturityGates";
 import { QuestionResponseFields } from "./QuestionResponseFields";
 import { SubjectField } from "./SubjectField";
 import { updateSubjectWithDefaults } from "../../assessment-engine/subject-convenience";
@@ -86,6 +90,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   const [statusMessage, setStatusMessage] = useState("Loading assessment…");
   const [error, setError] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [scopeOpen, setScopeOpen] = useState(true);
+  const scopeRecordId = useRef<string | null>(null);
+  const levelPanelRef = useRef<HTMLElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -167,6 +174,15 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
     return () => window.clearTimeout(timeout);
   }, [record]);
 
+  // Open the scope card when an assessment is first shown with scope gaps and
+  // fold it away when the scope is already complete. It is not toggled while
+  // the user edits, so completing the last field never collapses the form.
+  useEffect(() => {
+    if (!record || scopeRecordId.current === record.id) return;
+    scopeRecordId.current = record.id;
+    setScopeOpen(assessmentSubjectIssues(profile, record.subject).length > 0);
+  }, [profile, record]);
+
   const score = useMemo(
     () =>
       model && record
@@ -180,6 +196,29 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
   );
   const criterionPolicy = evidenceCriterionPolicy(profile);
   const level = model?.levels.find((item) => item.number === selectedLevel);
+  const criterionText = useMemo(
+    () =>
+      new Map(
+        (model?.levels ?? []).flatMap((item) =>
+          item.criteria.items.map(
+            (criterion) => [criterion.id, criterion.text] as const,
+          ),
+        ),
+      ),
+    [model],
+  );
+
+  const showLevel = (levelNumber: number) => {
+    setSelectedLevel(levelNumber);
+    // Bring the level heading into view so a choice made in the progress panel
+    // or the level strip lands on the content it selected.
+    window.requestAnimationFrame(() =>
+      levelPanelRef.current?.scrollIntoView?.({
+        behavior: "smooth",
+        block: "start",
+      }),
+    );
+  };
 
   const mutate = (
     updater: (current: EvidenceAssessmentRecord) => EvidenceAssessmentRecord,
@@ -252,18 +291,12 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
           `This evidence request accepts at most ${owner.maxFiles} file${owner.maxFiles === 1 ? "" : "s"}.`,
         );
       }
-      const added: AssessmentEvidenceFile[] = [];
-      let packageFiles = [...record.evidenceFiles];
-      for (const file of Array.from(files)) {
-        const evidence = await evidenceFromFile(
-          file,
-          packageFiles,
-          profile,
-          owner.acceptedMediaTypes,
-        );
-        added.push(evidence);
-        packageFiles = [...packageFiles, evidence];
-      }
+      const added = await evidenceFromFiles(
+        Array.from(files),
+        record.evidenceFiles,
+        profile,
+        owner.acceptedMediaTypes,
+      );
       const ids = added.map((file) => file.id);
       mutate((current) => {
         if (owner.kind === "criterion") {
@@ -406,6 +439,51 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
 
   const subjectIssues = assessmentSubjectIssues(profile, record.subject);
   const exportAvailable = cryptographyAvailable && subjectIssues.length === 0;
+  const exportBlockedReason = !cryptographyAvailable
+    ? "Export requires HTTPS or localhost."
+    : subjectIssues[0];
+  const scopeExpanded = scopeOpen;
+  const subjectSummary = profile.runtime.subjectFields
+    .slice(0, 3)
+    .map((field) => record.subject[field.key])
+    .filter((value): value is string => typeof value === "string" && !!value)
+    .join(" · ");
+  const levelNumbers = model.levels.map((item) => item.number);
+  const maximumLevel = Math.max(...levelNumbers);
+  const levelIndex = levelNumbers.indexOf(level.number);
+  const nextLevelInModel = model.levels[levelIndex + 1];
+  const previousLevelInModel = model.levels[levelIndex - 1];
+  const levelResult = score.levelResults.find(
+    (entry) => entry.level === level.number,
+  );
+  const levelStatus =
+    score.achievedLevel !== null && level.number <= score.achievedLevel
+      ? "Established"
+      : score.nextLevel === level.number
+        ? "Next gate"
+        : "Not yet established";
+  const evidenceFromLevel =
+    typeof profile.runtime.methodology.parameters?.evidenceRequiredFromLevel ===
+    "number"
+      ? profile.runtime.methodology.parameters.evidenceRequiredFromLevel
+      : 1;
+  const passingLabel =
+    criterionPolicy?.statuses.find((option) => option.value === "met")?.label ??
+    "Met";
+  const findingOptions =
+    profile.runtime.questions?.findings.filter(
+      ({ value }) => value !== "not-assessed",
+    ) ?? [];
+
+  const exportJson = () => {
+    if (!exportAvailable) {
+      setError(exportBlockedReason ?? "Export is not available yet.");
+      return;
+    }
+    void downloadAssessmentPackage(model, profile, record).catch((error_) =>
+      setError(error_ instanceof Error ? error_.message : String(error_)),
+    );
+  };
 
   return (
     <div className="evidence-assessment-assessment-container">
@@ -417,14 +495,9 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
           <h2>{profile.profile.title}</h2>
           <p>{profile.profile.description}</p>
         </div>
-        <div className="evidence-assessment-header__result" aria-live="polite">
-          <span>
-            {score.achievedLevel === null
-              ? "No level established"
-              : `Level ${score.achievedLevel}`}
-          </span>
-          <small>{statusMessage}</small>
-        </div>
+        <output className="evidence-assessment-header__status">
+          {statusMessage}
+        </output>
       </header>
 
       <div className="evidence-assessment-toolbar">
@@ -439,29 +512,50 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             </option>
           ))}
         </Select>
-        <Button onClick={() => void createAssessment()}>New</Button>
-        <Button variant="danger" onClick={() => void deleteAssessment()}>
-          Delete
-        </Button>
-        <Button
-          disabled={!exportAvailable}
-          title={
-            !cryptographyAvailable
-              ? "Export requires HTTPS or localhost."
-              : subjectIssues[0]
-          }
-          onClick={() =>
-            void downloadAssessmentPackage(model, profile, record).catch(
-              (error_) =>
+        <div className="evidence-assessment-toolbar__actions">
+          <Button onClick={() => void createAssessment()}>New</Button>
+          <Menu
+            label="More assessment actions"
+            align="end"
+            items={[
+              {
+                id: "import",
+                label: "Import JSON",
+                onSelect: () => importRef.current?.click(),
+              },
+              {
+                id: "export",
+                label: "Export JSON",
+                onSelect: exportJson,
+              },
+              {
+                id: "delete",
+                label: "Delete assessment",
+                tone: "danger",
+                onSelect: () => void deleteAssessment(),
+              },
+            ]}
+          />
+          <Button
+            variant="primary"
+            disabled={generatingPdf || !exportAvailable}
+            title={exportBlockedReason}
+            onClick={async () => {
+              setGeneratingPdf(true);
+              try {
+                await downloadEvidenceAssessmentPdf(model, profile, record);
+              } catch (error_) {
                 setError(
                   error_ instanceof Error ? error_.message : String(error_),
-                ),
-            )
-          }
-        >
-          Export JSON
-        </Button>
-        <Button onClick={() => importRef.current?.click()}>Import JSON</Button>
+                );
+              } finally {
+                setGeneratingPdf(false);
+              }
+            }}
+          >
+            {generatingPdf ? "Generating PDF…" : "Download PDF report"}
+          </Button>
+        </div>
         <input
           ref={importRef}
           className="pkimm-visually-hidden"
@@ -474,29 +568,6 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
             event.target.value = "";
           }}
         />
-        <Button
-          variant="primary"
-          disabled={generatingPdf || !exportAvailable}
-          title={
-            !cryptographyAvailable
-              ? "PDF generation requires HTTPS or localhost."
-              : subjectIssues[0]
-          }
-          onClick={async () => {
-            setGeneratingPdf(true);
-            try {
-              await downloadEvidenceAssessmentPdf(model, profile, record);
-            } catch (error_) {
-              setError(
-                error_ instanceof Error ? error_.message : String(error_),
-              );
-            } finally {
-              setGeneratingPdf(false);
-            }
-          }}
-        >
-          {generatingPdf ? "Generating PDF…" : "Download PDF report"}
-        </Button>
       </div>
 
       {error ? (
@@ -513,414 +584,438 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
         </output>
       ) : null}
 
-      <main className="evidence-assessment-main">
-        <Card
-          as="section"
-          padding="lg"
-          className="evidence-assessment-scope-card"
+      <div className="evidence-assessment-layout">
+        <aside
+          className="evidence-assessment-rail"
+          aria-label="Assessment progress"
         >
-          <div className="evidence-assessment-section-heading">
-            <div>
-              <h3>Assessment scope</h3>
-              <p>
+          <Card as="div" padding="lg">
+            <MaturityProgressPanel
+              levels={model.levels}
+              score={score}
+              criterionText={criterionText}
+              statuses={criterionPolicy?.statuses ?? []}
+              findings={findingOptions}
+              scoringRule={model.scoring.rule}
+              selectedLevel={selectedLevel}
+              onSelectLevel={showLevel}
+            />
+          </Card>
+        </aside>
+
+        <main className="evidence-assessment-main">
+          <Card
+            as="section"
+            padding="none"
+            className="evidence-assessment-scope-card"
+            aria-labelledby="evidence-assessment-scope-heading"
+          >
+            <h3
+              id="evidence-assessment-scope-heading"
+              className="evidence-assessment-disclosure__heading"
+            >
+              <button
+                type="button"
+                className="evidence-assessment-disclosure"
+                aria-expanded={scopeExpanded}
+                aria-controls="evidence-assessment-scope-body"
+                onClick={() => setScopeOpen(!scopeExpanded)}
+              >
+                <span className="evidence-assessment-disclosure__text">
+                  <span className="evidence-assessment-disclosure__title">
+                    Assessment scope
+                  </span>
+                  <span className="evidence-assessment-disclosure__summary">
+                    {subjectIssues.length > 0
+                      ? `${subjectIssues.length} item${subjectIssues.length === 1 ? "" : "s"} to complete before export`
+                      : subjectSummary || "Complete"}
+                  </span>
+                </span>
+                <span
+                  className={`evidence-assessment-disclosure__state ${
+                    subjectIssues.length > 0
+                      ? "evidence-assessment-disclosure__state--todo"
+                      : "evidence-assessment-disclosure__state--done"
+                  }`}
+                >
+                  {subjectIssues.length > 0 ? "To do" : "Complete"}
+                </span>
+              </button>
+            </h3>
+            <div
+              id="evidence-assessment-scope-body"
+              className="evidence-assessment-disclosure__body"
+              hidden={!scopeExpanded}
+            >
+              <p className="evidence-assessment-muted">
                 Identify one product or service, including the released version
                 and deployment modes covered.
               </p>
+              <div className="evidence-assessment-field-grid">
+                {profile.runtime.subjectFields.map((field) => (
+                  <SubjectField
+                    key={field.key}
+                    field={field}
+                    subject={record.subject}
+                    onChange={updateSubjectField}
+                  />
+                ))}
+              </div>
+              {subjectIssues.length > 0 ? (
+                <ul className="evidence-assessment-scope-issues" role="alert">
+                  {subjectIssues.map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
-          </div>
-          <div className="evidence-assessment-field-grid">
-            {profile.runtime.subjectFields.map((field) => (
-              <SubjectField
-                key={field.key}
-                field={field}
-                subject={record.subject}
-                onChange={updateSubjectField}
-              />
-            ))}
-          </div>
-          {subjectIssues.length > 0 ? (
-            <div role="alert">
-              {subjectIssues.map((issue) => (
-                <p key={issue}>{issue}</p>
-              ))}
-            </div>
-          ) : null}
-        </Card>
+          </Card>
 
-        <ApprovalPolicyCard
-          profile={profile}
-          assuranceProfileId={record.assuranceProfileId}
-        />
+          <ApprovalPolicyCard
+            profile={profile}
+            assuranceProfileId={record.assuranceProfileId}
+          />
 
-        <Card
-          as="section"
-          padding="lg"
-          className="evidence-assessment-score-card"
-        >
-          <div className="evidence-assessment-score-card__level">
-            <strong>
-              {score.achievedLevel === null
-                ? "No level"
-                : `Claimed Level ${score.achievedLevel}`}
-            </strong>
-            <span>
-              {score.achievedLevel === null
-                ? "Not yet established"
-                : "Highest fully met cumulative level"}
-            </span>
-          </div>
-          <dl>
-            <div>
-              <dt>Criteria marked Met</dt>
-              <dd>
-                {score.criteriaMet}/{score.criteriaTotal}
-              </dd>
-            </div>
-            <div>
-              <dt>Questions answered</dt>
-              <dd>
-                {score.questionsAnswered}/{score.questionsTotal}
-              </dd>
-            </div>
-            <div>
-              <dt>Evidence files</dt>
-              <dd>{score.evidenceFiles}</dd>
-            </div>
-            {profile.runtime.questions?.findings
-              .filter(({ value }) => value !== "not-assessed")
-              .map((finding) => (
-                <div key={finding.value}>
-                  <dt>{finding.label}</dt>
-                  <dd>{score.questionFindingCounts[finding.value] ?? 0}</dd>
-                </div>
-              ))}
-          </dl>
-          <p>{model.scoring.rule}</p>
-        </Card>
+          <MaturityLevelStrip
+            levels={model.levels}
+            score={score}
+            selectedLevel={selectedLevel}
+            onSelectLevel={showLevel}
+          />
 
-        <Card as="section" padding="lg">
-          <MaturityGateChart levels={model.levels} score={score} />
-        </Card>
-
-        <nav
-          className="evidence-assessment-level-tabs"
-          aria-label={`${model.model.abbreviation} maturity levels`}
-        >
-          {model.levels.map((item) => {
-            const result = score.levelResults.find(
-              (entry) => entry.level === item.number,
-            );
-            return (
-              <button
-                key={item.number}
-                type="button"
-                className={selectedLevel === item.number ? "active" : ""}
-                aria-current={
-                  selectedLevel === item.number ? "page" : undefined
-                }
-                onClick={() => setSelectedLevel(item.number)}
+          <section
+            ref={levelPanelRef}
+            className="evidence-assessment-level-panel"
+            aria-labelledby={`evidence-assessment-level-${level.number}`}
+            style={levelStyleVars(levelColorIndex(level.number, maximumLevel))}
+          >
+            <div className="evidence-assessment-level-panel__heading">
+              <span
+                className="evidence-assessment-level-panel__badge"
+                aria-hidden="true"
               >
-                <span>Level {item.number}</span>
-                <small>
-                  {item.name}
-                  {result?.met ? " · met" : ""}
-                </small>
-              </button>
-            );
-          })}
-        </nav>
-
-        <section
-          className="evidence-assessment-level-panel"
-          aria-labelledby={`evidence-assessment-level-${level.number}`}
-        >
-          <div className="evidence-assessment-level-panel__heading">
-            <div>
-              <span>Level {level.number}</span>
-              <h3 id={`evidence-assessment-level-${level.number}`}>
-                {level.name}
-              </h3>
-              <p>{level.summary}</p>
-            </div>
-            <a
-              href={level.sourcePage}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View approved model text
-            </a>
-          </div>
-
-          <div className="evidence-assessment-model-copy">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {level.criteria.introduction}
-            </ReactMarkdown>
-          </div>
-          <div className="evidence-assessment-criterion-list">
-            {level.criteria.items.map((criterion) => {
-              const progress =
-                record.criterionProgress[criterion.id] ??
-                emptyCriterionProgress();
-              const gateBlocker = score.levelResults
-                .find((result) => result.level === level.number)
-                ?.blockers.find((blocker) =>
-                  blocker.startsWith(`${criterion.id}:`),
-                );
-              return (
-                <Card
-                  key={criterion.id}
-                  as="article"
-                  padding="lg"
-                  className={`evidence-assessment-criterion ${criterionStatusClass(
-                    progress.status,
-                    Boolean(gateBlocker),
-                  )}`}
+                {level.number}
+              </span>
+              <div>
+                <span className="evidence-assessment-level-panel__eyebrow">
+                  Level {level.number}
+                  <span className="evidence-assessment-level-panel__status">
+                    {levelStatus}
+                    {levelResult
+                      ? ` · ${levelResult.criteriaMet} of ${levelResult.criteriaTotal} criteria met`
+                      : ""}
+                  </span>
+                </span>
+                <h3 id={`evidence-assessment-level-${level.number}`}>
+                  {level.name}
+                </h3>
+                <p>{level.summary}</p>
+                <a
+                  href={level.sourcePage}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <div className="evidence-assessment-item-title">
-                    <span>{criterion.id}</span>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {criterion.text}
-                    </ReactMarkdown>
-                  </div>
-                  <fieldset className="evidence-assessment-status-options">
-                    <legend>Criterion status</legend>
-                    {criterionPolicy?.statuses.map((option) => (
-                      <label key={option.value}>
-                        <input
-                          type="radio"
-                          name={`status-${criterion.id}`}
-                          value={option.value}
-                          checked={progress.status === option.value}
-                          onChange={() =>
+                  View approved model text
+                </a>
+              </div>
+            </div>
+
+            <div className="evidence-assessment-model-copy">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {level.criteria.introduction}
+              </ReactMarkdown>
+            </div>
+            <div className="evidence-assessment-criterion-list">
+              {level.criteria.items.map((criterion) => {
+                const progress =
+                  record.criterionProgress[criterion.id] ??
+                  emptyCriterionProgress();
+                const gateBlocker = score.levelResults
+                  .find((result) => result.level === level.number)
+                  ?.blockers.find((blocker) =>
+                    blocker.startsWith(`${criterion.id}:`),
+                  );
+                return (
+                  <Card
+                    key={criterion.id}
+                    as="article"
+                    padding="lg"
+                    className={`evidence-assessment-criterion ${criterionStatusClass(
+                      progress.status,
+                      Boolean(gateBlocker),
+                    )}`}
+                  >
+                    <div className="evidence-assessment-item-title">
+                      <span>{criterion.id}</span>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {criterion.text}
+                      </ReactMarkdown>
+                    </div>
+                    <fieldset className="evidence-assessment-status-options">
+                      <legend>Criterion status</legend>
+                      {criterionPolicy?.statuses.map((option) => (
+                        <label key={option.value}>
+                          <input
+                            type="radio"
+                            name={`status-${criterion.id}`}
+                            value={option.value}
+                            checked={progress.status === option.value}
+                            onChange={() =>
+                              updateCriterion(criterion.id, {
+                                status: option.value,
+                              })
+                            }
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                    {criterion.assessmentQuestionIds?.length ? (
+                      <p className="evidence-assessment-criterion__question-links">
+                        Assessed through questions{" "}
+                        {criterion.assessmentQuestionIds.join(", ")}.
+                      </p>
+                    ) : null}
+                    {level.number >= evidenceFromLevel ? (
+                      <>
+                        <TextArea
+                          label={
+                            criterionPolicy?.evidence.statementLabel ??
+                            "Evidence"
+                          }
+                          hint={criterionPolicy?.evidence.statementHint}
+                          rows={3}
+                          value={progress.evidenceStatement}
+                          onChange={(event) =>
                             updateCriterion(criterion.id, {
-                              status: option.value,
+                              evidenceStatement: event.target.value,
                             })
                           }
                         />
-                        <span>{option.label}</span>
-                      </label>
-                    ))}
-                  </fieldset>
-                  {criterion.assessmentQuestionIds?.length ? (
-                    <p className="evidence-assessment-criterion__question-links">
-                      Assessed through questions{" "}
-                      {criterion.assessmentQuestionIds.join(", ")}.
-                    </p>
-                  ) : null}
-                  {level.number > 0 ? (
-                    <>
-                      <TextArea
-                        label={
-                          criterionPolicy?.evidence.statementLabel ?? "Evidence"
-                        }
-                        hint={criterionPolicy?.evidence.statementHint}
-                        rows={3}
-                        value={progress.evidenceStatement}
-                        onChange={(event) =>
-                          updateCriterion(criterion.id, {
-                            evidenceStatement: event.target.value,
-                          })
-                        }
-                      />
-                      {progress.status === "met" && gateBlocker ? (
-                        <output className="evidence-assessment-evidence-required">
-                          This criterion cannot establish the level:{" "}
-                          {gateBlocker.slice(criterion.id.length + 2)}.
-                        </output>
-                      ) : null}
-                      <EvidenceAttachments
-                        ownerLabel={`criterion ${criterion.id}`}
-                        evidenceIds={progress.evidenceIds}
-                        evidenceFiles={record.evidenceFiles}
-                        onAdd={(files) =>
-                          addEvidence(
-                            { kind: "criterion", id: criterion.id },
-                            files,
-                          )
-                        }
-                        onRemove={(id) =>
-                          removeEvidence(
-                            { kind: "criterion", id: criterion.id },
-                            id,
-                          )
-                        }
-                      />
-                    </>
-                  ) : (
-                    <p className="evidence-assessment-level-zero-note">
-                      Level 0 is self-declared. Evidence is not required, but
-                      both Level 0 criteria must be marked Met to establish it.
-                    </p>
-                  )}
-                  <TextArea
-                    label="Notes and gaps"
-                    rows={2}
-                    value={progress.notes}
-                    onChange={(event) =>
-                      updateCriterion(criterion.id, {
-                        notes: event.target.value,
-                      })
-                    }
-                  />
-                </Card>
-              );
-            })}
-          </div>
-
-          {level.assessment.methodology ? (
-            <details className="evidence-assessment-methodology">
-              <summary>Assessment methodology record</summary>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {level.assessment.methodology}
-              </ReactMarkdown>
-            </details>
-          ) : null}
-
-          <div className="evidence-assessment-question-groups">
-            {level.assessment.groups.map((group) => (
-              <section key={group.id}>
-                <h4>{group.name}</h4>
-                {group.introduction ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {group.introduction}
-                  </ReactMarkdown>
-                ) : null}
-                {group.questions.map((question) => {
-                  const hasProgress = Boolean(
-                    record.questionProgress[question.id],
-                  );
-                  const progress =
-                    record.questionProgress[question.id] ??
-                    emptyQuestionProgress();
-                  const definition = responseDefinition(
-                    question,
-                    group.kind,
-                    profile,
-                  );
-                  const responseIssues = questionResponseIssues(
-                    question,
-                    group.kind,
-                    profile,
-                    progress,
-                    record.evidenceFiles,
-                  );
-                  return (
-                    <Card
-                      key={question.id}
-                      as="article"
-                      padding="lg"
-                      className="evidence-assessment-question"
-                    >
-                      <div className="evidence-assessment-item-title">
-                        <span>{question.id}</span>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {question.question}
-                        </ReactMarkdown>
-                      </div>
-                      {question.guidance ? (
-                        <details>
-                          <summary>Assessment guidance</summary>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {question.guidance}
-                          </ReactMarkdown>
-                        </details>
-                      ) : null}
-                      {question.expectedInput ? (
-                        <p>
-                          <strong>Expected input:</strong>{" "}
-                          {question.expectedInput}
-                        </p>
-                      ) : null}
-                      {question.purpose ? (
-                        <p>
-                          <strong>Purpose:</strong> {question.purpose}
-                        </p>
-                      ) : null}
-                      <QuestionResponseFields
-                        question={question}
-                        kind={group.kind}
-                        profile={profile}
-                        progress={progress}
-                        onChange={(update) =>
-                          updateQuestion(question.id, update)
-                        }
-                      />
-                      {hasProgress && responseIssues.length > 0 ? (
-                        <ul className="evidence-assessment-question__issues">
-                          {responseIssues.map((issue) => (
-                            <li key={issue}>{issue}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {definition.evidence || group.kind === "assessment" ? (
+                        {progress.status === "met" && gateBlocker ? (
+                          <output className="evidence-assessment-evidence-required">
+                            This criterion cannot establish the level:{" "}
+                            {gateBlocker.slice(criterion.id.length + 2)}.
+                          </output>
+                        ) : null}
                         <EvidenceAttachments
-                          ownerLabel={`question ${question.id}`}
+                          ownerLabel={`criterion ${criterion.id}`}
                           evidenceIds={progress.evidenceIds}
                           evidenceFiles={record.evidenceFiles}
                           onAdd={(files) =>
                             addEvidence(
-                              {
-                                kind: "question",
-                                id: question.id,
-                                acceptedMediaTypes:
-                                  definition.evidence?.acceptedMediaTypes,
-                                maxFiles: definition.evidence?.maxFiles,
-                              },
+                              { kind: "criterion", id: criterion.id },
                               files,
                             )
                           }
                           onRemove={(id) =>
                             removeEvidence(
-                              { kind: "question", id: question.id },
+                              { kind: "criterion", id: criterion.id },
                               id,
                             )
                           }
-                          label={
-                            definition.evidence?.label ??
-                            profile.runtime.questions?.defaults[group.kind]
-                              .evidenceLabel
-                          }
-                          description={
-                            definition.evidence?.description ??
-                            profile.runtime.questions?.defaults[group.kind]
-                              .evidenceDescription
-                          }
-                          acceptedMediaTypes={
-                            definition.evidence?.acceptedMediaTypes
-                          }
-                          maxFiles={definition.evidence?.maxFiles}
                         />
-                      ) : null}
-                    </Card>
-                  );
-                })}
-              </section>
-            ))}
-          </div>
+                      </>
+                    ) : (
+                      <p className="evidence-assessment-level-zero-note">
+                        Evidence is not required at this level. Mark every
+                        criterion {passingLabel} to establish it.
+                      </p>
+                    )}
+                    <TextArea
+                      label="Notes and gaps"
+                      rows={2}
+                      value={progress.notes}
+                      onChange={(event) =>
+                        updateCriterion(criterion.id, {
+                          notes: event.target.value,
+                        })
+                      }
+                    />
+                  </Card>
+                );
+              })}
+            </div>
 
-          {level.evidenceChecklist.items.length > 0 ? (
-            <Card
-              as="section"
-              padding="lg"
-              className="evidence-assessment-checklist"
-            >
-              <h4>Evidence checklist</h4>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {level.evidenceChecklist.introduction}
-              </ReactMarkdown>
-              <ul>
-                {level.evidenceChecklist.items.map((item) => (
-                  <li key={item.id}>
+            {level.assessment.methodology ? (
+              <details className="evidence-assessment-methodology">
+                <summary>Assessment methodology record</summary>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {level.assessment.methodology}
+                </ReactMarkdown>
+              </details>
+            ) : null}
+
+            <div className="evidence-assessment-question-groups">
+              {level.assessment.groups.map((group) => (
+                <section key={group.id}>
+                  <h4>{group.name}</h4>
+                  {group.introduction ? (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {item.text}
+                      {group.introduction}
                     </ReactMarkdown>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
-        </section>
-      </main>
+                  ) : null}
+                  {group.questions.map((question) => {
+                    const hasProgress = Boolean(
+                      record.questionProgress[question.id],
+                    );
+                    const progress =
+                      record.questionProgress[question.id] ??
+                      emptyQuestionProgress();
+                    const definition = responseDefinition(
+                      question,
+                      group.kind,
+                      profile,
+                    );
+                    const responseIssues = questionResponseIssues(
+                      question,
+                      group.kind,
+                      profile,
+                      progress,
+                      record.evidenceFiles,
+                    );
+                    return (
+                      <Card
+                        key={question.id}
+                        as="article"
+                        padding="lg"
+                        className="evidence-assessment-question"
+                      >
+                        <div className="evidence-assessment-item-title">
+                          <span>{question.id}</span>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {question.question}
+                          </ReactMarkdown>
+                        </div>
+                        {question.guidance ? (
+                          <details>
+                            <summary>Assessment guidance</summary>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {question.guidance}
+                            </ReactMarkdown>
+                          </details>
+                        ) : null}
+                        {question.expectedInput && !question.response ? (
+                          <p>
+                            <strong>Expected input:</strong>{" "}
+                            {question.expectedInput}
+                          </p>
+                        ) : null}
+                        {question.purpose ? (
+                          <p className="evidence-assessment-question__purpose">
+                            <strong>Purpose:</strong> {question.purpose}
+                          </p>
+                        ) : null}
+                        <QuestionResponseFields
+                          question={question}
+                          kind={group.kind}
+                          profile={profile}
+                          progress={progress}
+                          onChange={(update) =>
+                            updateQuestion(question.id, update)
+                          }
+                        />
+                        {hasProgress && responseIssues.length > 0 ? (
+                          <ul className="evidence-assessment-question__issues">
+                            {responseIssues.map((issue) => (
+                              <li key={issue}>{issue}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        {definition.evidence || group.kind === "assessment" ? (
+                          <EvidenceAttachments
+                            ownerLabel={`question ${question.id}`}
+                            evidenceIds={progress.evidenceIds}
+                            evidenceFiles={record.evidenceFiles}
+                            onAdd={(files) =>
+                              addEvidence(
+                                {
+                                  kind: "question",
+                                  id: question.id,
+                                  acceptedMediaTypes:
+                                    definition.evidence?.acceptedMediaTypes,
+                                  maxFiles: definition.evidence?.maxFiles,
+                                },
+                                files,
+                              )
+                            }
+                            onRemove={(id) =>
+                              removeEvidence(
+                                { kind: "question", id: question.id },
+                                id,
+                              )
+                            }
+                            label={
+                              definition.evidence?.label ??
+                              profile.runtime.questions?.defaults[group.kind]
+                                .evidenceLabel
+                            }
+                            description={
+                              definition.evidence?.description ??
+                              profile.runtime.questions?.defaults[group.kind]
+                                .evidenceDescription
+                            }
+                            acceptedMediaTypes={
+                              definition.evidence?.acceptedMediaTypes
+                            }
+                            maxFiles={definition.evidence?.maxFiles}
+                          />
+                        ) : null}
+                      </Card>
+                    );
+                  })}
+                </section>
+              ))}
+            </div>
+
+            {level.evidenceChecklist.items.length > 0 ? (
+              <Card
+                as="section"
+                padding="lg"
+                className="evidence-assessment-checklist"
+              >
+                <h4>Evidence checklist</h4>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {level.evidenceChecklist.introduction}
+                </ReactMarkdown>
+                <ul>
+                  {level.evidenceChecklist.items.map((item) => (
+                    <li key={item.id}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {item.text}
+                      </ReactMarkdown>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ) : null}
+            {nextLevelInModel || previousLevelInModel ? (
+              <nav
+                className="evidence-assessment-level-nav"
+                aria-label="Move between levels"
+              >
+                {previousLevelInModel ? (
+                  <Button
+                    onClick={() => showLevel(previousLevelInModel.number)}
+                  >
+                    Back to Level {previousLevelInModel.number}
+                  </Button>
+                ) : (
+                  <span />
+                )}
+                {nextLevelInModel ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => showLevel(nextLevelInModel.number)}
+                  >
+                    Continue to Level {nextLevelInModel.number}
+                  </Button>
+                ) : null}
+              </nav>
+            ) : null}
+          </section>
+        </main>
+      </div>
     </div>
   );
 };

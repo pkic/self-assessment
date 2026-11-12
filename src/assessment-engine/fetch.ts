@@ -35,17 +35,21 @@ export const fetchTextWithLimit = async (
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > maxBytes) {
-        await reader.cancel();
-        throw new Error(`${label} exceeds the ${maxBytes}-byte safety limit.`);
-      }
-      chunks.push(value);
+  // Reads one chunk at a time and recurses, so the size limit stops the
+  // download as soon as it is crossed.
+  const pump = async (): Promise<void> => {
+    const { done, value } = await reader.read();
+    if (done) return;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error(`${label} exceeds the ${maxBytes}-byte safety limit.`);
     }
+    chunks.push(value);
+    return pump();
+  };
+  try {
+    await pump();
   } finally {
     reader.releaseLock();
   }
