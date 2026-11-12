@@ -98,6 +98,11 @@
   }
 }
 
+.pkimm-field__label-note {
+  font-weight: 400;
+  color: var(--pkimm-text-color-muted);
+}
+
 .pkimm-field__hint {
   font-size: 0.8rem;
   color: var(--pkimm-text-color-muted);

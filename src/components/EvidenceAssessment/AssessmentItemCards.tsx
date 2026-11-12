@@ -140,6 +140,7 @@ export const CriterionCard: React.FC<CriterionCardProps> = ({
           <>
             <TextArea
               label={policy?.evidence.statementLabel ?? "Evidence"}
+              labelNote="or attach a file"
               hint={policy?.evidence.statementHint}
               rows={3}
               value={progress.evidenceStatement}
@@ -163,6 +164,7 @@ export const CriterionCard: React.FC<CriterionCardProps> = ({
         )}
         <TextArea
           label="Notes and gaps"
+          labelNote="optional"
           rows={2}
           value={progress.notes}
           onChange={(event) => onUpdate({ notes: event.target.value })}

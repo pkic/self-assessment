@@ -839,6 +839,12 @@
   }
 }
 /* What an answer still needs: guidance while the user works, not an error. */
+.evidence-assessment-question__rule {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pkimm-text-color-muted);
+}
+
 .evidence-assessment-question__issues {
   margin: 0;
   padding: var(--pkimm-space-sm) var(--pkimm-space-md);

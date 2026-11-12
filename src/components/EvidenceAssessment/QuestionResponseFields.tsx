@@ -4,6 +4,7 @@ import { DURATION_UNITS } from "../../assessment-engine/question-values";
 import { Select, TextArea, TextField } from "../ui";
 import { responseDefinition } from "./questionResponse";
 import { ChoiceGroup } from "./ChoiceGroup";
+import { fieldRequirementNote, RuleNote } from "./fieldRequirement";
 import { passingQuestionFindings } from "./assessmentView";
 import type {
   EvidenceQuestion,
@@ -69,14 +70,34 @@ const localInputToUtc = (localValue: string): string => {
   return Number.isNaN(date.valueOf()) ? "" : date.toISOString();
 };
 
+const LabelNote: React.FC<{ note?: string }> = ({ note }) =>
+  note ? (
+    <span className="pkimm-field__label-note" aria-hidden="true">
+      {" "}
+      ({note})
+    </span>
+  ) : null;
+
+const FieldLegend: React.FC<{ label: string; note?: string }> = ({
+  label,
+  note,
+}) => (
+  <legend>
+    {label}
+    <LabelNote note={note} />
+  </legend>
+);
+
 const renderTextarea = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => (
   <TextArea
     key={field.key}
     label={field.label}
+    labelNote={note}
     hint={field.hint}
     required={field.required}
     rows={field.rows ?? 4}
@@ -89,6 +110,7 @@ const renderCheckboxBoolean = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => (
   <label key={field.key} className="evidence-assessment-question__checkbox">
     <input
@@ -99,7 +121,10 @@ const renderCheckboxBoolean = (
         updateValue(field.key, event.target.checked ? "yes" : "no")
       }
     />
-    <span>{field.label}</span>
+    <span>
+      {field.label}
+      <LabelNote note={note} />
+    </span>
   </label>
 );
 
@@ -107,10 +132,12 @@ const renderBooleanSelect = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => (
   <Select
     key={field.key}
     label={field.label}
+    labelNote={note}
     required={field.required}
     value={typeof value === "string" ? value : ""}
     onChange={(event) => updateValue(field.key, event.target.value)}
@@ -126,9 +153,10 @@ const renderRadioSelect = (
   value: FieldValue,
   updateValue: UpdateValue,
   questionId: string,
+  note?: string,
 ): React.ReactElement => (
   <fieldset key={field.key} className="evidence-assessment-question__radio">
-    <legend>{field.label}</legend>
+    <FieldLegend label={field.label} note={note} />
     {field.options?.map((option) => (
       <label key={option.value}>
         <input
@@ -149,10 +177,12 @@ const renderSelect = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => (
   <Select
     key={field.key}
     label={field.label}
+    labelNote={note}
     required={field.required}
     value={typeof value === "string" ? value : ""}
     onChange={(event) => updateValue(field.key, event.target.value)}
@@ -170,10 +200,12 @@ const renderDateTime = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => (
   <TextField
     key={field.key}
     label={field.label}
+    labelNote={note}
     hint={field.hint}
     type="datetime-local"
     required={field.required}
@@ -188,6 +220,7 @@ const renderDateRange = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => {
   const [start = "", end = ""] =
     typeof value === "string" ? value.split("|") : [];
@@ -196,7 +229,7 @@ const renderDateRange = (
       key={field.key}
       className="evidence-assessment-question__date-range"
     >
-      <legend>{field.label}</legend>
+      <FieldLegend label={field.label} note={note} />
       <TextField
         label={`${field.label} start`}
         hideLabel
@@ -225,6 +258,7 @@ const renderDuration = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => {
   const [amount = "", unit = ""] =
     typeof value === "string" ? value.split("|") : [];
@@ -234,7 +268,7 @@ const renderDuration = (
       key={field.key}
       className="evidence-assessment-question__duration"
     >
-      <legend>{field.label}</legend>
+      <FieldLegend label={field.label} note={note} />
       <TextField
         label={`${field.label} amount`}
         hideLabel
@@ -270,6 +304,7 @@ const renderMultiselect = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => {
   const selected = Array.isArray(value) ? value : [];
   return (
@@ -277,7 +312,7 @@ const renderMultiselect = (
       key={field.key}
       className="evidence-assessment-question__multi-select"
     >
-      <legend>{field.label}</legend>
+      <FieldLegend label={field.label} note={note} />
       {field.options?.map((option) => (
         <label key={option.value}>
           <input
@@ -303,10 +338,12 @@ const renderGenericField = (
   field: EvidenceQuestionField,
   value: FieldValue,
   updateValue: UpdateValue,
+  note?: string,
 ): React.ReactElement => (
   <TextField
     key={field.key}
     label={field.label}
+    labelNote={note}
     hint={field.hint}
     type={inputTypeFor(field.type, field.presentation)}
     required={field.required}
@@ -324,27 +361,29 @@ const renderResponseField = (
   value: FieldValue,
   updateValue: UpdateValue,
   questionId: string,
+  note?: string,
 ): React.ReactElement => {
   if (field.type === "textarea")
-    return renderTextarea(field, value, updateValue);
+    return renderTextarea(field, value, updateValue, note);
   if (field.type === "boolean" && field.presentation === "checkbox") {
-    return renderCheckboxBoolean(field, value, updateValue);
+    return renderCheckboxBoolean(field, value, updateValue, note);
   }
   if (field.type === "boolean")
-    return renderBooleanSelect(field, value, updateValue);
+    return renderBooleanSelect(field, value, updateValue, note);
   if (field.type === "select" && field.presentation === "radio") {
-    return renderRadioSelect(field, value, updateValue, questionId);
+    return renderRadioSelect(field, value, updateValue, questionId, note);
   }
-  if (field.type === "select") return renderSelect(field, value, updateValue);
+  if (field.type === "select")
+    return renderSelect(field, value, updateValue, note);
   if (field.type === "date-time")
-    return renderDateTime(field, value, updateValue);
+    return renderDateTime(field, value, updateValue, note);
   if (field.type === "date-range")
-    return renderDateRange(field, value, updateValue);
+    return renderDateRange(field, value, updateValue, note);
   if (field.type === "duration")
-    return renderDuration(field, value, updateValue);
+    return renderDuration(field, value, updateValue, note);
   if (field.type === "multiselect")
-    return renderMultiselect(field, value, updateValue);
-  return renderGenericField(field, value, updateValue);
+    return renderMultiselect(field, value, updateValue, note);
+  return renderGenericField(field, value, updateValue, note);
 };
 
 const renderFindingOptions = (
@@ -381,14 +420,18 @@ export const QuestionResponseFields: React.FC<Props> = ({
   return (
     <div className="evidence-assessment-question__response">
       {renderFindingOptions(profile, kind, question.id, progress, onChange)}
-      {definition.fields.map((field) =>
-        renderResponseField(
-          field,
-          progress.values[field.key],
-          updateValue,
-          question.id,
-        ),
-      )}
+      {definition.fields.map((field) => (
+        <React.Fragment key={field.key}>
+          <RuleNote field={field.key} rules={definition.rules} />
+          {renderResponseField(
+            field,
+            progress.values[field.key],
+            updateValue,
+            question.id,
+            fieldRequirementNote(field, definition.rules),
+          )}
+        </React.Fragment>
+      ))}
     </div>
   );
 };

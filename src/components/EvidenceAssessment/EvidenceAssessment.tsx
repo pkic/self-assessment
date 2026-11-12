@@ -640,6 +640,7 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                     key={field.key}
                     field={field}
                     subject={record.subject}
+                    rules={profile.runtime.subjectRules}
                     onChange={updateSubjectField}
                   />
                 ))}
