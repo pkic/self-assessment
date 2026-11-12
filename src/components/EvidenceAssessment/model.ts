@@ -224,3 +224,23 @@ export const parseEvidenceModel = (yamlText: string): EvidenceModelData => {
   }
   return parsed;
 };
+
+/**
+ * Absolute address of a page the model refers to. Model links such as a
+ * level's sourcePage are written relative to the model's own site, so they are
+ * resolved against its canonical URL, never against the page that embeds the
+ * widget.
+ */
+export const modelPageUrl = (
+  model: EvidenceModelData,
+  reference: string,
+): string | undefined => {
+  try {
+    const url = new URL(reference, model.model.canonicalUrl);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};

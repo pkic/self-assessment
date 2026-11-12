@@ -1,7 +1,7 @@
 import { getBundledAssessmentModelYaml } from "../../defaults/assessmentModels";
 import { getBundledAssessmentProfileYaml } from "../../defaults/assessmentProfiles";
 import { parseAssessmentProfile } from "../../assessment-engine/profile";
-import { parseEvidenceModel } from "./model";
+import { modelPageUrl, parseEvidenceModel } from "./model";
 import yaml from "js-yaml";
 import type { EvidenceModelData } from "./types";
 import legacyModelYaml from "../../public/pqcmm-model-1.0.1.yaml";
@@ -156,5 +156,22 @@ describe("PQCMM model data", () => {
     expect(() => parseEvidenceModel(yaml.dump(parsed))).toThrow(
       "does not satisfy",
     );
+  });
+});
+
+describe("modelPageUrl", () => {
+  const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
+
+  it("resolves site-relative model links against the model's own site", () => {
+    expect(modelPageUrl(model, "/wg/pqc/pqcmm/levels/1-initial/")).toBe(
+      "https://pkic.org/wg/pqc/pqcmm/levels/1-initial/",
+    );
+  });
+
+  it("keeps absolute links and refuses non-web schemes", () => {
+    expect(modelPageUrl(model, "https://example.org/a")).toBe(
+      "https://example.org/a",
+    );
+    expect(modelPageUrl(model, "javascript:alert(1)")).toBeUndefined();
   });
 });

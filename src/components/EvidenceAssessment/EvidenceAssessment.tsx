@@ -44,6 +44,7 @@ import {
   QuestionCard,
 } from "./AssessmentItemCards";
 import { loadActiveAssessment, loadEvidenceModel } from "./loadAssessment";
+import { modelPageUrl } from "./model";
 import {
   adjacentLevels,
   errorMessage,
@@ -643,13 +644,15 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
                   {level.name}
                 </h3>
                 <p>{level.summary}</p>
-                <a
-                  href={level.sourcePage}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View approved model text
-                </a>
+                {modelPageUrl(model, level.sourcePage) ? (
+                  <a
+                    href={modelPageUrl(model, level.sourcePage)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View approved model text
+                  </a>
+                ) : null}
               </div>
             </div>
 
