@@ -249,6 +249,7 @@
           "propertyNames": { "pattern": "^[a-z][a-zA-Z0-9]*$" },
           "additionalProperties": {
             "oneOf": [
+              { "type": "boolean" },
               { "type": "string", "maxLength": 100000 },
               {
                 "type": "array",

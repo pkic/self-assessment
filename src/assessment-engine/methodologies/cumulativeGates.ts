@@ -227,8 +227,10 @@ const cumulativeGates = (
       return Boolean(progress && responseComplete(question.id));
     }).length,
     questionsTotal: questions.length,
+    // Derived findings exist for every answered question (the export writes
+    // one for each), so they are counted over the same set as answers.
     questionFindingCounts: countQuestionFindings(
-      assessmentQuestions,
+      derivedFindings ? questions : assessmentQuestions,
       record.questionProgress,
       derivedFindings
         ? (questionId) =>

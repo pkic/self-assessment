@@ -922,6 +922,11 @@
   input {
     accent-color: var(--pkimm-primary-color);
   }
+  // Long parameter-set names wrap instead of widening the column.
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 .evidence-multi__custom {
   display: grid;

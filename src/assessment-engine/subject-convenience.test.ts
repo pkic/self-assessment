@@ -18,9 +18,26 @@ describe("assessment subject conveniences", () => {
       suggestedSubjectValue(cpeField, {
         vendorName: "Example Corp.",
         productName: "Secure Gateway / Cloud",
-        productVersion: "2.0 β",
+        productVersion: "2.0",
       }),
     ).toBe("cpe:2.3:a:example_corp:secure_gateway_cloud:2.0:*:*:*:*:*:*:*");
+  });
+
+  it("does not suggest a CPE from descriptive text", () => {
+    expect(
+      suggestedSubjectValue(cpeField, {
+        vendorName: "Example",
+        productName: "Gateway server (linux-amd64 build, stable channel)",
+        productVersion: "4.2",
+      }),
+    ).toBeNull();
+    expect(
+      suggestedSubjectValue(cpeField, {
+        vendorName: "Example",
+        productName: "Gateway",
+        productVersion: "4.2 with OpenSSL 3.5",
+      }),
+    ).toBeNull();
   });
 
   it("does not guess a CPE until every configured source is present", () => {

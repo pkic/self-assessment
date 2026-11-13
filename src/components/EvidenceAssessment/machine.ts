@@ -385,6 +385,37 @@ const evidenceReviewStatus = (
     : "not-provided";
 
 /**
+ * Yes/no answers are stored as "yes" and "no" so the form can tell an unset
+ * field from a "no"; in the package they are real booleans.
+ */
+const exportedValues = (
+  fields: { key: string; type: string }[],
+  values: Record<string, string | string[]>,
+): Record<string, string | string[] | boolean> => {
+  const booleans = new Set(
+    fields.filter((field) => field.type === "boolean").map(({ key }) => key),
+  );
+  return Object.fromEntries(
+    Object.entries(values).map(([key, value]) => [
+      key,
+      booleans.has(key) && (value === "yes" || value === "no")
+        ? value === "yes"
+        : value,
+    ]),
+  );
+};
+
+const importedValues = (
+  values: Record<string, string | string[] | boolean>,
+): Record<string, string | string[]> =>
+  Object.fromEntries(
+    Object.entries(values).map(([key, value]) => {
+      if (typeof value !== "boolean") return [key, value];
+      return [key, value ? "yes" : "no"];
+    }),
+  );
+
+/**
  * With derived findings, replaces each stored question finding with the one
  * its answer implies, so the exported package, and the digest over it, carry
  * the same per-question vocabulary as an assessment with explicit findings.
@@ -512,7 +543,7 @@ export const buildAssessmentPackage = async (
               prompt: question.question,
               finding: progress.finding,
               value: summary,
-              values: progress.values,
+              values: exportedValues(definition.fields, progress.values),
               evidenceIds: progress.evidenceIds,
               evidenceReviewStatus: evidenceReviewStatus(
                 summary,
@@ -627,7 +658,9 @@ export const parseAssessmentPackage = async (
         response.id,
         {
           finding: response.finding ?? "not-assessed",
-          values: response.values ?? { response: response.value },
+          values: response.values
+            ? importedValues(response.values)
+            : { response: response.value },
           evidenceIds: response.evidenceIds,
         },
       ]),

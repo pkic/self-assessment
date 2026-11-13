@@ -198,7 +198,8 @@ export interface AssessmentCredentialSubject {
     status?: string;
     finding?: string;
     value: string;
-    values?: Record<string, string | string[]>;
+    /** Yes/no fields are exported as booleans. */
+    values?: Record<string, string | string[] | boolean>;
     notes?: string;
     evidenceIds: string[];
     evidenceReviewStatus: EvidenceReviewStatus;

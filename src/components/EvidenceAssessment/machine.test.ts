@@ -80,6 +80,11 @@ describe("PQCMM machine-readable assessments", () => {
       values: { targetDate: "2027-06-30" },
       evidenceIds: [],
     };
+    assessment.questionProgress["1.2.4"] = {
+      finding: "not-assessed",
+      values: { accessibleWithoutCustomBuild: "no" },
+      evidenceIds: [],
+    };
     assessment.evidenceFiles = [
       {
         id: "evidence-1",
@@ -104,6 +109,15 @@ describe("PQCMM machine-readable assessments", () => {
       profile,
     );
     expect(restored.subject.productName).toBe("Quantum service");
+    // Yes/no answers are booleans in the package and "yes"/"no" again after import.
+    expect(
+      exported.credential.credentialSubject.responses.find(
+        (response) => response.id === "1.2.4",
+      )?.values,
+    ).toEqual({ accessibleWithoutCustomBuild: false });
+    expect(restored.questionProgress["1.2.4"].values).toEqual({
+      accessibleWithoutCustomBuild: "no",
+    });
     expect(restored.criterionProgress["1.1.1"]).toEqual(
       assessment.criterionProgress["1.1.1"],
     );
