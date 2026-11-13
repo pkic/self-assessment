@@ -45,6 +45,22 @@ function buildReferencesLookup(
   return m;
 }
 
+/**
+ * The bundled model YAML for a requested release. An unknown version falls
+ * back to the latest release, like a failed `dataUrl` fetch, so a mistyped
+ * attribute never leaves the widget without a model.
+ */
+export const bundledModelFor = (version?: string): string => {
+  if (version) {
+    const requested = getBundledModelYaml(version);
+    if (requested) return requested;
+    console.error(
+      `Model version ${version} is not bundled; loading ${DEFAULT_MODEL_VERSION}.`,
+    );
+  }
+  return getBundledModelYaml(DEFAULT_MODEL_VERSION) as string;
+};
+
 export interface InitialLoad {
   data: AssessmentData | null;
   extensionsData: ExtensionData[];
@@ -63,12 +79,20 @@ export interface InitialLoad {
 export const useInitialLoad = (input: {
   src?: string;
   references?: string;
+  /** Bundled model release to load when there is no `src`; default: latest. */
+  modelVersion?: string;
   setSavedState: React.Dispatch<React.SetStateAction<SavedState>>;
   setCurrentTab: (t: string | null) => void;
   setStorageBackend: (b: StorageBackend | null) => void;
 }): InitialLoad => {
-  const { src, references, setSavedState, setCurrentTab, setStorageBackend } =
-    input;
+  const {
+    src,
+    references,
+    modelVersion,
+    setSavedState,
+    setCurrentTab,
+    setStorageBackend,
+  } = input;
 
   const [data, setData] = useState<AssessmentData | null>(null);
   const [extensionsData, setExtensionsData] = useState<ExtensionData[]>([]);
@@ -130,8 +154,9 @@ export const useInitialLoad = (input: {
           if (bundled) initialData = yamlParser(bundled) as AssessmentData;
         }
       } else {
-        const bundled = getBundledModelYaml(DEFAULT_MODEL_VERSION);
-        if (bundled) initialData = yamlParser(bundled) as AssessmentData;
+        initialData = yamlParser(
+          bundledModelFor(modelVersion),
+        ) as AssessmentData;
       }
 
       const adapter2 = await getStorageAdapter();
@@ -253,7 +278,7 @@ export const useInitialLoad = (input: {
     };
 
     void load().catch((error) => console.error("Error loading data:", error));
-  }, [src, references]);
+  }, [src, references, modelVersion]);
 
   const refreshExtensions = useCallback(async () => {
     const adapter = await getStorageAdapter();

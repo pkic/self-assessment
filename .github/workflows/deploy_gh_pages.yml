@@ -1,45 +1,23 @@
-name: Build and deploy to GitHub Pages
+name: Deploy branch preview to GitHub Pages
 
+# main is published on every push; any other branch on request. The old
+# /develop/ path keeps working as a redirect to the main-branch preview.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  gh-deploy:
-    if: github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/')
-    name: Deploy to GitHub Pages
-    runs-on: ubuntu-latest
+  publish:
+    if: startsWith(github.ref, 'refs/heads/')
     permissions:
       contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 #v7.1.0
-        with:
-          node-version-file: ".node-version"
-      - name: Restore released model files
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
-        with:
-          path: .cache/models
-          key: models-${{ hashFiles('models.lock.json') }}
-      - name: Build component
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-        run: |
-          npm ci --ignore-scripts
-          npm run build
-      - name: Copy index and data files
-        run: |
-          cp ./src/public/index.html ./dist/index.html
-          cp ./src/public/pkimm-model-1.0.0.yaml ./dist/pkimm-model-1.0.0.yaml
-          cp ./src/generated/models/pkimm-model-2.0.0.yaml ./dist/pkimm-model-2.0.0.yaml
-          cp ./src/generated/models/pkimm-references.yaml ./dist/pkimm-references.yaml
-      # Popular action to deploy to GitHub Pages:
-      # Docs: https://github.com/peaceiris/actions-gh-pages#%EF%B8%8F-docusaurus
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 #v4.1.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Build output to publish to the `gh-pages` branch:
-          publish_dir: ./dist
-          destination_dir: develop
+    uses: ./.github/workflows/publish_pages.yml
+    with:
+      branch: ${{ github.ref_name }}
+      label: Branch ${{ github.ref_name }}
+      alias: ${{ github.ref_name == 'main' && 'develop' || '' }}
+      drafts: true

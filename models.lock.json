@@ -10,6 +10,7 @@
           "files": [
             {
               "path": "data/pkimm-model-2.0.0.yaml",
+              "modelVersion": "2.0.0",
               "sha256": "334db6fe5c0814b8d88918fdbecbc78ca8cdcd6cae4b8937e9a3657dfca86ca9"
             },
             {
