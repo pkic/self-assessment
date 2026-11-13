@@ -1,5 +1,6 @@
 dist/
 node_modules/
+.cache/
 
 # Vendored from pkimm — formatted to match the canonical source there.
 src/public/pkimm-model-*.yaml

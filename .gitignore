@@ -25,6 +25,9 @@ yarn-error.log*
 /dist/
 /src/generated/
 
+# Released model files downloaded by scripts/fetch-models.mjs
+/.cache/
+
 /.idea/
 
 # Local design/spec notes (not part of the published artifact)

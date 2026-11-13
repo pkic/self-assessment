@@ -1,0 +1,36 @@
+{
+  "lockVersion": 1,
+  "sources": [
+    {
+      "id": "pkimm",
+      "repository": "pkic/pkimm",
+      "releases": [
+        {
+          "tag": "2.0.0",
+          "files": [
+            {
+              "path": "data/pkimm-model-2.0.0.yaml",
+              "sha256": "334db6fe5c0814b8d88918fdbecbc78ca8cdcd6cae4b8937e9a3657dfca86ca9"
+            },
+            {
+              "path": "data/pkimm-references.yaml",
+              "sha256": "7f6991144ecf385c9f739a9e8206f634d10ff19c4a930850c1460f5fde55ba82"
+            },
+            {
+              "path": "data/pkimm-model.schema-1.0.0.json",
+              "sha256": "74e5547a973181860f60506015ff4b79b9cf605245ce17725627b66a72c2f2c1"
+            },
+            {
+              "path": "data/pkimm-model.schema-2.0.0.json",
+              "sha256": "13da2aed308ee37feedc21e0f00b865e5f6cd022bd1208b205bd73199c5a0bb4"
+            },
+            {
+              "path": "data/pkimm-references.schema-1.0.0.json",
+              "sha256": "38741de3ba8cb0e37a7dc9ba9e7e8e2f004b192b9decbff2a0170e61229d088a"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
