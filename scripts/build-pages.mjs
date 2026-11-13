@@ -94,17 +94,23 @@ const page = (title, body, head = "") =>
 const list = (items) =>
   items.length === 0
     ? '    <p class="meta">Nothing published yet.</p>'
-    : `    <ul>\n${items.map((item) => `      <li>${item}</li>`).join("\n")}\n    </ul>`;
+    : [
+        "    <ul>",
+        ...items.map((item) => `      <li>${item}</li>`),
+        "    </ul>",
+      ].join("\n");
 
 const link = (href, text) =>
   `<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`;
 
+const draftSuffix = (model) => (model.draft ? " (draft)" : "");
+
 const modelName = (model) =>
-  `${model.assessment.toUpperCase()} ${model.version}${model.draft ? " (draft)" : ""}`;
+  `${model.assessment.toUpperCase()} ${model.version}${draftSuffix(model)}`;
 
 const modelPage = (model, label) =>
   htmlDocument(
-    `${modelName(model)} self-assessment${label ? `, ${label}` : ""}`,
+    [`${modelName(model)} self-assessment`, label].filter(Boolean).join(", "),
     `    <self-assessment modelVersion="${escapeHtml(model.version)}"></self-assessment>
     <script src="../../self-assessment.js"></script>`,
   );
@@ -127,7 +133,7 @@ const buildIndex = (manifest) => {
         models.map((model) =>
           link(
             `${model.path}/`,
-            `Version ${model.version}${model.draft ? " (draft)" : ""}`,
+            `Version ${model.version}${draftSuffix(model)}`,
           ),
         ),
       )}`,
@@ -277,7 +283,7 @@ ${list(previewItems("preview/branch", branches))}
     <h2>Previews of pull requests</h2>
 ${list(previewItems("preview/pr", prs))}
     <h2>Earlier tool releases</h2>
-${list(earlier.map((name) => link(`${name}/`, name)))}`,
+${list(earlier.map((name) => link(name + "/", name)))}`,
     ),
   );
   if (!existsSync(join(site, "preview"))) return;
