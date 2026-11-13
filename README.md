@@ -45,9 +45,12 @@ Both modes read and write the same assessment record, so switching between them 
 
 The model and references YAMLs are bundled into `dist/self-assessment.js`, so the widget works out of the box with no data URLs at all. The widget can also load either version of the PKIMM model from a URL via `dataUrl`; the 2.0.0 file is preferred, and 1.0.0 files are accepted and silently migrated when imported into a saved assessment.
 
-- `pkimm-model-2.0.0.yaml` — current model. Schema: [`pkimm-model.schema-2.0.0.json`](src/public/pkimm-model.schema-2.0.0.json).
-- `pkimm-model-1.0.0.yaml` — released 1.0.0 model. Schema: [`pkimm-model.schema-1.0.0.json`](src/public/pkimm-model.schema-1.0.0.json).
-- `pkimm-references.yaml` — shared references catalog (cited by both models). Schema: [`pkimm-references.schema-1.0.0.json`](src/public/pkimm-references.schema-1.0.0.json).
+- `pkimm-model-2.0.0.yaml` — current model. Schema: [`pkimm-model.schema-2.0.0.json`](https://github.com/pkic/pkimm/blob/2.0.0/data/pkimm-model.schema-2.0.0.json).
+- `pkimm-model-1.0.0.yaml` — released 1.0.0 model. Schema: [`pkimm-model.schema-1.0.0.json`](https://github.com/pkic/pkimm/blob/2.0.0/data/pkimm-model.schema-1.0.0.json).
+- `pkimm-references.yaml` — shared references catalog (cited by both models). Schema: [`pkimm-references.schema-1.0.0.json`](https://github.com/pkic/pkimm/blob/2.0.0/data/pkimm-references.schema-1.0.0.json).
+
+Released models are not kept in this repository. The build downloads the releases listed in [`models.lock.json`](models.lock.json) from their repositories at the release tag, checks each file against its SHA-256 and caches it in `.cache/models/`, so later builds work offline. To try an unreleased model, set `MODEL_SOURCE_PKIMM=/path/to/pkimm-checkout`; those files are not checked against the lock. After adding a release to the lock file, run `node scripts/fetch-models.mjs --lock` to record its hashes.
+
 - Extension YAMLs (any name) — must validate against [`extension.schema-1.0.0.json`](src/public/extension.schema-1.0.0.json).
 
 These files are bundled directly into the widget for zero-config use, and are also still served from gh-pages (alongside every release) for hosts that override `dataUrl`/`referencesUrl`. All schemas are also vendored in the bundle for validation at load time; the canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository.
@@ -90,7 +93,8 @@ Local dev note: the webpack-dev-server serves the `dist/` directory. After `npm 
 
 ```bash
 cp src/public/index.html src/public/pkimm-model-1.0.0.yaml \
-   src/public/pkimm-model-2.0.0.yaml src/public/pkimm-references.yaml dist/
+   src/generated/models/pkimm-model-2.0.0.yaml \
+   src/generated/models/pkimm-references.yaml dist/
 ```
 
 The dev fixture (`src/public/index.html`) is attribute-free (zero-config) — it no longer sets `dataUrl`/`referencesUrl`. Per-category reference disclosures appear from the bundled references catalog without any copy step; the `cp` above is only needed to exercise the `dataUrl`/`referencesUrl` override path locally.

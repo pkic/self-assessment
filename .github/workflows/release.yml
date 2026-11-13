@@ -15,6 +15,11 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 #v7.1.0
         with:
           node-version-file: ".node-version"
+      - name: Restore released model files
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
+        with:
+          path: .cache/models
+          key: models-${{ hashFiles('models.lock.json') }}
       - name: Build component
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -25,8 +30,8 @@ jobs:
         run: |
           cp ./src/public/index.html ./dist/index.html
           cp ./src/public/pkimm-model-1.0.0.yaml ./dist/pkimm-model-1.0.0.yaml
-          cp ./src/public/pkimm-model-2.0.0.yaml ./dist/pkimm-model-2.0.0.yaml
-          cp ./src/public/pkimm-references.yaml ./dist/pkimm-references.yaml
+          cp ./src/generated/models/pkimm-model-2.0.0.yaml ./dist/pkimm-model-2.0.0.yaml
+          cp ./src/generated/models/pkimm-references.yaml ./dist/pkimm-references.yaml
       - name: Get tag name
         id: get_tag_name
         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
