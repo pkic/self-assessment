@@ -1,0 +1,110 @@
+name: Publish to GitHub Pages
+
+# Shared by the main-branch, release and pull-request workflows. Builds the
+# component at the calling ref and lays it out on the gh-pages branch with
+# scripts/build-pages.mjs, or removes a preview. Several runs may finish at
+# the same time (one per pull request), so the push retries on top of the
+# latest gh-pages commit instead of relying on a concurrency group, which
+# would cancel all but one waiting run.
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        description: "publish or remove"
+        type: string
+        default: publish
+      target:
+        description: "release or preview/pr/NUMBER (use branch for a branch preview)"
+        type: string
+        default: ""
+      branch:
+        description: "Branch name for a preview/branch/ target"
+        type: string
+        default: ""
+      label:
+        type: string
+        default: ""
+      alias:
+        description: "Older path kept working as a redirect, e.g. develop"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: ${{ inputs.command }} ${{ inputs.target || inputs.branch }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          # Removing a preview of a closed pull request: its branch may be
+          # gone, so run the script from the default branch.
+          ref: ${{ inputs.command == 'remove' && github.event.repository.default_branch || '' }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 #v7.1.0
+        with:
+          node-version-file: ".node-version"
+      - name: Restore released model files
+        if: inputs.command == 'publish'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
+        with:
+          path: .cache/models
+          key: models-${{ hashFiles('models.lock.json') }}
+      - name: Build component
+        if: inputs.command == 'publish'
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+      - name: Copy data files for the dataUrl and referencesUrl overrides
+        if: inputs.command == 'publish'
+        run: |
+          cp ./src/public/pkimm-model-1.0.0.yaml ./dist/
+          cp ./src/generated/models/*.yaml ./dist/
+      - name: Check out gh-pages
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          ref: gh-pages
+          path: site
+      - name: Update and push gh-pages
+        env:
+          COMMAND: ${{ inputs.command }}
+          TARGET: ${{ inputs.target }}
+          BRANCH: ${{ inputs.branch }}
+          LABEL: ${{ inputs.label }}
+          ALIAS: ${{ inputs.alias }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          args=("$COMMAND" --site site --dist dist)
+          [ -n "$TARGET" ] && args+=(--target "$TARGET")
+          [ -n "$BRANCH" ] && args+=(--branch "$BRANCH")
+          if [ "$COMMAND" = publish ]; then
+            [ -n "$LABEL" ] && args+=(--label "$LABEL")
+            [ -n "$ALIAS" ] && args+=(--alias "$ALIAS")
+            args+=(--commit "$COMMIT")
+          fi
+          git -C site config user.name "github-actions[bot]"
+          git -C site config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git -C site fetch --depth 1 origin gh-pages
+            git -C site reset --hard FETCH_HEAD
+            node scripts/build-pages.mjs "${args[@]}"
+            git -C site add -A
+            if git -C site diff --cached --quiet; then
+              echo "Nothing to change."
+              exit 0
+            fi
+            git -C site commit -q -m "$COMMAND ${TARGET:-$BRANCH} at ${COMMIT}"
+            if git -C site push origin HEAD:gh-pages; then
+              exit 0
+            fi
+            echo "gh-pages moved; retrying ($attempt)."
+            sleep $((attempt * 5))
+          done
+          echo "Could not push to gh-pages." >&2
+          exit 1
