@@ -6,8 +6,8 @@ describe("fieldRequirementNote", () => {
   it("leaves required fields and rule members unmarked", () => {
     expect(
       fieldRequirementNote({ key: "version", required: true }, rules),
-    ).toBe(undefined);
-    expect(fieldRequirementNote({ key: "docs" }, rules)).toBe(undefined);
+    ).toBeUndefined();
+    expect(fieldRequirementNote({ key: "docs" }, rules)).toBeUndefined();
   });
 
   it("marks every other field as optional", () => {

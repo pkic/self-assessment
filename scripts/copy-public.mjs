@@ -29,7 +29,8 @@ const bundledModelOptions = async () => {
   return models
     .map(({ assessment, version, draft }) => {
       const label = `${assessment.toUpperCase()} ${version}${draft ? " (draft)" : ""}`;
-      return `<option value="${escapeHtml(`${assessment}@${version}`)}">${escapeHtml(label)}</option>`;
+      const value = `${assessment}@${version}`;
+      return `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
     })
     .join("\n            ");
 };

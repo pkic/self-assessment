@@ -150,9 +150,16 @@ const buildIndex = (manifest) => {
     `    <h1>Self-assessment: ${escapeHtml(manifest.label)}</h1>
     <p class="meta">${escapeHtml(meta)}</p>
 ${sections.join("\n")}
-${manifest.custom ? `    <p>${link("custom.html", "Load another profile or model")}</p>\n` : ""}    <p>${link("../".repeat(manifest.target.split("/").length), "All builds")}</p>`,
+${customLink(manifest)}    <p>${link("../".repeat(manifest.target.split("/").length), "All builds")}</p>`,
   );
 };
+
+const customLink = (manifest) =>
+  manifest.custom
+    ? "    <p>" +
+      link("custom.html", "Load another profile or model") +
+      "</p>\n"
+    : "";
 
 /** Copies a build to site/target and writes its model pages and index. */
 export function publish({ site, target, dist, label, commit, models, now }) {

@@ -451,14 +451,10 @@
   margin-bottom: 0;
 }
 
-.evidence-assessment-criterion-list {
-  display: grid;
-  gap: var(--pkimm-space-md);
-}
-
 /* A criterion: a statement and a decision. Everything else appears only
    once a conclusion is chosen, so an untouched level reads as a short list. */
 .evidence-assessment-criterion-list {
+  display: grid;
   gap: 0;
   border-top: 1px solid var(--pkimm-border-color);
 }
