@@ -173,12 +173,149 @@ test("writes an index that imports every locked model", async () => {
     log: quiet,
   });
   assert.deepEqual(lockedModels(lock), [
-    { assessment: "pkimm", version: "2.0.0", fileName: "model.yaml" },
+    {
+      assessment: "pkimm",
+      version: "2.0.0",
+      draft: false,
+      fileName: "model.yaml",
+    },
   ]);
   const index = readFileSync(join(outDir, "index.ts"), "utf8");
   assert.equal(index, modelIndexSource(lock));
   assert.match(index, /import model0 from "\.\/model\.yaml";/);
-  assert.match(index, /assessment: "pkimm", version: "2\.0\.0", yaml: model0/);
+  assert.match(
+    index,
+    /assessment: "pkimm", version: "2\.0\.0", draft: false, yaml: model0/,
+  );
+});
+
+const draftLock = (hash) => ({
+  lockVersion: 1,
+  sources: [
+    {
+      id: "pqcmm",
+      repository: "pkic/pqcmm",
+      releases: [
+        {
+          tag: "v1.0.1",
+          files: [
+            {
+              path: "model/m-1.0.1.yaml",
+              modelVersion: "1.0.1",
+              sha256: sha256(body),
+            },
+          ],
+        },
+        {
+          commit: "42dcb8473f5b10e21167d6d8e61e814bcb06226f",
+          draft: true,
+          files: [
+            {
+              path: "model/m.yaml",
+              as: "m-1.1.0.yaml",
+              modelVersion: "1.1.0",
+              sha256: hash,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
+
+test("fetches a draft at its commit, and offers it only with MODEL_DRAFTS=1", async () => {
+  const lock = draftLock(sha256(body));
+  const released = dirs();
+  const calls = [];
+  await fetchModels({
+    lock,
+    ...released,
+    env: {},
+    fetchImpl: respond(body, calls),
+    log: quiet,
+  });
+  assert.equal(calls.length, 2);
+  assert.deepEqual(
+    JSON.parse(readFileSync(join(released.outDir, "models.json"), "utf8")),
+    [{ assessment: "pqcmm", version: "1.0.1", draft: false }],
+  );
+  assert.doesNotMatch(
+    readFileSync(join(released.outDir, "index.ts"), "utf8"),
+    /1\.1\.0/,
+  );
+
+  const preview = dirs();
+  calls.length = 0;
+  await fetchModels({
+    lock,
+    ...preview,
+    env: { MODEL_DRAFTS: "1" },
+    fetchImpl: respond(body, calls),
+    log: quiet,
+  });
+  assert.ok(
+    calls.includes(
+      "https://raw.githubusercontent.com/pkic/pqcmm/42dcb8473f5b10e21167d6d8e61e814bcb06226f/model/m.yaml",
+    ),
+  );
+  assert.deepEqual(readFileSync(join(preview.outDir, "m-1.1.0.yaml")), body);
+  assert.match(
+    readFileSync(join(preview.outDir, "index.ts"), "utf8"),
+    /version: "1\.1\.0", draft: true/,
+  );
+});
+
+test("a draft is still checked against its hash", async () => {
+  const { outDir, cacheDir } = dirs();
+  await assert.rejects(
+    fetchModels({
+      lock: draftLock("0".repeat(64)),
+      outDir,
+      cacheDir,
+      env: { MODEL_DRAFTS: "1" },
+      fetchImpl: respond(body, []),
+      log: quiet,
+    }),
+    /does not match the hash/,
+  );
+});
+
+test("only a draft names a commit, and it needs a full hash", () => {
+  const withRelease = (release) =>
+    JSON.stringify({
+      lockVersion: 1,
+      sources: [{ id: "pqcmm", repository: "pkic/pqcmm", releases: [release] }],
+    });
+  assert.throws(
+    () => readLock(withRelease({ commit: "a".repeat(40), files: [] })),
+    /only a draft/,
+  );
+  assert.throws(
+    () => readLock(withRelease({ draft: true, commit: "abc", files: [] })),
+    /full commit hash/,
+  );
+  assert.throws(
+    () =>
+      readLock(
+        withRelease({
+          draft: true,
+          tag: "v1",
+          commit: "a".repeat(40),
+          files: [],
+        }),
+      ),
+    /full commit hash/,
+  );
+  assert.throws(
+    () =>
+      readLock(
+        withRelease({
+          tag: "v1",
+          files: [{ path: "a.yaml", as: "../b.yaml" }],
+        }),
+      ),
+    /invalid output name/,
+  );
 });
 
 test("refuses a model version that is malformed or listed twice", () => {

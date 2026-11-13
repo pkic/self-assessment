@@ -20,9 +20,10 @@ import {
 
 const now = new Date("2026-11-13T12:00:00Z");
 const models = [
-  { assessment: "pkimm", version: "2.0.0" },
-  { assessment: "pqcmm", version: "1.0.1" },
+  { assessment: "pkimm", version: "2.0.0", draft: false },
+  { assessment: "pqcmm", version: "1.0.1", draft: false },
 ];
+const draft = { assessment: "pqcmm", version: "1.1.0", draft: true };
 
 const setup = () => {
   const base = mkdtempSync(join(tmpdir(), "pages-"));
@@ -179,6 +180,37 @@ test("remove deletes a preview and the index no longer lists it", () => {
   writeSiteIndexes(site);
   assert.ok(!existsSync(join(site, "preview/pr/7")));
   assert.doesNotMatch(read(site, "index.html"), /preview\/pr\/7/);
+});
+
+test("drafts are marked in previews and refused in a release", () => {
+  const { site, dist } = setup();
+  publish({
+    site,
+    target: "preview/pr/5",
+    dist,
+    models: [...models, draft],
+    now,
+  });
+  assert.match(
+    read(site, "preview/pr/5/index.html"),
+    /Version 1\.1\.0 \(draft\)/,
+  );
+  assert.match(
+    read(site, "preview/pr/5/pqcmm/1.1.0/index.html"),
+    /PQCMM 1\.1\.0 \(draft\)/,
+  );
+  assert.throws(
+    () =>
+      publish({
+        site,
+        target: "release",
+        dist,
+        models: [...models, draft],
+        now,
+      }),
+    /cannot include the draft PQCMM 1\.1\.0/,
+  );
+  assert.ok(!existsSync(join(site, "release")));
 });
 
 test("labels are escaped in the generated HTML", () => {

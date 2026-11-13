@@ -29,6 +29,10 @@ on:
         description: "Older path kept working as a redirect, e.g. develop"
         type: string
         default: ""
+      drafts:
+        description: "Bundle draft models from models.lock.json (previews only)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -58,6 +62,7 @@ jobs:
         if: inputs.command == 'publish'
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
+          MODEL_DRAFTS: ${{ inputs.drafts && '1' || '' }}
         run: |
           npm ci --ignore-scripts
           npm run build

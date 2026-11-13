@@ -20,3 +20,4 @@ jobs:
       branch: ${{ github.ref_name }}
       label: Branch ${{ github.ref_name }}
       alias: ${{ github.ref_name == 'main' && 'develop' || '' }}
+      drafts: true

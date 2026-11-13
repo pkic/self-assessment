@@ -21,6 +21,8 @@ Include the component in your HTML. No attributes are needed — the widget rend
 - `preview/branch/{branch}/{assessment}/{version}/`: a branch build. `main` is published on every push (`/develop/` redirects to it); other branches when the deploy workflow is run for them. The branch name becomes one path segment, with characters other than letters, digits, `.`, `_` and `-` replaced by `-`.
 - `preview/pr/{number}/{assessment}/{version}/`: a build of a pull request from a branch of this repository, removed when the pull request closes. Pull requests from forks get no preview.
 
+Previews also carry draft models from the lock file, marked "(draft)" on their index pages. `release/` never does.
+
 Each build folder has an index page, and so do the site root, `preview/`, `preview/branch/` and `preview/pr/`.
 
 ### Override the bundled data
@@ -62,7 +64,7 @@ The model and references YAMLs are bundled into `dist/self-assessment.js`, so th
 - `pkimm-model-1.0.0.yaml` — released 1.0.0 model. Schema: [`pkimm-model.schema-1.0.0.json`](https://github.com/pkic/pkimm/blob/2.0.0/data/pkimm-model.schema-1.0.0.json).
 - `pkimm-references.yaml` — shared references catalog (cited by both models). Schema: [`pkimm-references.schema-1.0.0.json`](https://github.com/pkic/pkimm/blob/2.0.0/data/pkimm-references.schema-1.0.0.json).
 
-Released models are not kept in this repository. The build downloads the releases listed in [`models.lock.json`](models.lock.json) from their repositories at the release tag, checks each file against its SHA-256 and caches it in `.cache/models/`, so later builds work offline. To try an unreleased model, set `MODEL_SOURCE_PKIMM=/path/to/pkimm-checkout`; those files are not checked against the lock. After adding a release to the lock file, run `node scripts/fetch-models.mjs --lock` to record its hashes.
+Released models are not kept in this repository. The build downloads the releases listed in [`models.lock.json`](models.lock.json) from their repositories at the release tag, checks each file against its SHA-256 and caches it in `.cache/models/`, so later builds work offline. To try an unreleased model, set `MODEL_SOURCE_PKIMM=/path/to/pkimm-checkout`; those files are not checked against the lock. After adding a release to the lock file, run `node scripts/fetch-models.mjs --lock` to record its hashes. A lock entry can also pin an unreleased draft to one commit (`"commit"` plus `"draft": true`, with `"as"` to name an unversioned file). Drafts are fetched and checked against their hashes like releases, but their models are only bundled and offered with `MODEL_DRAFTS=1`, which the branch and pull request previews set and release builds do not.
 
 - Extension YAMLs (any name) — must validate against [`extension.schema-1.0.0.json`](src/public/extension.schema-1.0.0.json).
 

@@ -22,8 +22,15 @@ export const RELEASED_MODEL_VERSIONS: string[] = RELEASED_MODELS.filter(
   .sort(compareVersions);
 
 // The model version loaded when the host asks for none: the latest release.
+// A draft (bundled only in preview builds) is never the default.
+const RELEASED_NOT_DRAFT = RELEASED_MODEL_VERSIONS.filter((version) =>
+  RELEASED_MODELS.some(
+    (model) =>
+      model.assessment === "pkimm" && model.version === version && !model.draft,
+  ),
+);
 export const DEFAULT_MODEL_VERSION =
-  RELEASED_MODEL_VERSIONS[RELEASED_MODEL_VERSIONS.length - 1];
+  RELEASED_NOT_DRAFT[RELEASED_NOT_DRAFT.length - 1];
 
 // Every bundled version is held in this map, so webpack keeps each string.
 // The 1.0.0 model is the migration fixture; the rest come from the lock file.

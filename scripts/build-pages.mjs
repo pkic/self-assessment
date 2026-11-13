@@ -32,8 +32,6 @@ import {
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { lockedModels, readLock } from "./fetch-models.mjs";
-
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MANIFEST = "pages.json";
 const ALIAS = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/;
@@ -94,9 +92,12 @@ const list = (items) =>
 const link = (href, text) =>
   `<a href="${escapeHtml(href)}">${escapeHtml(text)}</a>`;
 
+const modelName = (model) =>
+  `${model.assessment.toUpperCase()} ${model.version}${model.draft ? " (draft)" : ""}`;
+
 const modelPage = (model, label) =>
   page(
-    `${model.assessment.toUpperCase()} ${model.version} self-assessment${label ? ` (${label})` : ""}`,
+    `${modelName(model)} self-assessment${label ? `, ${label}` : ""}`,
     `    <self-assessment modelVersion="${escapeHtml(model.version)}"></self-assessment>
     <script src="../../self-assessment.js"></script>`,
   );
@@ -117,7 +118,10 @@ const buildIndex = (manifest) => {
     ([assessment, models]) =>
       `    <h2>${escapeHtml(assessment.toUpperCase())}</h2>\n${list(
         models.map((model) =>
-          link(`${model.path}/`, `Version ${model.version}`),
+          link(
+            `${model.path}/`,
+            `Version ${model.version}${model.draft ? " (draft)" : ""}`,
+          ),
         ),
       )}`,
   );
@@ -139,6 +143,12 @@ ${sections.join("\n")}
 /** Copies a build to site/target and writes its model pages and index. */
 export function publish({ site, target, dist, label, commit, models, now }) {
   checkTarget(target);
+  const draft = models.find((model) => model.draft);
+  if (target === "release" && draft) {
+    throw new Error(
+      `A release cannot include the draft ${modelName(draft)}; build without MODEL_DRAFTS.`,
+    );
+  }
   const dir = join(site, target);
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
@@ -152,6 +162,7 @@ export function publish({ site, target, dist, label, commit, models, now }) {
     models: models.map((model) => ({
       assessment: model.assessment,
       version: model.version,
+      draft: model.draft === true,
       path: `${model.assessment}/${model.version}`,
     })),
   };
@@ -240,10 +251,7 @@ export function writeSiteIndexes(site) {
   const releaseSection = release
     ? list(
         release.models.map((model) =>
-          link(
-            `release/${model.path}/`,
-            `${model.assessment.toUpperCase()} ${model.version}`,
-          ),
+          link(`release/${model.path}/`, modelName(model)),
         ),
       )
     : list([]);
@@ -311,8 +319,9 @@ if (isMain) {
   try {
     if (!site) throw new Error("--site is required.");
     if (command === "publish") {
-      const lock = readLock(
-        readFileSync(join(root, "models.lock.json"), "utf8"),
+      // The models this build bundled, as written by fetch-models.mjs.
+      const models = JSON.parse(
+        readFileSync(join(root, "src/generated/models/models.json"), "utf8"),
       );
       publish({
         site,
@@ -320,7 +329,7 @@ if (isMain) {
         dist: option(args, "dist") ?? join(root, "dist"),
         label: option(args, "label"),
         commit: option(args, "commit"),
-        models: lockedModels(lock),
+        models,
         now: new Date(),
       });
       const alias = option(args, "alias");

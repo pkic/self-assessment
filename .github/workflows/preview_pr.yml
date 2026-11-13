@@ -19,3 +19,4 @@ jobs:
     with:
       target: preview/pr/${{ github.event.pull_request.number }}
       label: Pull request #${{ github.event.pull_request.number }}
+      drafts: true
