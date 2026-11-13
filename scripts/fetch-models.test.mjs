@@ -4,7 +4,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { fetchModels, readLock, sha256 } from "./fetch-models.mjs";
+import {
+  fetchModels,
+  lockedModels,
+  modelIndexSource,
+  readLock,
+  sha256,
+} from "./fetch-models.mjs";
 
 const body = Buffer.from("schemaVersion: 2.0.0\n");
 const lockFor = (hash = sha256(body)) => ({
@@ -152,4 +158,40 @@ test("the committed lock file is valid", () => {
   );
   assert.doesNotThrow(() => readLock(text));
   assert.ok(readLock(text).sources.length > 0);
+});
+
+test("writes an index that imports every locked model", async () => {
+  const { outDir, cacheDir } = dirs();
+  const lock = lockFor();
+  lock.sources[0].releases[0].files[0].modelVersion = "2.0.0";
+  await fetchModels({
+    lock,
+    outDir,
+    cacheDir,
+    env: {},
+    fetchImpl: respond(body, []),
+    log: quiet,
+  });
+  assert.deepEqual(lockedModels(lock), [
+    { assessment: "pkimm", version: "2.0.0", fileName: "model.yaml" },
+  ]);
+  const index = readFileSync(join(outDir, "index.ts"), "utf8");
+  assert.equal(index, modelIndexSource(lock));
+  assert.match(index, /import model0 from "\.\/model\.yaml";/);
+  assert.match(index, /assessment: "pkimm", version: "2\.0\.0", yaml: model0/);
+});
+
+test("refuses a model version that is malformed or listed twice", () => {
+  const bad = lockFor();
+  bad.sources[0].releases[0].files[0].modelVersion = "v2";
+  assert.throws(() => readLock(JSON.stringify(bad)), /invalid modelVersion/);
+  const twice = lockFor();
+  twice.sources[0].releases[0].files[0].modelVersion = "2.0.0";
+  twice.sources[0].releases.push({
+    tag: "2.0.0-again",
+    files: [
+      { path: "data/other.yaml", sha256: sha256(body), modelVersion: "2.0.0" },
+    ],
+  });
+  assert.throws(() => readLock(JSON.stringify(twice)), /listed twice/);
 });
