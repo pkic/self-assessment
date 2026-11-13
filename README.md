@@ -31,6 +31,7 @@ Extensions are not configured by a host attribute — the user uploads and remov
 | `dataUrl`       | no       | Optional override. URL of the PKIMM model YAML (`pkimm-model-1.0.0.yaml` or `pkimm-model-2.0.0.yaml`). Defaults to the bundled latest model (2.0.0).                                                                                                                                                                           |
 | `referencesUrl` | no       | Optional override. URL of the shared references catalog (`pkimm-references.yaml`). Defaults to the bundled references catalog (so category cards + the PDF References appendix appear by default); set this to point at a different catalog.                                                                                   |
 | `modes`         | no       | Which assessment views are offered (comma-separated, case-insensitive): `self`, `full`, or `self,full`. Unset (default) offers both, opening in Self. `modes="self"` offers only the quick Self assessment; `modes="full"` opens in Full but keeps Self available. Self can never be disabled. See **Assessment modes** below. |
+| `modelVersion`  | no       | Which bundled PKIMM release to load, for example `2.0.0`. Defaults to the latest release in `models.lock.json`. An unknown version falls back to the latest. Ignored when `dataUrl` is set.                                                                                                                                    |
 
 ### Assessment modes (Self / Full)
 

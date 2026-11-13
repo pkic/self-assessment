@@ -19,7 +19,11 @@ import type {
   Assessment,
   ExtensionData,
 } from "../../../types/types";
-import { useInitialLoad } from "./useInitialLoad";
+import { bundledModelFor, useInitialLoad } from "./useInitialLoad";
+import {
+  DEFAULT_MODEL_VERSION,
+  getBundledModelYaml,
+} from "../../../defaults/bundledData";
 
 const readSavedState = jest.fn();
 const listExtensions = jest.fn();
@@ -630,5 +634,22 @@ describe("useInitialLoad", () => {
     );
     await waitFor(() => expect(result.current.extensionsData.length).toBe(1));
     expect(result.current.incompatibleExtensionIds.size).toBe(0);
+  });
+});
+
+describe("bundledModelFor", () => {
+  it("returns the requested bundled release", () => {
+    expect(bundledModelFor("2.0.0")).toBe(getBundledModelYaml("2.0.0"));
+  });
+
+  it("falls back to the latest release for a missing or unknown version", () => {
+    const latest = getBundledModelYaml(DEFAULT_MODEL_VERSION);
+    expect(bundledModelFor()).toBe(latest);
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+    expect(bundledModelFor("9.9.9")).toBe(latest);
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining("9.9.9 is not bundled"),
+    );
+    spy.mockRestore();
   });
 });
