@@ -1,6 +1,9 @@
 import modelV1 from "../public/pkimm-model-1.0.0.yaml";
-import modelV2 from "../public/pkimm-model-2.0.0.yaml";
-import referencesYaml from "../public/pkimm-references.yaml";
+// Released models are fetched at build time from their repositories
+// (models.lock.json, scripts/fetch-models.mjs). The 1.0.0 model above is a
+// frozen migration fixture kept in this repository.
+import modelV2 from "../generated/models/pkimm-model-2.0.0.yaml";
+import referencesYaml from "../generated/models/pkimm-references.yaml";
 
 // The model version loaded when the host supplies no `dataUrl`.
 export const DEFAULT_MODEL_VERSION = "2.0.0";

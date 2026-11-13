@@ -18,8 +18,10 @@ import standaloneCode from "ajv/dist/standalone/index.js";
 import addFormats from "ajv-formats";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const readSchema = (name) =>
-  JSON.parse(readFileSync(join(root, "src/public", name), "utf8"));
+// Released model schemas come from src/generated/models (fetched by
+// scripts/fetch-models.mjs); schemas this repository owns stay in src/public.
+const readSchema = (name, dir = "src/generated/models") =>
+  JSON.parse(readFileSync(join(root, dir, name), "utf8"));
 
 const outDir = join(root, "src/generated");
 mkdirSync(outDir, { recursive: true });
@@ -64,7 +66,9 @@ emit(
 
 emit(
   Ajv2020,
-  { "extension-1.0.0": readSchema("extension.schema-1.0.0.json") },
+  {
+    "extension-1.0.0": readSchema("extension.schema-1.0.0.json", "src/public"),
+  },
   { validateExtension100: "extension-1.0.0" },
   "validators-2020",
 );
