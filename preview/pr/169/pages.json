@@ -1,0 +1,27 @@
+{
+  "target": "preview/pr/169",
+  "label": "Pull request",
+  "commit": "94876abda91fa5cfcdadc1084605f55d8c9f1a43",
+  "builtAt": "2026-11-13T12:55:10.276Z",
+  "custom": true,
+  "models": [
+    {
+      "assessment": "pkimm",
+      "version": "2.0.0",
+      "draft": false,
+      "path": "pkimm/2.0.0"
+    },
+    {
+      "assessment": "pqcmm",
+      "version": "1.0.1",
+      "draft": false,
+      "path": "pqcmm/1.0.1"
+    },
+    {
+      "assessment": "pqcmm",
+      "version": "1.1.0",
+      "draft": true,
+      "path": "pqcmm/1.1.0"
+    }
+  ]
+}
