@@ -1,0 +1,14 @@
+{
+  "target": "preview/pr/185",
+  "label": "Pull request #185",
+  "commit": "d9eb62b20b6e79a238094a46a43ed2a9cb422357",
+  "builtAt": "2026-11-13T15:21:01.924Z",
+  "models": [
+    {
+      "assessment": "pkimm",
+      "version": "2.0.0",
+      "draft": false,
+      "path": "pkimm/2.0.0"
+    }
+  ]
+}
