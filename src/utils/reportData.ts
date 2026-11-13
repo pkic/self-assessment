@@ -11,13 +11,13 @@ import {
   calculateModuleMaturityLevels,
   calculateExtensionMaturityLevels,
   calculateExtensionFloorScore,
-  calculateExtensionWeightedPKIMMScore,
+  calculateExtensionWeightedScore,
   getEffectiveWeight,
   getCategoryOverlayInfo,
   hasOverlays,
   calculateBlendedLevel,
   type CategoryOverlayDetails,
-} from "./maturityCalculations";
+} from "../assessment-engine/methodologies/weightedMaturity";
 import {
   calculateEffectiveCategoryLevel,
   computeCompleteness,
@@ -29,6 +29,7 @@ import {
   type RequirementFilterState,
 } from "./requirementFilter";
 import LevelResult from "../enums/LevelResult";
+import type { AssessmentProfileData } from "../assessment-engine/types";
 
 export interface ReportScores {
   overall: number;
@@ -76,13 +77,16 @@ export const buildReportScores = (
   progress: Record<string, ProgressData>,
   activeExtension: ExtensionData | null,
   requirementProgress?: Record<string, RequirementProgress>,
+  methodology?: AssessmentProfileData["runtime"]["methodology"],
 ): ReportScores => {
+  const parameters = methodology?.parameters;
   const overall = calculateOverallMaturityLevel(
     modules,
     progress,
     [],
     [],
     requirementProgress,
+    parameters,
   );
   // calculateModuleMaturityLevels returns { module: <name>, level } in `modules` order.
   const perModuleLevels = calculateModuleMaturityLevels(
@@ -91,6 +95,7 @@ export const buildReportScores = (
     [],
     [],
     requirementProgress,
+    parameters,
   );
   const modules_ = modules.map((m, i) => ({
     moduleId: m.id,
@@ -114,18 +119,21 @@ export const buildReportScores = (
       [extId],
       progress,
       requirementProgress,
+      parameters,
     )[0]?.level ?? null;
   const floor = calculateExtensionFloorScore(
     modules,
     activeExtension,
     progress,
     requirementProgress,
+    parameters,
   );
-  const weighted = calculateExtensionWeightedPKIMMScore(
+  const weighted = calculateExtensionWeightedScore(
     modules,
     progress,
     activeExtension,
     requirementProgress,
+    parameters,
   );
   return { overall, modules: modules_, extension, floor, weighted };
 };
@@ -904,6 +912,7 @@ export const buildReportData = (input: {
   progress: Record<string, ProgressData>;
   activeExtension?: ExtensionData | null;
   requirementProgress?: Record<string, RequirementProgress>;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }): ReportData => {
   const ext = input.activeExtension ?? null;
   return {
@@ -913,6 +922,7 @@ export const buildReportData = (input: {
       input.progress,
       ext,
       input.requirementProgress,
+      input.methodology,
     ),
     completeness: buildReportCompleteness(
       input.modules,

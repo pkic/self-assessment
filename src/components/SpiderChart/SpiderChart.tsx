@@ -20,10 +20,11 @@ import {
   calculateOverallMaturityLevel,
   calculateExtensionMaturityLevels,
   calculateBlendedLevel,
-} from "../../utils/maturityCalculations";
+} from "../../assessment-engine/methodologies/weightedMaturity";
 import { calculateEffectiveCategoryLevel } from "../../utils/effectiveLevel";
 import { buildRadarAxes } from "../../utils/radarAxes";
 import LevelResult from "../../enums/LevelResult";
+import type { AssessmentProfileData } from "../../assessment-engine/types";
 
 ChartJS.register(
   RadialLinearScale,
@@ -51,6 +52,7 @@ interface SpiderChartProps {
    *  default so the chart stays byte-identical to today. */
   baselineProgress?: Record<string, ProgressData>;
   baselineRequirementProgress?: Record<string, RequirementProgress>;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 // Function to determine color based on the level
@@ -113,6 +115,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
   requirementProgress,
   baselineProgress,
   baselineRequirementProgress,
+  methodology,
 }) => {
   // Not-Applicable categories (baseline display === -1) are removed from the
   // radar axes entirely rather than plotted as 0 — plotting N/A at the
@@ -185,6 +188,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     [],
     [],
     requirementProgress,
+    methodology?.parameters,
   );
   const { background, border } = getColorForLevel(overallMaturityLevel);
 
@@ -194,6 +198,7 @@ export const SpiderChart: React.FC<SpiderChartProps> = ({
     enabledExtensions,
     progress,
     requirementProgress,
+    methodology?.parameters,
   );
 
   const datasets = [

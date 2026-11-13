@@ -11,6 +11,17 @@ import {
   ProgressData,
   RequirementProgress,
 } from "../types/types";
+import type { AssessmentProfileData } from "../assessment-engine/types";
+
+const DEFAULT_METHODOLOGY: AssessmentProfileData["runtime"]["methodology"] = {
+  strategy: "weighted-average",
+  version: "1.0.0",
+  parameters: {
+    minimumLevel: 0,
+    maximumLevel: 5,
+    rounding: "floor",
+  },
+};
 
 export type AssessmentTarget =
   { kind: "original" } | { kind: "extension"; id: string };
@@ -26,6 +37,7 @@ interface AssessmentTargetContextType {
   getRequirementProgress: () => Record<string, RequirementProgress>;
   getActiveExtension: () => ExtensionData | null;
   getCurrentTargetName: () => string;
+  methodology: AssessmentProfileData["runtime"]["methodology"];
 }
 
 const AssessmentTargetContext = createContext<
@@ -49,6 +61,7 @@ interface AssessmentTargetProviderProps {
   progress: Record<string, ProgressData>;
   requirementProgress: Record<string, RequirementProgress>;
   enabledExtensions: string[];
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 export const AssessmentTargetProvider: React.FC<
@@ -60,6 +73,7 @@ export const AssessmentTargetProvider: React.FC<
   progress,
   requirementProgress,
   enabledExtensions,
+  methodology = DEFAULT_METHODOLOGY,
 }) => {
   const [target, setTarget] = useState<AssessmentTarget>({ kind: "original" });
 
@@ -93,6 +107,7 @@ export const AssessmentTargetProvider: React.FC<
         );
         return ext?.extension.name || "Extension";
       },
+      methodology,
     }),
     [
       target,
@@ -101,6 +116,7 @@ export const AssessmentTargetProvider: React.FC<
       coreModules,
       progress,
       requirementProgress,
+      methodology,
     ],
   );
 

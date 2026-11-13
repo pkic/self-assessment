@@ -21,6 +21,7 @@ import { formatBytes } from "../../utils/durability";
 import { buildAssessmentCardModel } from "../../utils/assessmentCard";
 import { Button, Card, LevelBadge, Menu } from "../ui";
 import type { MenuItem } from "../ui";
+import type { AssessmentProfileData } from "../../assessment-engine/types";
 import "./AssessmentManager.module.scss";
 
 interface Props {
@@ -41,6 +42,7 @@ interface Props {
   onListRevisions: (id: string) => Promise<RevisionRecord[]>;
   onRestoreRevision: (revId: string, assessmentId: string) => Promise<void>;
   storageEstimate: { usage: number; quota: number } | null;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 export const AssessmentManager: React.FC<Props> = ({
@@ -61,6 +63,7 @@ export const AssessmentManager: React.FC<Props> = ({
   onListRevisions,
   onRestoreRevision,
   storageEstimate,
+  methodology,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
@@ -116,6 +119,7 @@ export const AssessmentManager: React.FC<Props> = ({
                   data?.modules ?? null,
                   loadedDataVersion,
                   extensionsData,
+                  methodology,
                 )}
                 onSelect={() => onSelect(a.id)}
                 onRename={(name) => onRename(a.id, name)}

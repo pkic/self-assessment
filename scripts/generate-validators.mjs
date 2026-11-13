@@ -18,8 +18,10 @@ import standaloneCode from "ajv/dist/standalone/index.js";
 import addFormats from "ajv-formats";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const readSchema = (name) =>
-  JSON.parse(readFileSync(join(root, "src/public", name), "utf8"));
+// Released model schemas come from src/generated/models (fetched by
+// scripts/fetch-models.mjs); schemas this repository owns stay in src/public.
+const readSchema = (name, dir = "src/generated/models") =>
+  JSON.parse(readFileSync(join(root, dir, name), "utf8"));
 
 const outDir = join(root, "src/generated");
 mkdirSync(outDir, { recursive: true });
@@ -64,8 +66,37 @@ emit(
 
 emit(
   Ajv2020,
-  { "extension-1.0.0": readSchema("extension.schema-1.0.0.json") },
-  { validateExtension100: "extension-1.0.0" },
+  {
+    "extension-1.0.0": readSchema("extension.schema-1.0.0.json", "src/public"),
+    "pqcmm-model-1.0.0": readSchema("pqcmm-model.schema-1.0.0.json"),
+    "pqcmm-model-1.1.0": readSchema("pqcmm-model.schema-1.1.0.json"),
+    "assessment-package-1.0.0": readSchema(
+      "assessment-package.schema-1.0.0.json",
+      "src/public",
+    ),
+    "assessment-package-1.1.0": readSchema(
+      "assessment-package.schema-1.1.0.json",
+      "src/public",
+    ),
+    // The released 1.0.0 profile schema plus the size limits 1.1.0 adds, so
+    // a profile loaded from profileUrl is bounded whichever version it uses.
+    "assessment-profile-1.0.0": readSchema(
+      "assessment-profile.schema-1.0.0.json",
+      "src/public",
+    ),
+    "assessment-profile-1.1.0": readSchema(
+      "assessment-profile.schema-1.1.0.json",
+    ),
+  },
+  {
+    validateExtension100: "extension-1.0.0",
+    validatePqcmmModel100: "pqcmm-model-1.0.0",
+    validatePqcmmModel110: "pqcmm-model-1.1.0",
+    validateAssessmentPackage100: "assessment-package-1.0.0",
+    validateAssessmentPackage110: "assessment-package-1.1.0",
+    validateAssessmentProfile100: "assessment-profile-1.0.0",
+    validateAssessmentProfile110: "assessment-profile-1.1.0",
+  },
   "validators-2020",
 );
 

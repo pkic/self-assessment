@@ -1,0 +1,90 @@
+{
+  "lockVersion": 1,
+  "sources": [
+    {
+      "id": "pkimm",
+      "repository": "pkic/pkimm",
+      "releases": [
+        {
+          "tag": "2.0.0",
+          "files": [
+            {
+              "path": "data/pkimm-model-2.0.0.yaml",
+              "modelVersion": "2.0.0",
+              "sha256": "334db6fe5c0814b8d88918fdbecbc78ca8cdcd6cae4b8937e9a3657dfca86ca9"
+            },
+            {
+              "path": "data/pkimm-references.yaml",
+              "sha256": "7f6991144ecf385c9f739a9e8206f634d10ff19c4a930850c1460f5fde55ba82"
+            },
+            {
+              "path": "data/pkimm-model.schema-1.0.0.json",
+              "sha256": "74e5547a973181860f60506015ff4b79b9cf605245ce17725627b66a72c2f2c1"
+            },
+            {
+              "path": "data/pkimm-model.schema-2.0.0.json",
+              "sha256": "13da2aed308ee37feedc21e0f00b865e5f6cd022bd1208b205bd73199c5a0bb4"
+            },
+            {
+              "path": "data/pkimm-references.schema-1.0.0.json",
+              "sha256": "38741de3ba8cb0e37a7dc9ba9e7e8e2f004b192b9decbff2a0170e61229d088a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pqcmm",
+      "repository": "pkic/pqcmm",
+      "releases": [
+        {
+          "tag": "v1.0.1",
+          "files": [
+            {
+              "path": "model/pqcmm-model-1.0.1.yaml",
+              "modelVersion": "1.0.1",
+              "sha256": "98b6e914b3a46d9bb8aac49455ef1107846e454c12d27de68d0955194845bf24"
+            },
+            {
+              "path": "profiles/pqcmm-self-assessment-profile-1.0.0.yaml",
+              "profile": true,
+              "sha256": "19f75912027a484eab826965e4449c464be1c1857cb460bed412bf0da2a4c61c"
+            },
+            {
+              "path": "schemas/pqcmm-model.schema-1.0.0.json",
+              "sha256": "9e325966946391a6739150ffaaab2a6717d675a8ce5de97a9aeb988047001e71"
+            }
+          ]
+        },
+        {
+          "commit": "42dcb8473f5b10e21167d6d8e61e814bcb06226f",
+          "draft": true,
+          "files": [
+            {
+              "path": "model/pqcmm-model.yaml",
+              "as": "pqcmm-model-1.1.0.yaml",
+              "modelVersion": "1.1.0",
+              "sha256": "20605b5ed2b4c27851e4a6ab4ee5d35373ab4c6193fb6a825f53f55681491974"
+            },
+            {
+              "path": "profiles/pqcmm-self-assessment-profile.yaml",
+              "as": "pqcmm-self-assessment-profile-1.1.0.yaml",
+              "profile": true,
+              "sha256": "cd8ef6f802988059493e83c8f14aedd25cab4e51e0272e150cdf5dbe47e5a2ec"
+            },
+            {
+              "path": "schemas/pqcmm-model.schema.json",
+              "as": "pqcmm-model.schema-1.1.0.json",
+              "sha256": "d11f6e02efbc7166cc0f1d29926605a7d44a54ea001a575a87980a5c5a1b358a"
+            },
+            {
+              "path": "schemas/assessment-profile.schema.json",
+              "as": "assessment-profile.schema-1.1.0.json",
+              "sha256": "d5dc802d432ed791cc47ca507c492c82ae46523ffd5af169d670dcc2145fa0e4"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
