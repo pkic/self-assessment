@@ -25,6 +25,10 @@ on:
       label:
         type: string
         default: ""
+      ref:
+        description: "Commit to build; defaults to the calling ref"
+        type: string
+        default: ""
       alias:
         description: "Older path kept working as a redirect, e.g. develop"
         type: string
@@ -48,7 +52,7 @@ jobs:
         with:
           # Removing a preview of a closed pull request: its branch may be
           # gone, so run the script from the default branch.
-          ref: ${{ inputs.command == 'remove' && github.event.repository.default_branch || '' }}
+          ref: ${{ inputs.command == 'remove' && github.event.repository.default_branch || inputs.ref }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 #v7.1.0
         with:
           node-version-file: ".node-version"
@@ -83,7 +87,7 @@ jobs:
           BRANCH: ${{ inputs.branch }}
           LABEL: ${{ inputs.label }}
           ALIAS: ${{ inputs.alias }}
-          COMMIT: ${{ github.sha }}
+          COMMIT: ${{ inputs.ref || github.sha }}
         run: |
           args=("$COMMAND" --site site --dist dist)
           [ -n "$TARGET" ] && args+=(--target "$TARGET")
