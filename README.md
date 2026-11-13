@@ -4,12 +4,24 @@ A self-contained web component that embeds the [PKI Maturity Model (PKIMM)](http
 
 ## Quick start
 
-Include the component in your HTML. Replace `<version>` with a published release (or `develop` for the latest unstable build). No attributes are needed — the widget renders the latest PKIMM model (2.0.0) with its references catalog out of the box:
+Include the component in your HTML. No attributes are needed — the widget renders the latest PKIMM model (2.0.0) with its references catalog out of the box:
 
 ```html
 <self-assessment></self-assessment>
-<script src="https://pkic.github.io/self-assessment/<version>/self-assessment.js"></script>
+<script src="https://pkic.github.io/self-assessment/release/self-assessment.js"></script>
 ```
+
+`release/` is the latest tool release. Folders published by earlier releases (`/v2.0.1/` and older) stay available if you need to pin one.
+
+## Hosted pages
+
+[pkic.github.io/self-assessment](https://pkic.github.io/self-assessment/) lists every published build:
+
+- `release/{assessment}/{version}/`: the latest tool release with a given model release, for example `release/pkimm/2.0.0/`.
+- `preview/branch/{branch}/{assessment}/{version}/`: a branch build. `main` is published on every push (`/develop/` redirects to it); other branches when the deploy workflow is run for them. The branch name becomes one path segment, with characters other than letters, digits, `.`, `_` and `-` replaced by `-`.
+- `preview/pr/{number}/{assessment}/{version}/`: a build of a pull request from a branch of this repository, removed when the pull request closes. Pull requests from forks get no preview.
+
+Each build folder has an index page, and so do the site root, `preview/`, `preview/branch/` and `preview/pr/`.
 
 ### Override the bundled data
 
@@ -54,7 +66,7 @@ Released models are not kept in this repository. The build downloads the release
 
 - Extension YAMLs (any name) — must validate against [`extension.schema-1.0.0.json`](src/public/extension.schema-1.0.0.json).
 
-These files are bundled directly into the widget for zero-config use, and are also still served from gh-pages (alongside every release) for hosts that override `dataUrl`/`referencesUrl`. All schemas are also vendored in the bundle for validation at load time; the canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository.
+These files are bundled directly into the widget for zero-config use, and are also served next to the bundle in every published build for hosts that override `dataUrl`/`referencesUrl`. All schemas are also vendored in the bundle for validation at load time; the canonical copies live in the [pkic/pkimm](https://github.com/pkic/pkimm) repository.
 
 ## Data storage
 
@@ -100,7 +112,7 @@ cp src/public/index.html src/public/pkimm-model-1.0.0.yaml \
 
 The dev fixture (`src/public/index.html`) is attribute-free (zero-config) — it no longer sets `dataUrl`/`referencesUrl`. Per-category reference disclosures appear from the bundled references catalog without any copy step; the `cp` above is only needed to exercise the `dataUrl`/`referencesUrl` override path locally.
 
-CI workflows do this on every build. To try an extension, open the running widget's **Extensions** tab and upload an extension YAML — no build step or attribute is involved.
+CI workflows do this on every build. To lay a build out the way the hosted pages do, run `node scripts/build-pages.mjs publish --site <folder> --target release` after `npm run build`. To try an extension, open the running widget's **Extensions** tab and upload an extension YAML — no build step or attribute is involved.
 
 ## License
 
