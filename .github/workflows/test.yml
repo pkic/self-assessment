@@ -25,5 +25,10 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
+      - name: Restore released model files
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
+        with:
+          path: .cache/models
+          key: models-${{ hashFiles('models.lock.json') }}
       - name: Run tests
         run: npm run test
