@@ -162,6 +162,39 @@ describe("PQCMM cumulative gate scoring", () => {
     );
   });
 
+  it("does not count an answer the model marks as non-supporting", () => {
+    const derived = {
+      ...methodology,
+      parameters: { ...methodology.parameters, questionFindingMode: "derived" },
+    };
+    const marked = structuredClone(model);
+    const question = marked.levels
+      .flatMap((level) => level.assessment.groups)
+      .flatMap((group) => group.questions)
+      .find((candidate) => candidate.id === "1.2.4")!;
+    const field = question.response!.fields.find(
+      (candidate) => candidate.key === "accessibleWithoutCustomBuild",
+    )!;
+    field.nonSupportingValues = [false];
+
+    const assessment = record();
+    setLevel(assessment, 0, "met", false);
+    setLevel(assessment, 1, "met");
+    const passing = calculateGatedMaturityScore(marked, assessment, derived);
+    expect(passing.achievedLevel).toBe(1);
+
+    // The same complete answer, now saying a custom build is needed.
+    assessment.questionProgress["1.2.4"].values.accessibleWithoutCustomBuild =
+      "no";
+    const score = calculateGatedMaturityScore(marked, assessment, derived);
+    expect(score.achievedLevel).toBe(0);
+    expect(score.levelResults[1].blockers).toContainEqual(
+      expect.stringMatching(/1\.2\.4 do not support/),
+    );
+    expect(score.questionsAnswered).toBe(passing.questionsAnswered);
+    expect(score.questionFindingCounts["does-not-support"]).toBe(1);
+  });
+
   it("reports each part of a criterion's gate separately", () => {
     const assessment = record();
     setLevel(assessment, 1, "met");

@@ -44,10 +44,36 @@ export interface QuestionFieldPolicy {
   options?: { value: string }[];
   /** A multiselect that also accepts entries not in its options. */
   allowCustom?: boolean;
+  /** Answers that mean the question does not support its criterion. */
+  nonSupportingValues?: (string | boolean)[];
   min?: number;
   max?: number;
   allowedUnits?: string[];
 }
+
+/**
+ * The finding a complete answer implies when the model marks one of its values
+ * as not supporting the criterion, for example a failed test.
+ */
+export const NON_SUPPORTING_FINDING = "does-not-support";
+
+// Boolean answers are stored as "yes"/"no"; the model lists them as true/false.
+const storedAnswer = (value: string | boolean): string => {
+  if (value === true) return "yes";
+  if (value === false) return "no";
+  return value;
+};
+
+/** Whether this field's answer is one the model marks as non-supporting. */
+export const fieldAnswerDoesNotSupport = (
+  field: Pick<QuestionFieldPolicy, "nonSupportingValues">,
+  value: QuestionValue | undefined,
+): boolean => {
+  const marked = (field.nonSupportingValues ?? []).map(storedAnswer);
+  if (marked.length === 0 || value === undefined) return false;
+  const answers = Array.isArray(value) ? value : [value];
+  return answers.some((answer) => marked.includes(answer));
+};
 
 export const hasQuestionValue = (value: QuestionValue | undefined): boolean =>
   Array.isArray(value)

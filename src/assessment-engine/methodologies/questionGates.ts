@@ -1,5 +1,9 @@
 import type { EvidenceFile } from "../types";
-import { hasQuestionValue, validQuestionFieldValue } from "../question-values";
+import {
+  fieldAnswerDoesNotSupport,
+  hasQuestionValue,
+  validQuestionFieldValue,
+} from "../question-values";
 
 export interface GatedQuestion {
   id: string;
@@ -9,6 +13,7 @@ export interface GatedQuestion {
       type: string;
       required: boolean;
       options?: { value: string }[];
+      nonSupportingValues?: (string | boolean)[];
     }[];
     rules?: { kind: "at-least-one"; fields: string[] }[];
     evidence?: { required: boolean };
@@ -20,6 +25,22 @@ export interface GatedQuestionProgress {
   values: Record<string, string | string[]>;
   evidenceIds: string[];
 }
+
+/**
+ * Whether a recorded answer says the question does not support its criterion,
+ * because a field holds a value the model marks as non-supporting.
+ */
+export const questionAnswerDoesNotSupport = (
+  question: GatedQuestion | undefined,
+  progress: GatedQuestionProgress | undefined,
+): boolean =>
+  Boolean(
+    question &&
+    progress &&
+    (question.response?.fields ?? []).some((field) =>
+      fieldAnswerDoesNotSupport(field, progress.values[field.key]),
+    ),
+  );
 
 export const questionResponseComplete = (
   question: GatedQuestion | undefined,

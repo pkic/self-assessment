@@ -50,6 +50,11 @@ export interface EvidenceQuestionField {
   options?: { value: string; label: string }[];
   /** A multiselect that also accepts entries not in its options. */
   allowCustom?: boolean;
+  /**
+   * Answers that mean the question does not support its criterion (true or
+   * false for a boolean field, option values otherwise).
+   */
+  nonSupportingValues?: (string | boolean)[];
 }
 
 export interface EvidenceQuestionResponse {

@@ -1,7 +1,9 @@
 import type { EvidenceFile } from "../types";
 import { registerScoringStrategy, scoreWithStrategy } from "../scoring";
+import { NON_SUPPORTING_FINDING } from "../question-values";
 import {
   countQuestionFindings,
+  questionAnswerDoesNotSupport,
   questionResponseComplete,
   type GatedQuestion,
   type GatedQuestionProgress,
@@ -137,6 +139,13 @@ const cumulativeGates = (
     const progress = record.questionProgress[questionId];
     return questionResponseComplete(question, progress, record.evidenceFiles);
   };
+  // A complete answer the model marks as non-supporting (a failed test, a
+  // missing capability) is recorded but cannot carry its criterion.
+  const answerDoesNotSupport = (questionId: string): boolean =>
+    questionAnswerDoesNotSupport(
+      questionsById.get(questionId),
+      record.questionProgress[questionId],
+    );
   let achievedPositiveLevel = baselineLevel;
   let criteriaMet = 0;
   let criteriaTotal = 0;
@@ -157,6 +166,7 @@ const cumulativeGates = (
       const questionBlockers = (criterion.assessmentQuestionIds ?? []).filter(
         (questionId) =>
           !responseComplete(questionId) ||
+          (derivedFindings && answerDoesNotSupport(questionId)) ||
           (!derivedFindings &&
             !passingQuestionFindings.has(
               record.questionProgress[questionId]?.finding ?? "not-assessed",
@@ -233,10 +243,11 @@ const cumulativeGates = (
       derivedFindings ? questions : assessmentQuestions,
       record.questionProgress,
       derivedFindings
-        ? (questionId) =>
-            responseComplete(questionId)
-              ? (parameters.passingQuestionFindings?.[0] ?? "not-assessed")
-              : "not-assessed"
+        ? (questionId) => {
+            if (!responseComplete(questionId)) return "not-assessed";
+            if (answerDoesNotSupport(questionId)) return NON_SUPPORTING_FINDING;
+            return parameters.passingQuestionFindings?.[0] ?? "not-assessed";
+          }
         : undefined,
     ),
     evidenceFiles: record.evidenceFiles.length,

@@ -160,4 +160,29 @@ describe("exportedFinding", () => {
     );
     expect(exportedFinding(profile, item, kind, answered, [])).toBe("supports");
   });
+
+  it("writes does-not-support for an answer the model marks as non-supporting", () => {
+    const { question: original, kind } = question("1.4.1");
+    const item = structuredClone(original);
+    const outcome = item.response!.fields.find(
+      (field) => field.key === "reproductionOutcome",
+    )!;
+    outcome.nonSupportingValues = ["not-reproduced"];
+    const answered = {
+      ...emptyQuestionProgress(),
+      values: {
+        enablementMechanism: "--pq-groups",
+        reproductionOutcome: "reproduced",
+      },
+    };
+    expect(exportedFinding(profile, item, kind, answered, [])).toBe("supports");
+    const failed = {
+      ...answered,
+      values: { ...answered.values, reproductionOutcome: "not-reproduced" },
+    };
+    expect(questionResponseIssues(item, kind, profile, failed, [])).toEqual([]);
+    expect(exportedFinding(profile, item, kind, failed, [])).toBe(
+      "does-not-support",
+    );
+  });
 });

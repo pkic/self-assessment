@@ -5,8 +5,10 @@ import {
 import type { AssessmentProfileData } from "../../assessment-engine/types";
 import {
   hasQuestionValue,
+  NON_SUPPORTING_FINDING,
   validQuestionFieldValue,
 } from "../../assessment-engine/question-values";
+import { questionAnswerDoesNotSupport } from "../../assessment-engine/methodologies/questionGates";
 import type {
   AssessmentEvidenceFile,
   EvidenceQuestion,
@@ -170,7 +172,8 @@ export const questionResponseSummary = (
 /**
  * The finding written to an exported package. With explicit findings it is
  * the one recorded; with derived findings it is the profile's first passing
- * finding once the answer is complete, so every package carries the same
+ * finding once the answer is complete (or "does-not-support" when the model
+ * marks the answer as non-supporting), so every package carries the same
  * per-question vocabulary whoever made the assessment.
  */
 export const exportedFinding = (
@@ -182,8 +185,13 @@ export const exportedFinding = (
 ): string => {
   if (questionFindingsExplicit(profile)) return progress.finding;
   const supports = passingQuestionFindings(profile)[0];
-  return supports &&
-    questionIsAnswered(question, kind, profile, progress, evidenceFiles)
-    ? supports
-    : "not-assessed";
+  if (
+    !supports ||
+    !questionIsAnswered(question, kind, profile, progress, evidenceFiles)
+  ) {
+    return "not-assessed";
+  }
+  return questionAnswerDoesNotSupport(question, progress)
+    ? NON_SUPPORTING_FINDING
+    : supports;
 };
