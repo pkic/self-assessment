@@ -3,7 +3,9 @@ import { parseEvidenceModel } from "./model";
 import { calculateGatedMaturityScore } from "../../assessment-engine/methodologies/cumulativeGates";
 import type { EvidenceAssessmentRecord } from "./types";
 
-const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
+const model = parseEvidenceModel(
+  getBundledAssessmentModelYaml("pqcmm", "1.1.0")!,
+);
 const methodology = {
   strategy: "cumulative-gates",
   parameters: {

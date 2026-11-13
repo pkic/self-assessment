@@ -4,12 +4,15 @@ import { parseAssessmentProfile } from "../../assessment-engine/profile";
 import { modelPageUrl, parseEvidenceModel } from "./model";
 import yaml from "js-yaml";
 import type { EvidenceModelData } from "./types";
-import legacyModelYaml from "../../public/pqcmm-model-1.0.1.yaml";
-import legacyProfileYaml from "../../public/pqcmm-self-assessment-profile-1.0.0.yaml";
+import legacyModelYaml from "../../generated/models/pqcmm-model-1.0.1.yaml";
+import legacyProfileYaml from "../../generated/models/pqcmm-self-assessment-profile-1.0.0.yaml";
 
 describe("PQCMM model data", () => {
-  const modelYaml = getBundledAssessmentModelYaml("pqcmm")!;
-  const profileYaml = getBundledAssessmentProfileYaml("pqcmm-self-assessment")!;
+  const modelYaml = getBundledAssessmentModelYaml("pqcmm", "1.1.0")!;
+  const profileYaml = getBundledAssessmentProfileYaml(
+    "pqcmm-self-assessment",
+    "1.1.0",
+  )!;
   it("loads the versioned 1.1.0 model with criterion links and typed questions", () => {
     const model = parseEvidenceModel(modelYaml);
     expect(model.model).toMatchObject({
@@ -160,7 +163,9 @@ describe("PQCMM model data", () => {
 });
 
 describe("modelPageUrl", () => {
-  const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
+  const model = parseEvidenceModel(
+    getBundledAssessmentModelYaml("pqcmm", "1.1.0")!,
+  );
 
   it("resolves site-relative model links against the model's own site", () => {
     expect(modelPageUrl(model, "/wg/pqc/pqcmm/levels/1-initial/")).toBe(

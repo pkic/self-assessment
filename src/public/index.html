@@ -19,9 +19,8 @@
       <form method="get" aria-label="Assessment preview configuration">
         <label>
           Bundled assessment
-          <select name="profile" id="preview-profile">
-            <option value="pkimm-self-assessment">PKIMM 2.0.0</option>
-            <option value="pqcmm-self-assessment">PQCMM 1.1.0</option>
+          <select name="assessment" id="preview-assessment">
+            <!-- __BUNDLED_MODELS__ -->
           </select>
         </label>
         <details>
@@ -60,7 +59,7 @@
         </details>
         <div class="preview-controls__actions">
           <button type="submit">Load assessment</button>
-          <a href="./">Reset</a>
+          <a href="?">Reset</a>
         </div>
       </form>
     </header>

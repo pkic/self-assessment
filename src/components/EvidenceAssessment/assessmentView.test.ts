@@ -11,7 +11,7 @@ import {
 import { plainText } from "./criterionLabel";
 
 const profile = parseAssessmentProfile(
-  getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+  getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
 );
 
 describe("assessment view helpers", () => {

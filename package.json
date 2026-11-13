@@ -7,21 +7,21 @@
   },
   "main": "dist/self-assessment.js",
   "scripts": {
+    "fetch:models": "node scripts/fetch-models.mjs",
     "generate:validators": "node scripts/generate-validators.mjs",
-    "prestart": "npm run generate:validators && npm run copy:public",
+    "prepare:data": "npm run fetch:models && npm run generate:validators",
+    "prestart": "npm run prepare:data && npm run copy:public",
     "start": "webpack serve --mode development",
-    "prebuild": "npm run generate:validators && npm run copy:public",
+    "prebuild": "npm run prepare:data && npm run copy:public",
     "build": "webpack --mode production",
     "coverage-badge": "make-coverage-badge --output-path ./coverage_badge.svg",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint --fix .",
     "lint:check": "eslint .",
-    "pretest": "npm run generate:validators && node --test scripts/sync-pqcmm-model.test.mjs",
-    "test": "NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest",
-    "copy:public": "node scripts/copy-public.mjs",
-    "sync:pqcmm": "node scripts/sync-pqcmm-model.mjs",
-    "test:sync:pqcmm": "node --test scripts/sync-pqcmm-model.test.mjs"
+    "pretest": "MODEL_DRAFTS=1 npm run prepare:data",
+    "test": "node --test \"scripts/*.test.mjs\" && NODE_OPTIONS='--experimental-vm-modules --disable-warning=ExperimentalWarning' jest",
+    "copy:public": "node scripts/copy-public.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.1",

@@ -156,6 +156,8 @@ interface AssessmentProps {
   references: string | null;
   modes?: string | null;
   profile: AssessmentProfileData;
+  /** A bundled model release to load instead of the latest one. */
+  modelVersion?: string | null;
 }
 
 const EMPTY_STATE: SavedState = {
@@ -190,6 +192,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
   references,
   modes,
   profile,
+  modelVersion,
 }) => {
   const modeCaps = parseModes(modes);
 
@@ -267,6 +270,7 @@ export const Assessment: React.FC<AssessmentProps> = ({
   } = useInitialLoad({
     src: src ?? undefined,
     references: references ?? undefined,
+    modelVersion: modelVersion ?? undefined,
     setSavedState,
     setCurrentTab,
     setStorageBackend,

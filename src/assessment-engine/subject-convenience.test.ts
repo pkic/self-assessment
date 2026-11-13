@@ -6,7 +6,7 @@ import {
 } from "./subject-convenience";
 
 const profile = parseAssessmentProfile(
-  getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+  getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
 );
 const cpeField = profile.runtime.subjectFields.find(
   (field) => field.format === "cpe-2.3",

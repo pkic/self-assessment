@@ -35,9 +35,11 @@ const embeddedNames = async (blob: Blob): Promise<string[]> => {
 
 describe("PQCMM PDF report", () => {
   it("embeds a machine-readable manifest and each evidence file", async () => {
-    const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
+    const model = parseEvidenceModel(
+      getBundledAssessmentModelYaml("pqcmm", "1.1.0")!,
+    );
     const profile = parseAssessmentProfile(
-      getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+      getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
     );
     const assessment = completePqcmmSubject(
       newEvidenceAssessment(model, profile),

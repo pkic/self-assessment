@@ -8,7 +8,8 @@ const mutateProfile = (
   mutate: (profile: AssessmentProfileData) => void,
 ): string => {
   const parsed = yaml.load(
-    getBundledAssessmentProfileYaml(id)!,
+    // The newest profile shape (PQCMM 1.1.0, a draft bundled for tests).
+    getBundledAssessmentProfileYaml(id, "1.1.0")!,
   ) as AssessmentProfileData;
   mutate(parsed);
   return yaml.dump(parsed);
@@ -23,7 +24,7 @@ describe("assessment profile trust boundaries", () => {
     ).not.toThrow();
     expect(() =>
       parseAssessmentProfile(
-        getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+        getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
       ),
     ).not.toThrow();
   });

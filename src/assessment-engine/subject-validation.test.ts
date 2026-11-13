@@ -3,7 +3,7 @@ import { parseAssessmentProfile } from "./profile";
 import { assessmentSubjectIssues } from "./subject-validation";
 
 const profile = parseAssessmentProfile(
-  getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+  getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
 );
 const requiredScope = {
   productName: "Example product",

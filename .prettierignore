@@ -1,15 +1,13 @@
 dist/
 node_modules/
 
-# Vendored from pkimm — formatted to match the canonical source there.
-src/public/pkimm-model-*.yaml
-src/public/pkimm-references.yaml
-src/public/pkimm-model.schema-*.json
-src/public/pkimm-references.schema-*.json
+.cache/
+src/generated/
+
+# Kept byte-identical to their published sources.
+src/public/pkimm-model-1.0.0.yaml
 src/public/extension.schema-*.json
 
-# Synced from pkic/pqcmm — keep byte-identical to the canonical source.
-src/public/pqcmm-model-*.yaml
-src/public/pqcmm-model.schema-*.json
-src/public/pqcmm-self-assessment-profile-*.yaml
-src/public/assessment-profile.schema-*.json
+# The released assessment profile schema with the 1.1.0 size limits; kept in
+# the release's formatting so it diffs cleanly against pkic/pqcmm.
+src/public/assessment-profile.schema-1.0.0.json

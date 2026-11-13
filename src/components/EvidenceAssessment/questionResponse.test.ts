@@ -9,9 +9,11 @@ import {
 } from "./questionResponse";
 import type { AssessmentEvidenceFile } from "./types";
 
-const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
+const model = parseEvidenceModel(
+  getBundledAssessmentModelYaml("pqcmm", "1.1.0")!,
+);
 const profile = parseAssessmentProfile(
-  getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+  getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
 );
 const question = (id: string) => {
   for (const level of model.levels) {

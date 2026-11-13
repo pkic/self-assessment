@@ -20,7 +20,7 @@ describe("EvidenceAssessment", () => {
       <EvidenceAssessment
         src={null}
         profile={parseAssessmentProfile(
-          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
         )}
       />,
     );
@@ -119,7 +119,7 @@ describe("EvidenceAssessment", () => {
       <EvidenceAssessment
         src={null}
         profile={parseAssessmentProfile(
-          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
         )}
       />,
     );
@@ -149,7 +149,7 @@ describe("EvidenceAssessment", () => {
       <EvidenceAssessment
         src={null}
         profile={parseAssessmentProfile(
-          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
         )}
       />,
     );
@@ -165,7 +165,7 @@ describe("EvidenceAssessment", () => {
       <EvidenceAssessment
         src={null}
         profile={parseAssessmentProfile(
-          getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+          getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
         )}
       />,
     );

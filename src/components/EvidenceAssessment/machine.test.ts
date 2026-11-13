@@ -13,9 +13,11 @@ import { parseEvidenceModel } from "./model";
 import { completePqcmmSubject } from "./testFixtures";
 import { evidenceCriterionPolicy } from "../../assessment-engine/profile";
 
-const model = parseEvidenceModel(getBundledAssessmentModelYaml("pqcmm")!);
+const model = parseEvidenceModel(
+  getBundledAssessmentModelYaml("pqcmm", "1.1.0")!,
+);
 const profile = parseAssessmentProfile(
-  getBundledAssessmentProfileYaml("pqcmm-self-assessment")!,
+  getBundledAssessmentProfileYaml("pqcmm-self-assessment", "1.1.0")!,
 );
 
 describe("PQCMM machine-readable assessments", () => {

@@ -40,10 +40,13 @@ export const loadEvidenceModel = async (
         MAX_MODEL_YAML_BYTES,
         signal,
       )
-    : getBundledAssessmentModelYaml(profile.profile.model.id);
+    : getBundledAssessmentModelYaml(
+        profile.profile.model.id,
+        profile.profile.model.version,
+      );
   if (!text) {
     throw new Error(
-      `No bundled model is available for ${profile.profile.model.id}; provide dataUrl.`,
+      `No bundled model is available for ${profile.profile.model.id} ${profile.profile.model.version}; provide dataUrl.`,
     );
   }
   const parsed = parseEvidenceModel(text);

@@ -14,10 +14,18 @@
     if (value) assessment?.setAttribute(attribute, value);
   }
 
+  // The bundled-model selector carries "model@version", for example
+  // pqcmm@1.0.1; a named profile or profile URL takes precedence.
+  const [model, modelVersion] = (parameters.get("assessment") ?? "").split("@");
+  if (model && !parameters.get("profile")) {
+    assessment?.setAttribute("model", model);
+    if (modelVersion) assessment?.setAttribute("modelVersion", modelVersion);
+  }
+
   const form = document.querySelector(".preview-controls form");
   if (!(form instanceof HTMLFormElement)) return;
 
-  for (const attribute of attributes) {
+  for (const attribute of [...attributes, "assessment"]) {
     const control = form.elements.namedItem(attribute);
     const value = parameters.get(attribute);
     if (value && control instanceof HTMLInputElement) control.value = value;

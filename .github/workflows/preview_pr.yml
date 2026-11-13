@@ -1,0 +1,22 @@
+name: Pull request preview
+
+# Previews pull requests from branches of this repository at
+# preview/pr/{number}/. Pull requests from forks are skipped: their runs get
+# no write token, and their code should not publish under this site.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish_pages.yml
+    with:
+      target: preview/pr/${{ github.event.pull_request.number }}
+      label: Pull request #${{ github.event.pull_request.number }}
+      drafts: true

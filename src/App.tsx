@@ -7,10 +7,7 @@ import {
   fetchTextWithLimit,
   MAX_PROFILE_YAML_BYTES,
 } from "./assessment-engine/fetch";
-import {
-  DEFAULT_ASSESSMENT_PROFILE,
-  getBundledAssessmentProfileYaml,
-} from "./defaults/assessmentProfiles";
+import { resolveBundledProfile } from "./defaults/assessmentProfiles";
 
 interface AppProps {
   dataUrl: string | null;
@@ -18,6 +15,10 @@ interface AppProps {
   modes?: string | null;
   profile?: string | null;
   profileUrl?: string | null;
+  /** Selects the bundled profile for a model id when no profile is named. */
+  model?: string | null;
+  /** A bundled model release to load instead of the latest one. */
+  modelVersion?: string | null;
 }
 
 const App: React.FC<AppProps> = ({
@@ -26,6 +27,8 @@ const App: React.FC<AppProps> = ({
   modes,
   profile: profileId,
   profileUrl,
+  model,
+  modelVersion,
 }) => {
   const [profile, setProfile] = useState<AssessmentProfileData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +45,12 @@ const App: React.FC<AppProps> = ({
               MAX_PROFILE_YAML_BYTES,
               controller.signal,
             )
-          : getBundledAssessmentProfileYaml(
-              profileId ?? DEFAULT_ASSESSMENT_PROFILE,
-            );
+          : resolveBundledProfile({ profile: profileId, model, modelVersion })
+              ?.yaml;
         if (!yaml) {
-          throw new Error(`Unknown assessment profile: ${profileId}`);
+          throw new Error(
+            `Unknown assessment profile: ${profileId ?? model ?? ""}`,
+          );
         }
         const parsed = parseAssessmentProfile(yaml);
         if (!cancelled) setProfile(parsed);
@@ -61,7 +65,7 @@ const App: React.FC<AppProps> = ({
       cancelled = true;
       controller.abort();
     };
-  }, [profileId, profileUrl]);
+  }, [profileId, profileUrl, model, modelVersion]);
 
   if (error) return <div role="alert">{error}</div>;
   if (!profile) return <output>Loading assessment profile…</output>;
@@ -73,6 +77,7 @@ const App: React.FC<AppProps> = ({
         references={referencesUrl}
         modes={modes}
         profile={profile}
+        modelVersion={modelVersion}
       />
     ),
     "evidence-gated-maturity": (
