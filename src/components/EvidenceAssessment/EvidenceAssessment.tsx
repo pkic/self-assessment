@@ -256,19 +256,39 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
         profile,
         owner.acceptedMediaTypes,
       );
-      const ids = added.map((file) => file.id);
       mutate((current) => {
+        // The same file attached in several places is stored once: later
+        // attachments point at the copy already in the assessment.
+        const known = new Map(
+          current.evidenceFiles.map((file) => [file.sha256, file.id]),
+        );
+        const fresh: typeof added = [];
+        const ids: string[] = [];
+        for (const file of added) {
+          const existing = known.get(file.sha256);
+          if (existing) {
+            ids.push(existing);
+          } else {
+            known.set(file.sha256, file.id);
+            fresh.push(file);
+            ids.push(file.id);
+          }
+        }
+        const appendIds = (current_: string[]) => [
+          ...current_,
+          ...ids.filter((id) => !current_.includes(id)),
+        ];
         if (owner.kind === "criterion") {
           const progress =
             current.criterionProgress[owner.id] ?? emptyCriterionProgress();
           return {
             ...current,
-            evidenceFiles: [...current.evidenceFiles, ...added],
+            evidenceFiles: [...current.evidenceFiles, ...fresh],
             criterionProgress: {
               ...current.criterionProgress,
               [owner.id]: {
                 ...progress,
-                evidenceIds: [...progress.evidenceIds, ...ids],
+                evidenceIds: appendIds(progress.evidenceIds),
               },
             },
           };
@@ -277,12 +297,12 @@ export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
           current.questionProgress[owner.id] ?? emptyQuestionProgress();
         return {
           ...current,
-          evidenceFiles: [...current.evidenceFiles, ...added],
+          evidenceFiles: [...current.evidenceFiles, ...fresh],
           questionProgress: {
             ...current.questionProgress,
             [owner.id]: {
               ...progress,
-              evidenceIds: [...progress.evidenceIds, ...ids],
+              evidenceIds: appendIds(progress.evidenceIds),
             },
           },
         };

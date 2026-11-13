@@ -230,6 +230,12 @@ const cumulativeGates = (
     questionFindingCounts: countQuestionFindings(
       assessmentQuestions,
       record.questionProgress,
+      derivedFindings
+        ? (questionId) =>
+            responseComplete(questionId)
+              ? (parameters.passingQuestionFindings?.[0] ?? "not-assessed")
+              : "not-assessed"
+        : undefined,
     ),
     evidenceFiles: record.evidenceFiles.length,
     levelResults,

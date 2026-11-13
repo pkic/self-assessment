@@ -50,12 +50,20 @@ export const questionResponseComplete = (
   return fieldsComplete && fieldsValid && rulesComplete && evidenceComplete;
 };
 
+/**
+ * Counts questions per finding. When findings are derived, `derivedFinding`
+ * supplies each question's finding from its answer instead of the stored one,
+ * so the counts match what the export reports.
+ */
 export const countQuestionFindings = (
   questions: GatedQuestion[],
   progress: Record<string, GatedQuestionProgress>,
+  derivedFinding?: (questionId: string) => string,
 ): Record<string, number> =>
   questions.reduce<Record<string, number>>((counts, question) => {
-    const finding = progress[question.id]?.finding ?? "not-assessed";
+    const finding = derivedFinding
+      ? derivedFinding(question.id)
+      : (progress[question.id]?.finding ?? "not-assessed");
     counts[finding] = (counts[finding] ?? 0) + 1;
     return counts;
   }, {});

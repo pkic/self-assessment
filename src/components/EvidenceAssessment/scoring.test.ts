@@ -141,9 +141,16 @@ describe("PQCMM cumulative gate scoring", () => {
     for (const progress of Object.values(assessment.questionProgress)) {
       progress.finding = "not-assessed";
     }
-    expect(
-      calculateGatedMaturityScore(model, assessment, derived).achievedLevel,
-    ).toBe(1);
+    const derivedScore = calculateGatedMaturityScore(
+      model,
+      assessment,
+      derived,
+    );
+    expect(derivedScore.achievedLevel).toBe(1);
+    // Counts follow the answers, not the unset stored findings.
+    expect(derivedScore.questionFindingCounts.supports).toBe(
+      derivedScore.questionsAnswered,
+    );
 
     assessment.questionProgress["1.2.1"].values = {};
     const score = calculateGatedMaturityScore(model, assessment, derived);
