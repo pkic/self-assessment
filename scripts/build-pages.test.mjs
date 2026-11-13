@@ -54,7 +54,10 @@ test("publish writes the bundle, one page per model and an index", () => {
   const page = read(dir, "pqcmm/1.0.1/index.html");
   assert.match(page, /<self-assessment model="pqcmm" modelVersion="1\.0\.1">/);
   assert.match(page, /src="\.\.\/\.\.\/self-assessment\.js"/);
+  // The widget lays itself out: no narrow column, no stray text.
+  assert.doesNotMatch(page, /max-width|<style>|undefined/);
   const index = read(dir, "index.html");
+  assert.match(index, /max-width/);
   assert.match(index, /href="pkimm\/2\.0\.0\/"/);
   assert.match(index, /Commit abcdef1/);
   assert.match(index, /href="\.\.\/\.\.\/\.\.\/"/);

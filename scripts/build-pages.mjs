@@ -65,25 +65,32 @@ const escapeHtml = (text) =>
       })[character],
   );
 
-const page = (title, body, head = "") => `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(title)}</title>
-    ${head}<style>
+// Index pages get a narrow reading column. Model pages get no page styles,
+// like the build's own page, so the widget lays itself out at full width.
+const INDEX_STYLE = `<style>
       body { font-family: Roboto, system-ui, sans-serif; margin: 2rem auto; max-width: 48rem; padding: 0 1rem; line-height: 1.5; color: #1f2933; }
       h1 { font-size: 1.5rem; }
       h2 { font-size: 1.1rem; margin-top: 2rem; }
       ul { padding-left: 1.25rem; }
       .meta { color: #616e7c; font-size: 0.9rem; }
-    </style>
+    </style>`;
+
+const htmlDocument = (title, body, head = "") => `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(title)}</title>
+    ${head}
   </head>
   <body>
 ${body}
   </body>
 </html>
 `;
+
+const page = (title, body, head = "") =>
+  htmlDocument(title, body, `${head}${INDEX_STYLE}`);
 
 const list = (items) =>
   items.length === 0
@@ -97,7 +104,7 @@ const modelName = (model) =>
   `${model.assessment.toUpperCase()} ${model.version}${model.draft ? " (draft)" : ""}`;
 
 const modelPage = (model, label) =>
-  page(
+  htmlDocument(
     `${modelName(model)} self-assessment${label ? `, ${label}` : ""}`,
     `    <self-assessment model="${escapeHtml(model.assessment)}" modelVersion="${escapeHtml(model.version)}"></self-assessment>
     <script src="../../self-assessment.js"></script>`,
