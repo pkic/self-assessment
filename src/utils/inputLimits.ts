@@ -232,10 +232,20 @@ export const readImportFile = (file: Blob): Promise<string> =>
     ? Promise.reject(new ImportTooLargeError())
     : file.text();
 
+/** Parses one YAML document; text with no document (empty, or only comments) returns undefined, where js-yaml 5's `load` throws. */
+export const loadYaml = (
+  text: string,
+  options?: Parameters<typeof yaml.load>[1],
+): unknown => {
+  const docs = yaml.loadAll(text, options);
+  // load reports the multi-document error.
+  return docs.length > 1 ? yaml.load(text, options) : docs[0];
+};
+
 /** Parses an imported YAML file with YAML's JSON schema (no dates, binary data, sets, ordered maps, pairs or merge keys) within MAX_IMPORT_LENGTH. */
 export const loadImportYaml = (text: string): unknown => {
   if (text.length > MAX_IMPORT_LENGTH) throw new ImportTooLargeError();
-  const parsed = yaml.load(text, { schema: yaml.JSON_SCHEMA });
+  const parsed = loadYaml(text, { schema: yaml.JSON_SCHEMA });
   if (exceedsSize(parsed, MAX_IMPORT_LENGTH)) throw new ImportTooLargeError();
   return parsed;
 };
