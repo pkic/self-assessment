@@ -57,14 +57,14 @@
           ]
         },
         {
-          "commit": "42dcb8473f5b10e21167d6d8e61e814bcb06226f",
+          "commit": "0388a17aace8cc29e1fa97b44840d428fbd213de",
           "draft": true,
           "files": [
             {
               "path": "model/pqcmm-model.yaml",
               "as": "pqcmm-model-1.1.0.yaml",
               "modelVersion": "1.1.0",
-              "sha256": "20605b5ed2b4c27851e4a6ab4ee5d35373ab4c6193fb6a825f53f55681491974"
+              "sha256": "939f6467b72d9a4bbf882f00e61c7774e890de097d295d4d270f0783cc37ef24"
             },
             {
               "path": "profiles/pqcmm-self-assessment-profile.yaml",
@@ -75,7 +75,7 @@
             {
               "path": "schemas/pqcmm-model.schema.json",
               "as": "pqcmm-model.schema-1.1.0.json",
-              "sha256": "d11f6e02efbc7166cc0f1d29926605a7d44a54ea001a575a87980a5c5a1b358a"
+              "sha256": "4aa9d8edb0f987c420841c2cf629668e0034b5b5a861537ba45f012a6d8fb075"
             },
             {
               "path": "schemas/assessment-profile.schema.json",
