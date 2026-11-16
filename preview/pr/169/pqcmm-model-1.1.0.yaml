@@ -143,9 +143,9 @@ levels:
           introduction: When onboarding a supplier or reviewing an existing product, the following questions help establish a baseline and set expectations for progression. These are not assessment questions — they do not require evidence collection or verification. They are planning and risk-register inputs.
           questions:
             - id: 0.2.1
-              question: By what date do you expect to reach Level 1 — with at least one quantum-safe algorithm available for evaluation?
-              expectedInput: Date (YYYY-MM-DD).
-              purpose: Helps both the organization and the vendor set a concrete milestone for the supplier roadmap and ensures clear communication of the post-quantum cryptography (PQC) timeline.
+              question: By what date do you expect to reach Level 1 — with at least one quantum-safe algorithm available for evaluation? Optionally, give the dates you expect or commit to for Levels 2 to 5.
+              expectedInput: Date (YYYY-MM-DD) for Level 1; optional dates for Levels 2 to 5, each marked expected or committed.
+              purpose: Helps both the organization and the vendor set a concrete milestone for the supplier roadmap and ensures clear communication of the post-quantum cryptography (PQC) timeline. Later dates show whether a roadmap exists beyond the first step; leaving them empty is valid.
               # Answer form shown by the assessment tool.
               response:
                 fields:
@@ -153,6 +153,58 @@ levels:
                     label: Target date for Level 1
                     type: date
                     required: true
+                  - key: level2Date
+                    label: Target date for Level 2
+                    type: date
+                    required: false
+                  - key: level2Commitment
+                    label: Commitment for the Level 2 date
+                    type: select
+                    required: false
+                    options:
+                      - value: expected
+                        label: Expected
+                      - value: committed
+                        label: Committed
+                  - key: level3Date
+                    label: Target date for Level 3
+                    type: date
+                    required: false
+                  - key: level3Commitment
+                    label: Commitment for the Level 3 date
+                    type: select
+                    required: false
+                    options:
+                      - value: expected
+                        label: Expected
+                      - value: committed
+                        label: Committed
+                  - key: level4Date
+                    label: Target date for Level 4
+                    type: date
+                    required: false
+                  - key: level4Commitment
+                    label: Commitment for the Level 4 date
+                    type: select
+                    required: false
+                    options:
+                      - value: expected
+                        label: Expected
+                      - value: committed
+                        label: Committed
+                  - key: level5Date
+                    label: Target date for Level 5
+                    type: date
+                    required: false
+                  - key: level5Commitment
+                    label: Commitment for the Level 5 date
+                    type: select
+                    required: false
+                    options:
+                      - value: expected
+                        label: Expected
+                      - value: committed
+                        label: Committed
 
             - id: 0.2.2
               question: Is a Software Bill of Materials (SBOM) or Cryptographic Bill of Materials (CBOM) available for this product in SPDX or CycloneDX format?
@@ -434,6 +486,7 @@ levels:
                   - key: accessibleWithoutCustomBuild
                     label: Feature is accessible without custom builds or source-code modification
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: environment
                     label: Environment type
@@ -451,6 +504,7 @@ levels:
                   - key: reproductionOutcome
                     label: Reproduction outcome
                     type: select
+                    nonSupportingValues: [failed]
                     required: true
                     options:
                       - value: succeeded
@@ -505,6 +559,7 @@ levels:
                   - key: reproductionOutcome
                     label: Enablement reproduced by the assessor
                     type: select
+                    nonSupportingValues: [not-reproduced]
                     required: true
                     options:
                       - value: reproduced
@@ -520,21 +575,29 @@ levels:
               # Answer form shown by the assessment tool.
               response:
                 fields:
+                  - key: documentationExists
+                    label: Official enablement documentation exists
+                    type: boolean
+                    nonSupportingValues: [false]
+                    required: true
                   - key: documentationUrl
                     label: Official documentation URL
                     type: url
-                    required: true
+                    required: false
+                    hint: Required when the documentation exists.
                   - key: sectionReference
                     label: Section reference
                     type: text
-                    required: true
+                    required: false
                   - key: coversAssessedVersion
                     label: Documentation covers the assessed product version
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: customerAccessible
                     label: Documentation is accessible to customers
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                     hint: Internal wikis and internal knowledge bases do not satisfy this criterion.
 
@@ -812,6 +875,7 @@ levels:
                   - key: includedInStandardSupport
                     label: Feature is covered by standard support, including security patches
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: supportPolicyUrl
                     label: Support policy URL
@@ -837,19 +901,21 @@ levels:
                   - key: gaDeclared
                     label: Feature declared generally available in the stable channel
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: gaDate
                     label: General availability date
                     type: date
-                    required: true
+                    required: false
+                    hint: Leave empty when the feature is not declared generally available.
                   - key: productVersion
                     label: First generally available version
                     type: text
-                    required: true
+                    required: false
                   - key: releaseChannel
                     label: Stable release channel identifier
                     type: text
-                    required: true
+                    required: false
                   - key: releaseNotesUrl
                     label: Release notes or changelog URL
                     type: url
@@ -954,6 +1020,7 @@ levels:
                   - key: outcome
                     label: Interoperability outcome
                     type: select
+                    nonSupportingValues: [fail]
                     required: true
                     options:
                       - value: pass
@@ -1161,6 +1228,7 @@ levels:
                   - key: coversAssessedVersion
                     label: Covers the assessed product version
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: lastUpdated
                     label: Inventory last updated
@@ -1198,6 +1266,7 @@ levels:
                   - key: allFieldsPresent
                     label: Every sampled entry carries algorithm, parameter set, key size, usage context, and component
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: incompleteEntries
                     label: Sampled entries with missing fields
@@ -1295,6 +1364,7 @@ levels:
                   - key: allFeaturesHaveRemediationEntries
                     label: Every non-quantum-safe feature has its own documented risk entry
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: remediationEntries
                     label: Risk entries with algorithm, component, risk acceptance reference, and target remediation
@@ -1380,6 +1450,7 @@ levels:
                   - key: validationOutcome
                     label: SBOM validation outcome
                     type: select
+                    nonSupportingValues: [invalid]
                     required: true
                     options:
                       - value: valid
@@ -1408,6 +1479,7 @@ levels:
                   - key: allLibrariesVersioned
                     label: Every cryptographic library in the SBOM carries an explicit version
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: libraryVersions
                     label: Cryptographic libraries with their listed versions
@@ -1417,6 +1489,7 @@ levels:
                   - key: versionSupportsClaimedAlgorithms
                     label: Listed versions support the claimed quantum-safe algorithms
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: verificationSource
                     label: Library release notes or documentation used to verify support
@@ -1529,6 +1602,7 @@ levels:
                   - key: identifiersExternalised
                     label: Algorithm identifiers and parameters are externalised from hard-coded values
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: configurationArtifact
                     label: Configuration file, policy document, or API controlling algorithm selection
@@ -1537,6 +1611,7 @@ levels:
                   - key: changeWithoutRebuild
                     label: Algorithm can be changed without rebuilding the product
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: verifiedInTestEnvironment
                     label: Assessor verified this in a test environment
@@ -1552,6 +1627,7 @@ levels:
                   - key: transitionPerformed
                     label: Controlled algorithm transition
                     type: select
+                    nonSupportingValues: [none]
                     required: true
                     options:
                       - value: executed
@@ -1841,6 +1917,7 @@ levels:
                   - key: coversAssessedVersion
                     label: Covers the assessed product version
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                 evidence:
                   label: Machine-readable CBOM for the assessed release
@@ -1867,6 +1944,7 @@ levels:
                   - key: allFieldsPresent
                     label: Every sampled entry carries algorithm, parameter set, key size, protocol context, and usage purpose
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: incompleteEntries
                     label: Sampled entries with missing fields
@@ -2000,6 +2078,7 @@ levels:
                   - key: classicalConnectionOutcome
                     label: Classical-only client connection outcome
                     type: select
+                    nonSupportingValues: [accepted]
                     required: true
                     options:
                       - value: rejected
@@ -2027,6 +2106,7 @@ levels:
                   - key: functionalOutcome
                     label: Functional outcome in zero-legacy mode
                     type: select
+                    nonSupportingValues: [failed]
                     required: true
                     options:
                       - value: fully-functional
@@ -2060,6 +2140,7 @@ levels:
                   - key: allComponentsDisableable
                     label: Non-quantum-safe algorithms can be disabled in every in-scope component
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
                   - key: nonDisableableComponents
                     label: Components where non-quantum-safe algorithms cannot be disabled
@@ -2332,6 +2413,7 @@ levels:
                   - key: defaultsQuantumSafe
                     label: Quantum-safe algorithms are the default without manual modification
                     type: boolean
+                    nonSupportingValues: [false]
                     required: true
 
             - id: 5.2.2
@@ -2351,6 +2433,7 @@ levels:
                   - key: silentFallbackObserved
                     label: Silent fallback to classical observed without operator action
                     type: boolean
+                    nonSupportingValues: [true]
                     required: true
                     hint: A silent fallback is a disqualifying finding for Level 5.
                   - key: testOutcome
@@ -2389,6 +2472,7 @@ levels:
                   - key: inconsistenciesFound
                     label: Default configuration differs between deployment modes
                     type: boolean
+                    nonSupportingValues: [true]
                     required: true
 
         - id: "5.3"
@@ -2452,6 +2536,7 @@ levels:
                   - key: requirementsOutcome
                     label: Quantum-safe configuration against the stated requirements
                     type: select
+                    nonSupportingValues: [does-not-meet]
                     required: true
                     options:
                       - value: meets
