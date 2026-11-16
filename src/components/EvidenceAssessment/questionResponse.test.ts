@@ -153,7 +153,10 @@ describe("exportedFinding", () => {
     );
     const answered = {
       ...empty,
-      values: { details: "Available to every customer on the stable plan." },
+      values: {
+        accessModel: "all-customers",
+        sourceReference: "https://example.com/release-notes",
+      },
     };
     expect(questionResponseIssues(item, kind, profile, answered, [])).toEqual(
       [],
