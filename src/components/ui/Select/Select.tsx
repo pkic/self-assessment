@@ -5,12 +5,15 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
   label: string;
   hideLabel?: boolean;
   fieldClassName?: string;
+  /** Short muted marker after the label, e.g. "optional". */
+  labelNote?: string;
 }
 
 export const Select: React.FC<SelectProps> = ({
   label,
   hideLabel = false,
   fieldClassName,
+  labelNote,
   className,
   children,
   ...rest
@@ -22,10 +25,17 @@ export const Select: React.FC<SelectProps> = ({
         .join(" ")}
     >
       {label}
+      {labelNote ? (
+        <span className="pkimm-field__label-note" aria-hidden="true">
+          {" "}
+          ({labelNote})
+        </span>
+      ) : null}
     </span>
     <select
       className={["pkimm-field__control", className].filter(Boolean).join(" ")}
       {...rest}
+      aria-label={rest["aria-label"] ?? (labelNote ? label : undefined)}
     >
       {children}
     </select>

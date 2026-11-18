@@ -81,7 +81,7 @@ const StatTile: React.FC<{ label: string; value: number; total: number }> = ({
 // AssessmentTargetContext), so it reflects whichever target (core or an
 // active extension's underlying core modules) is currently selected.
 export const EvaluationView: React.FC = () => {
-  const { getModules, getProgress, getRequirementProgress } =
+  const { getModules, getProgress, getRequirementProgress, methodology } =
     useAssessmentTarget();
   const modules = getModules();
   const progress = getProgress();
@@ -90,8 +90,15 @@ export const EvaluationView: React.FC = () => {
   // These builders are pure over (modules, progress, requirementProgress);
   // memoize so re-renders (e.g. a parent state change) don't recompute them.
   const scores = React.useMemo(
-    () => buildReportScores(modules, progress, null, requirementProgress),
-    [modules, progress, requirementProgress],
+    () =>
+      buildReportScores(
+        modules,
+        progress,
+        null,
+        requirementProgress,
+        methodology,
+      ),
+    [modules, progress, requirementProgress, methodology],
   );
   const completeness = React.useMemo(
     () => buildReportCompleteness(modules, progress, requirementProgress),

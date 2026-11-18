@@ -3,7 +3,7 @@ import { useAssessmentTarget } from "../../contexts/AssessmentTargetContext";
 import MaturityWidget from "../MaturityWidget/MaturityWidget";
 import ShareModal from "../ShareModal/ShareModal";
 import { generateURL } from "../../utils/urlGenerator";
-import { OverlayOperation } from "../../utils/maturityCalculations";
+import { OverlayOperation } from "../../assessment-engine/methodologies/weightedMaturity";
 import { buildReportData } from "../../utils/reportData";
 import type { RequirementFilterState } from "../../utils/requirementFilter";
 import {
@@ -140,6 +140,7 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
     getProgress,
     getRequirementProgress,
     getActiveExtension,
+    methodology,
   } = useAssessmentTarget();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [shareURL, setShareURL] = useState("");
@@ -221,8 +222,9 @@ export const UnifiedReport: React.FC<UnifiedReportProps> = ({
         progress,
         activeExtension: activeExtension ?? null,
         requirementProgress,
+        methodology,
       }),
-    [modules, progress, activeExtension, requirementProgress],
+    [modules, progress, activeExtension, requirementProgress, methodology],
   );
 
   const overallMaturityLevel = reportData.scores.overall;

@@ -318,6 +318,55 @@ test("only a draft names a commit, and it needs a full hash", () => {
   );
 });
 
+test("bundles a release's profiles with its model version", async () => {
+  const { outDir, cacheDir } = dirs();
+  const lock = {
+    lockVersion: 1,
+    sources: [
+      {
+        id: "pqcmm",
+        repository: "pkic/pqcmm",
+        releases: [
+          {
+            tag: "v1.0.1",
+            files: [
+              {
+                path: "model/m-1.0.1.yaml",
+                modelVersion: "1.0.1",
+                sha256: sha256(body),
+              },
+              {
+                path: "profiles/p-1.0.0.yaml",
+                profile: true,
+                sha256: sha256(body),
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  await fetchModels({
+    lock,
+    outDir,
+    cacheDir,
+    env: {},
+    fetchImpl: respond(body, []),
+    log: quiet,
+  });
+  const index = readFileSync(join(outDir, "index.ts"), "utf8");
+  assert.match(index, /import profile0 from "\.\/p-1\.0\.0\.yaml";/);
+  assert.match(
+    index,
+    /assessment: "pqcmm", version: "1\.0\.1", draft: false, yaml: profile0/,
+  );
+  lock.sources[0].releases[0].files[0].modelVersion = undefined;
+  assert.throws(
+    () => readLock(JSON.stringify(lock)),
+    /needs exactly one model/,
+  );
+});
+
 test("refuses a model version that is malformed or listed twice", () => {
   const bad = lockFor();
   bad.sources[0].releases[0].files[0].modelVersion = "v2";

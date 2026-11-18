@@ -32,6 +32,59 @@
           ]
         }
       ]
+    },
+    {
+      "id": "pqcmm",
+      "repository": "pkic/pqcmm",
+      "releases": [
+        {
+          "tag": "v1.0.1",
+          "files": [
+            {
+              "path": "model/pqcmm-model-1.0.1.yaml",
+              "modelVersion": "1.0.1",
+              "sha256": "98b6e914b3a46d9bb8aac49455ef1107846e454c12d27de68d0955194845bf24"
+            },
+            {
+              "path": "profiles/pqcmm-self-assessment-profile-1.0.0.yaml",
+              "profile": true,
+              "sha256": "19f75912027a484eab826965e4449c464be1c1857cb460bed412bf0da2a4c61c"
+            },
+            {
+              "path": "schemas/pqcmm-model.schema-1.0.0.json",
+              "sha256": "9e325966946391a6739150ffaaab2a6717d675a8ce5de97a9aeb988047001e71"
+            }
+          ]
+        },
+        {
+          "commit": "ff3fbf0e1f4acf5f204af55df2f805be4e805367",
+          "draft": true,
+          "files": [
+            {
+              "path": "model/pqcmm-model.yaml",
+              "as": "pqcmm-model-1.1.0.yaml",
+              "modelVersion": "1.1.0",
+              "sha256": "e35d8bd72e3eb9007de70d98d545fef804ef8af31dda1a3dceb1eb860eb8ffa1"
+            },
+            {
+              "path": "profiles/pqcmm-self-assessment-profile.yaml",
+              "as": "pqcmm-self-assessment-profile-1.1.0.yaml",
+              "profile": true,
+              "sha256": "cd8ef6f802988059493e83c8f14aedd25cab4e51e0272e150cdf5dbe47e5a2ec"
+            },
+            {
+              "path": "schemas/pqcmm-model.schema.json",
+              "as": "pqcmm-model.schema-1.1.0.json",
+              "sha256": "4aa9d8edb0f987c420841c2cf629668e0034b5b5a861537ba45f012a6d8fb075"
+            },
+            {
+              "path": "schemas/assessment-profile.schema.json",
+              "as": "assessment-profile.schema-1.1.0.json",
+              "sha256": "d5dc802d432ed791cc47ca507c492c82ae46523ffd5af169d670dcc2145fa0e4"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

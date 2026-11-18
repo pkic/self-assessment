@@ -18,11 +18,11 @@ import {
   ReportTooLargeError,
 } from "./inputLimits";
 import {
-  calculateExtensionWeightedPKIMMScore,
+  calculateExtensionWeightedScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
-} from "./maturityCalculations";
+} from "../assessment-engine/methodologies/weightedMaturity";
 import { generateQRDataUrl } from "./pdf/qr";
 import { PdfDocument } from "./pdf/CoreReportDocument";
 import { ExtensionPdfDocument } from "./pdf/ExtensionReportDocument";
@@ -42,6 +42,7 @@ import {
 } from "./reportData";
 import type { ComparisonResult, ReconciliationRow } from "./comparison";
 import type { RequirementFilterState } from "./requirementFilter";
+import type { AssessmentProfileData } from "../assessment-engine/types";
 
 export interface ExportPdfOptions {
   reportTier: "self" | "attestation" | "assessment" | "detailed" | "custom";
@@ -76,6 +77,7 @@ export interface ExportPdfOptions {
   comparisonBaselineName?: string;
   comparisonBaselineDate?: string;
   requirementFilter?: RequirementFilterState;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 export const exportToPDF = async (options: ExportPdfOptions) => {
@@ -83,10 +85,12 @@ export const exportToPDF = async (options: ExportPdfOptions) => {
   // line break and each list item counts extra (see exceedsReportLimit)
   // because it starts a new line in the layout. The share link is a link
   // target and QR input, never laid out as text, so it is kept exact (but
-  // still counted).
+  // still counted). The scoring methodology is profile configuration, not
+  // report text, so it is kept exact too.
   const opts = {
     ...limitTextLength(options),
     assessmentUrl: options.assessmentUrl,
+    methodology: options.methodology,
   };
   if (exceedsReportLimit(opts)) {
     throw new ReportTooLargeError();
@@ -125,6 +129,7 @@ export const exportToPDF = async (options: ExportPdfOptions) => {
     modules,
     progress,
     requirementProgress,
+    methodology: opts.methodology,
   });
 
   if (opts.reportTier === "self") {
@@ -269,14 +274,16 @@ interface ExportExtensionPDFOptions {
   dataVersion: string;
   chartImgData: string;
   requirementProgress?: Record<string, RequirementProgress>;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }
 
 export const exportExtensionPDF = async (
   options: ExportExtensionPDFOptions,
 ) => {
-  // The chart image is binary data, never laid out as text: neither cut nor
+  // The chart image is binary data and the methodology is profile
+  // configuration: neither is laid out as report text, so neither is cut or
   // counted. Everything else is cut, and an oversized report is refused.
-  const { chartImgData, ...rest } = options;
+  const { chartImgData, methodology, ...rest } = options;
   const data = limitTextLength(rest);
   if (exceedsReportLimit(data)) {
     throw new ReportTooLargeError();
@@ -301,6 +308,7 @@ export const exportExtensionPDF = async (
     modules: coreModules,
     activeExtension: extension,
     requirementProgress,
+    methodology,
   });
 
   const overallMaturityLevel = calculateOverallMaturityLevel(
@@ -309,6 +317,7 @@ export const exportExtensionPDF = async (
     [],
     [],
     requirementProgress,
+    methodology?.parameters,
   );
 
   const overallWeightedMaturity = calculateOverallMaturityLevel(
@@ -317,6 +326,7 @@ export const exportExtensionPDF = async (
     [extension],
     [extId],
     requirementProgress,
+    methodology?.parameters,
   );
 
   const moduleWeightedMaturityLevels = calculateModuleMaturityLevels(
@@ -325,6 +335,7 @@ export const exportExtensionPDF = async (
     [extension],
     [extId],
     requirementProgress,
+    methodology?.parameters,
   );
 
   const floorScore = calculateExtensionFloorScore(
@@ -332,13 +343,15 @@ export const exportExtensionPDF = async (
     extension,
     progress,
     requirementProgress,
+    methodology?.parameters,
   );
 
-  const weightedScore = calculateExtensionWeightedPKIMMScore(
+  const weightedScore = calculateExtensionWeightedScore(
     coreModules,
     progress,
     extension,
     requirementProgress,
+    methodology?.parameters,
   );
 
   const assessmentUrl = generateURL({

@@ -1,8 +1,9 @@
 import type { Assessment, ExtensionData, ModuleData } from "../types/types";
-import { calculateOverallMaturityLevel } from "./maturityCalculations";
+import { calculateOverallMaturityLevel } from "../assessment-engine/methodologies/weightedMaturity";
 import { computeCategoryGrainCounts } from "./reportData";
 import { hasV2Content } from "./stateSchema";
 import { mapAssessmentType } from "./pdf/assessmentType";
+import type { AssessmentProfileData } from "../assessment-engine/types";
 
 export interface AssessmentCardModel {
   isCompatible: boolean;
@@ -19,6 +20,7 @@ export const buildAssessmentCardModel = (
   loadedModules: ModuleData[] | null,
   loadedDataVersion: string,
   loadedExtensions: ExtensionData[],
+  methodology?: AssessmentProfileData["runtime"]["methodology"],
 ): AssessmentCardModel => {
   const isCompatible = assessment.dataVersion === loadedDataVersion;
   const isScorable = isCompatible && loadedModules !== null;
@@ -34,6 +36,7 @@ export const buildAssessmentCardModel = (
       loadedExtensions,
       assessment.enabledExtensions.map((e) => e.id),
       assessment.requirementProgress,
+      methodology?.parameters,
     );
     const counts = computeCategoryGrainCounts(
       loadedModules,

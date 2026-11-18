@@ -1,14 +1,16 @@
 import {
   calculateBlendedLevel,
   calculateExtensionMaturityLevels,
-  calculateExtensionWeightedPKIMMScore,
+  calculateExtensionWeightedScore,
   calculateExtensionFloorScore,
   calculateOverallMaturityLevel,
   calculateModuleMaturityLevels,
   calculateOverallMaturityRaw,
   calculateModuleMaturityRaw,
+  roundAndBoundWeightedLevel,
   getEffectiveWeight,
-} from "./maturityCalculations";
+} from "../assessment-engine/methodologies/weightedMaturity";
+
 import type {
   CategoryData,
   ExtensionData,
@@ -16,6 +18,24 @@ import type {
   ProgressData,
   RequirementProgress,
 } from "../types/types";
+
+describe("weighted methodology safety bounds", () => {
+  it("preserves Not Assessed even if an invalid caller supplies a positive minimum", () => {
+    expect(
+      roundAndBoundWeightedLevel(0, {
+        minimumLevel: 5,
+        maximumLevel: 5,
+        rounding: "ceil",
+      }),
+    ).toBe(0);
+  });
+
+  it("applies each supported rounding rule to an assessed value", () => {
+    expect(roundAndBoundWeightedLevel(2.4, { rounding: "floor" })).toBe(2);
+    expect(roundAndBoundWeightedLevel(2.4, { rounding: "round" })).toBe(2);
+    expect(roundAndBoundWeightedLevel(2.4, { rounding: "ceil" })).toBe(3);
+  });
+});
 
 /**
  * Reference example from the PKIMM extension framework Scoring model
@@ -301,7 +321,7 @@ describe("calculateExtensionMaturityLevels — Extension Score (spec)", () => {
   });
 });
 
-describe("calculateExtensionWeightedPKIMMScore — spec view", () => {
+describe("calculateExtensionWeightedScore — spec view", () => {
   const { modules, extension } = buildSpecFixture();
 
   it("uses baseline Level_C (NOT blended) with effective_category_weight", () => {
@@ -328,11 +348,7 @@ describe("calculateExtensionWeightedPKIMMScore — spec view", () => {
         applicability: true,
       },
     };
-    const score = calculateExtensionWeightedPKIMMScore(
-      modules,
-      progress,
-      extension,
-    );
+    const score = calculateExtensionWeightedScore(modules, progress, extension);
     expect(score).toBe(4);
   });
 
@@ -358,11 +374,7 @@ describe("calculateExtensionWeightedPKIMMScore — spec view", () => {
       },
     };
     // ExtensionWeightedPKIMM is unaffected by relevance, still = 4.
-    const ewp = calculateExtensionWeightedPKIMMScore(
-      modules,
-      progress,
-      extension,
-    );
+    const ewp = calculateExtensionWeightedScore(modules, progress, extension);
     expect(ewp).toBe(4);
 
     // ExtensionScore includes the relevance signal — different number.

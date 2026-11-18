@@ -3,7 +3,7 @@ import React from "react";
 import type {
   CategoryOverlayDetails,
   OverlayOperation,
-} from "../maturityCalculations";
+} from "../../assessment-engine/methodologies/weightedMaturity";
 import { overlayBadgeColors } from "./theme";
 
 const overlayBadgeLabel = (op: OverlayOperation, value: number): string => {

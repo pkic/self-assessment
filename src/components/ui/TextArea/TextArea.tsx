@@ -6,12 +6,15 @@ export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextArea
   label?: string;
   autoGrow?: boolean;
   hint?: string;
+  /** Short muted marker after the label, e.g. "optional". */
+  labelNote?: string;
 }
 
 export const TextArea: React.FC<TextAreaProps> = ({
   label,
   autoGrow,
   hint,
+  labelNote,
   className,
   onInput,
   maxLength = MAX_TEXT_LENGTH,
@@ -28,7 +31,8 @@ export const TextArea: React.FC<TextAreaProps> = ({
   // otherwise fold the hint into the accessible name and have it announced
   // twice (once as name, once via aria-describedby). Pin the name explicitly
   // whenever a hint is present alongside a label so it stays exactly `label`.
-  const effectiveAriaLabel = ariaLabel ?? (hint && label ? label : undefined);
+  const effectiveAriaLabel =
+    ariaLabel ?? ((hint || labelNote) && label ? label : undefined);
 
   const handleInput = (e: React.InputEvent<HTMLTextAreaElement>) => {
     if (autoGrow) {
@@ -53,7 +57,17 @@ export const TextArea: React.FC<TextAreaProps> = ({
   if (label || hint) {
     return (
       <label className="pkimm-field">
-        {label ? <span className="pkimm-field__label">{label}</span> : null}
+        {label ? (
+          <span className="pkimm-field__label">
+            {label}
+            {labelNote ? (
+              <span className="pkimm-field__label-note" aria-hidden="true">
+                {" "}
+                ({labelNote})
+              </span>
+            ) : null}
+          </span>
+        ) : null}
         {ta}
         {hint ? (
           <span className="pkimm-field__hint" id={hintId}>
