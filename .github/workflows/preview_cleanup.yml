@@ -1,0 +1,30 @@
+name: Remove preview
+
+# Removes a pull request preview when it is closed, and a branch preview
+# when its branch is deleted. Runs from the default branch and checks out no
+# pull request code.
+on:
+  pull_request_target:
+    types: [closed]
+  delete:
+
+permissions:
+  contents: read
+
+jobs:
+  remove-pr:
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish_pages.yml
+    with:
+      command: remove
+      target: preview/pr/${{ github.event.pull_request.number }}
+  remove-branch:
+    if: github.event_name == 'delete' && github.event.ref_type == 'branch'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/publish_pages.yml
+    with:
+      command: remove
+      branch: ${{ github.event.ref }}

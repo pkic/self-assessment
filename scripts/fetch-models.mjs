@@ -11,6 +11,18 @@
 // MODEL_SOURCE_PKIMM) reads that source's files from a local checkout at the
 // same paths, without hash checks, to try an unreleased model.
 //
+// Files marked with "modelVersion" are the source's model at that version.
+// The script also writes src/generated/models/index.ts, which imports each of
+// them, so every released model in the lock file is bundled and selectable,
+// and models.json, which lists them for scripts/build-pages.mjs.
+//
+// A release may instead name a "commit" and be marked "draft": an unreleased
+// model pinned to one commit, still checked against its hash. Its files are
+// always fetched (code may need its schemas), but its models are only listed
+// in index.ts and models.json, and so bundled and offered, when
+// MODEL_DRAFTS=1 (preview builds), never in a release build. A file's "as"
+// sets its output name, for drafts whose files are not yet named by version.
+//
 // Usage:
 //   node scripts/fetch-models.mjs          fetch and verify (pre-build/test)
 //   node scripts/fetch-models.mjs --lock   record hashes for new lock entries
@@ -22,8 +34,11 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SHA256 = /^[0-9a-f]{64}$/;
 const TAG = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const COMMIT = /^[0-9a-f]{40}$/;
+const FILE_NAME = /^[A-Za-z0-9_-][A-Za-z0-9._-]*$/;
 const REPOSITORY = /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/;
 const PATH = /^[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*$/;
+const VERSION = /^\d+\.\d+\.\d+$/;
 
 export const sha256 = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -32,18 +47,52 @@ const fail = (message) => {
   throw new Error(`models.lock.json: ${message}`);
 };
 
-const checkFile = (file, outputs) => {
+const checkFile = (file, outputs, versions) => {
   if (!PATH.test(file.path ?? "") || file.path.includes("..")) {
     fail(`invalid path ${file.path}.`);
   }
   if (file.sha256 !== undefined && !SHA256.test(file.sha256)) {
     fail(`invalid hash for ${file.path}.`);
   }
+  if (file.modelVersion !== undefined) {
+    if (!VERSION.test(file.modelVersion)) {
+      fail(`invalid modelVersion for ${file.path}.`);
+    }
+    if (versions.has(file.modelVersion)) {
+      fail(`model version ${file.modelVersion} is listed twice.`);
+    }
+    versions.add(file.modelVersion);
+  }
+  if (file.as !== undefined && !FILE_NAME.test(file.as)) {
+    fail(`invalid output name ${file.as}.`);
+  }
   // Every file lands in one flat output folder, named by its file name.
-  const output = basename(file.path);
+  const output = outputName(file);
   if (outputs.has(output)) fail(`${output} is listed twice.`);
   outputs.add(output);
 };
+
+const outputName = (file) => file.as ?? basename(file.path);
+
+/** A release names exactly one of a tag or, for a draft, a commit. */
+const checkRelease = (source, release) => {
+  if (release.draft === true) {
+    if (!COMMIT.test(release.commit ?? "") || release.tag !== undefined) {
+      fail(`a draft of ${source.id} needs a full commit hash and no tag.`);
+    }
+  } else if (release.draft !== undefined || release.commit !== undefined) {
+    fail(`only a draft of ${source.id} may name a commit.`);
+  } else if (!TAG.test(release.tag ?? "")) {
+    fail(`invalid tag for ${source.id}.`);
+  }
+};
+
+/** The ref a release is downloaded at: its tag, or a draft's commit. */
+const releaseRef = (release) => release.tag ?? release.commit;
+
+/** The releases whose models a build offers: drafts only when asked for. */
+export const includedReleases = (source, { drafts = false } = {}) =>
+  source.releases.filter((release) => drafts || release.draft !== true);
 
 const checkSource = (source, outputs) => {
   if (!/^[a-z][a-z0-9-]*$/.test(source.id ?? "")) {
@@ -52,9 +101,12 @@ const checkSource = (source, outputs) => {
   if (!REPOSITORY.test(source.repository ?? "")) {
     fail(`invalid repository for ${source.id}.`);
   }
+  const versions = new Set();
   for (const release of source.releases ?? []) {
-    if (!TAG.test(release.tag ?? "")) fail(`invalid tag for ${source.id}.`);
-    for (const file of release.files ?? []) checkFile(file, outputs);
+    checkRelease(source, release);
+    for (const file of release.files ?? []) {
+      checkFile(file, outputs, versions);
+    }
   }
 };
 
@@ -69,18 +121,67 @@ export function readLock(text) {
   return lock;
 }
 
+/** The model files a build includes: one per source and version. */
+export const lockedModels = (lock, options) =>
+  lock.sources.flatMap((source) =>
+    includedReleases(source, options).flatMap((release) =>
+      release.files
+        .filter((file) => file.modelVersion !== undefined)
+        .map((file) => ({
+          assessment: source.id,
+          version: file.modelVersion,
+          draft: release.draft === true,
+          fileName: outputName(file),
+        })),
+    ),
+  );
+
+/**
+ * Source of src/generated/models/index.ts: one import per locked model, so
+ * webpack bundles every released version.
+ */
+export const modelIndexSource = (lock, options) => {
+  const models = lockedModels(lock, options);
+  const imports = models.map(
+    ({ fileName }, index) => `import model${index} from "./${fileName}";`,
+  );
+  const entries = models.map(
+    ({ assessment, version, draft }, index) =>
+      `  { assessment: ${JSON.stringify(assessment)}, version: ${JSON.stringify(version)}, draft: ${draft}, yaml: model${index} },`,
+  );
+  return [
+    "// Generated by scripts/fetch-models.mjs from models.lock.json. Do not edit.",
+    ...imports,
+    "",
+    "export interface ReleasedModel {",
+    "  assessment: string;",
+    "  version: string;",
+    "  /** An unreleased model, only in preview builds. */",
+    "  draft: boolean;",
+    "  yaml: string;",
+    "}",
+    "",
+    "export const RELEASED_MODELS: ReleasedModel[] = [",
+    ...entries,
+    "];",
+    "",
+  ].join("\n");
+};
+
 const overrideFor = (source, env) =>
   env[`MODEL_SOURCE_${source.id.toUpperCase().replaceAll("-", "_")}`];
 
 const rawUrl = (source, release, file) =>
-  `https://raw.githubusercontent.com/${source.repository}/refs/tags/${release.tag}/${file.path}`;
+  release.draft === true
+    ? `https://raw.githubusercontent.com/${source.repository}/${release.commit}/${file.path}`
+    : `https://raw.githubusercontent.com/${source.repository}/refs/tags/${release.tag}/${file.path}`;
 
 /**
  * Returns the verified bytes of one locked file: from the cache, else from
  * the network (then cached). Throws when the hash doesn't match.
  */
 async function lockedBytes(source, release, file, { cacheDir, fetchImpl }) {
-  const cached = join(cacheDir, source.id, release.tag, file.path);
+  const cached = join(cacheDir, source.id, releaseRef(release), file.path);
   if (existsSync(cached)) {
     const bytes = readFileSync(cached);
     if (sha256(bytes) === file.sha256) return bytes;
@@ -101,7 +202,7 @@ async function lockedBytes(source, release, file, { cacheDir, fetchImpl }) {
   const bytes = Buffer.from(await response.arrayBuffer());
   if (file.sha256 !== undefined && sha256(bytes) !== file.sha256) {
     throw new Error(
-      `${source.repository}@${release.tag}:${file.path} does not match the hash in models.lock.json. The release changed; check it before updating the lock.`,
+      `${source.repository}@${releaseRef(release)}:${file.path} does not match the hash in models.lock.json. The release changed; check it before updating the lock.`,
     );
   }
   mkdirSync(dirname(cached), { recursive: true });
@@ -136,6 +237,7 @@ export async function fetchModels({
   log = console.log,
   record = false,
 }) {
+  const drafts = env.MODEL_DRAFTS === "1";
   mkdirSync(outDir, { recursive: true });
   const entries = lock.sources.flatMap((source) => {
     const checkout = overrideFor(source, env);
@@ -155,7 +257,15 @@ export async function fetchModels({
     ),
   );
   entries.forEach(({ file }, index) =>
-    writeFileSync(join(outDir, basename(file.path)), contents[index]),
+    writeFileSync(join(outDir, outputName(file)), contents[index]),
+  );
+  writeFileSync(join(outDir, "index.ts"), modelIndexSource(lock, { drafts }));
+  const models = lockedModels(lock, { drafts }).map(
+    ({ assessment, version, draft }) => ({ assessment, version, draft }),
+  );
+  writeFileSync(
+    join(outDir, "models.json"),
+    `${JSON.stringify(models, null, 2)}\n`,
   );
   return lock;
 }

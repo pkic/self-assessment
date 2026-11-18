@@ -2,6 +2,7 @@ import {
   getBundledModelYaml,
   DEFAULT_MODEL_VERSION,
   BUNDLED_REFERENCES_YAML,
+  RELEASED_MODEL_VERSIONS,
 } from "./bundledData";
 import { yamlParser } from "../utils/yamlParser";
 import type { AssessmentData, ReferencesCatalog } from "../types/types";
@@ -18,6 +19,17 @@ test("getBundledModelYaml returns parseable model YAML for both versions", () =>
     const parsed = yamlParser(yaml as string) as AssessmentData;
     expect(parsed.version).toBe(version);
     expect(parsed.modules.length).toBeGreaterThan(0);
+  }
+});
+
+test("every model release in the lock file is bundled, and the latest is the default", () => {
+  expect(RELEASED_MODEL_VERSIONS).toContain("2.0.0");
+  expect(DEFAULT_MODEL_VERSION).toBe(
+    RELEASED_MODEL_VERSIONS[RELEASED_MODEL_VERSIONS.length - 1],
+  );
+  for (const version of RELEASED_MODEL_VERSIONS) {
+    const parsed = yamlParser(getBundledModelYaml(version)!) as AssessmentData;
+    expect(parsed.version).toBe(version);
   }
 });
 

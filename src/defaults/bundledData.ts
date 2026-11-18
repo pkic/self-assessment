@@ -2,17 +2,45 @@ import modelV1 from "../public/pkimm-model-1.0.0.yaml";
 // Released models are fetched at build time from their repositories
 // (models.lock.json, scripts/fetch-models.mjs). The 1.0.0 model above is a
 // frozen migration fixture kept in this repository.
-import modelV2 from "../generated/models/pkimm-model-2.0.0.yaml";
 import referencesYaml from "../generated/models/pkimm-references.yaml";
+import { RELEASED_MODELS } from "../generated/models";
 
-// The model version loaded when the host supplies no `dataUrl`.
-export const DEFAULT_MODEL_VERSION = "2.0.0";
+const compareVersions = (a: string, b: string): number => {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  }
+  return 0;
+};
 
-// Both versions are held in a map so webpack retains each bundled string
-// (no tree-shaking of the non-default version).
+/** Every PKIMM version bundled from the lock file, oldest first. */
+export const RELEASED_MODEL_VERSIONS: string[] = RELEASED_MODELS.filter(
+  (model) => model.assessment === "pkimm",
+)
+  .map((model) => model.version)
+  .sort(compareVersions);
+
+// The model version loaded when the host asks for none: the latest release.
+// A draft (bundled only in preview builds) is never the default.
+const RELEASED_NOT_DRAFT = RELEASED_MODEL_VERSIONS.filter((version) =>
+  RELEASED_MODELS.some(
+    (model) =>
+      model.assessment === "pkimm" && model.version === version && !model.draft,
+  ),
+);
+export const DEFAULT_MODEL_VERSION =
+  RELEASED_NOT_DRAFT[RELEASED_NOT_DRAFT.length - 1];
+
+// Every bundled version is held in this map, so webpack keeps each string.
+// The 1.0.0 model is the migration fixture; the rest come from the lock file.
 const BUNDLED_MODELS: Record<string, string> = {
   "1.0.0": modelV1,
-  "2.0.0": modelV2,
+  ...Object.fromEntries(
+    RELEASED_MODELS.filter((model) => model.assessment === "pkimm").map(
+      (model) => [model.version, model.yaml],
+    ),
+  ),
 };
 
 // Raw YAML for a bundled model version, or null when the version is unknown.
