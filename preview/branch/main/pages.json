@@ -1,0 +1,14 @@
+{
+  "target": "preview/branch/main",
+  "label": "Branch main",
+  "commit": "6236f0f04f3b00efb92291849ab7511dc8868291",
+  "builtAt": "2026-11-18T05:56:04.477Z",
+  "models": [
+    {
+      "assessment": "pkimm",
+      "version": "2.0.0",
+      "draft": false,
+      "path": "pkimm/2.0.0"
+    }
+  ]
+}
