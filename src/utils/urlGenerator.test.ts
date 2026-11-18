@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import yaml from "js-yaml";
 import { deflateSync, inflateSync, strToU8 } from "fflate";
 import {
@@ -12,6 +10,7 @@ import {
   decodeFullParam,
 } from "./urlGenerator";
 import { yamlParser } from "./yamlParser";
+import { getBundledModelYaml } from "../defaults/bundledData";
 import {
   MAX_FULL_PARAM_DECODED_LENGTH,
   MAX_FULL_PARAM_LENGTH,
@@ -296,16 +295,8 @@ describe("encodeFullParam / decodeFullParam", () => {
   });
 
   it("decodes a fully rated assessment of the bundled 2.0.0 model", () => {
-    // every requirement of src/public/pkimm-model-2.0.0.yaml rated (77 today)
-    const modelPath = path.join(
-      __dirname,
-      "..",
-      "public",
-      "pkimm-model-2.0.0.yaml",
-    );
-    const model = yamlParser(
-      fs.readFileSync(modelPath, "utf8"),
-    ) as AssessmentData;
+    // every requirement of the bundled pkimm-model-2.0.0.yaml rated (77 today)
+    const model = yamlParser(getBundledModelYaml("2.0.0")!) as AssessmentData;
     const allRequirementsRated: Record<string, RequirementProgress> = {};
     for (const m of model.modules) {
       for (const c of m.categories) {
@@ -678,13 +669,7 @@ describe("generateURL — §11 size acceptance (fully-populated full assessment)
   // uses at runtime, rather than a hand-rolled fixture — the model's true
   // scale (4 modules / 16 categories / 76 requirements at the time this test
   // was written) is exactly what determines the real-world URL size.
-  const modelPath = path.join(
-    __dirname,
-    "..",
-    "public",
-    "pkimm-model-2.0.0.yaml",
-  );
-  const modelYAML = fs.readFileSync(modelPath, "utf8");
+  const modelYAML = getBundledModelYaml("2.0.0")!;
   const modelData = yamlParser(modelYAML) as AssessmentData;
   const realModules: ModuleData[] = modelData.modules;
 

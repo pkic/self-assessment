@@ -26,7 +26,7 @@ npm run format       # prettier --write
 npm run format:check # prettier --check
 ```
 
-Note for local dev: `webpack-dev-server` serves the `dist/` directory. The dev page (`src/public/index.html`) is attribute-free and zero-config — it renders against the bundled model + references with nothing else in `dist/`. Copy the runtime YAML files (`src/public/pkimm-model-*.yaml`, `src/public/pkimm-references.yaml`) into `dist/` only if you want to exercise the `dataUrl`/`referencesUrl` override path locally; CI still does this with explicit `cp` steps after `npm run build` regardless.
+Note for local dev: `webpack-dev-server` serves the `dist/` directory. The dev page (`src/public/index.html`) is attribute-free and zero-config — it renders against the bundled model + references with nothing else in `dist/`. Copy the runtime YAML files (`src/public/pkimm-model-1.0.0.yaml`, `src/generated/models/pkimm-model-2.0.0.yaml`, `src/generated/models/pkimm-references.yaml`) into `dist/` only if you want to exercise the `dataUrl`/`referencesUrl` override path locally; CI still does this with explicit `cp` steps after `npm run build` regardless.
 
 ## Architecture
 
@@ -55,18 +55,26 @@ Progress keys:
 
 The four core modules are fixed and validated by the JSON schema: G (Governance), M (Management), O (Operations), R (Resources).
 
-### Vendored schemas and YAMLs (`src/public/`)
+### Released models, schemas and YAMLs (`models.lock.json`, `src/generated/models/`, `src/public/`)
 
-Built-in schemas are imported by `yamlParser.ts` and inlined into the bundle by webpack.
+Released model files are **not committed**. `models.lock.json` lists each source repository, its release tags and, per file, the path at that tag and its SHA-256. `scripts/fetch-models.mjs` (run by `prestart`/`prebuild`/`pretest` through `npm run prepare:data`, before `generate:validators`) downloads each file from `raw.githubusercontent.com/<repo>/refs/tags/<tag>/<path>`, refuses any file whose hash differs from the lock (a moved or re-uploaded tag fails the build), caches it in `.cache/models/` (git-ignored, so later builds and tests work offline) and writes it to `src/generated/models/` (git-ignored) under its file name. Offline with an empty cache, it stops with a message naming the missing download. `MODEL_SOURCE_<ID>=/path/to/checkout` (e.g. `MODEL_SOURCE_PKIMM`) reads that source's files from a local checkout at the same paths, unverified, to try an unreleased model. Adding a release: add its entry to the lock without `sha256` and run `node scripts/fetch-models.mjs --lock`. The script's own tests (`scripts/fetch-models.test.mjs`, `node:test`) run first in `npm test`. CI restores `.cache/models/` with `actions/cache`, keyed on the lock file's hash.
+
+Fetched from `pkic/pkimm` at tag `2.0.0` (into `src/generated/models/`):
 
 - `pkimm-model.schema-1.0.0.json` (draft-07), `pkimm-model.schema-2.0.0.json` (draft-07)
 - `pkimm-references.schema-1.0.0.json` (draft-07)
+- `pkimm-model-2.0.0.yaml`, `pkimm-references.yaml`
+
+Kept in `src/public/` because this repository owns them:
+
 - `extension.schema-1.0.0.json` (draft 2020-12)
-- `pkimm-model-1.0.0.yaml`, `pkimm-model-2.0.0.yaml`, `pkimm-references.yaml`
+- `pkimm-model-1.0.0.yaml` — a frozen migration fixture: the released 1.0.0 file plus the `schemaVersion: "1.0.0"` line the parser needs, with the original `"he scope of policies..."` typo kept (the 1.0.0 copy in the pkimm repo has since corrected it, which would break the migration behaviour described below)
+
+Built-in schemas are imported by `yamlParser.ts` (through the generated validators) and inlined into the bundle by webpack.
 
 Two Ajv instances handle the mixed drafts — `Ajv` for draft-07 and `Ajv2020` for the extension schema. `yamlParser.validateSchema` dispatches via a `${kind}:${schemaVersion}` key.
 
-**Bundled defaults.** `src/public/*.yaml` (the three files above) are the single source for two consumers: `src/defaults/bundledData.ts` imports each as a raw string via a webpack `asset/source` rule (jest mirrors this with a `.yaml` raw-transform, `src/test-utils/yamlTransform.js`, plus the ambient `declare module "*.yaml"` in `src/yaml.d.ts`), and the deploy workflows still copy the same files to gh-pages (see CI section below). `getBundledModelYaml(version)` looks up either bundled model version; `DEFAULT_MODEL_VERSION` (`"2.0.0"`) is what a no-`dataUrl` load resolves to, and `BUNDLED_REFERENCES_YAML` is what a no-`referencesUrl` load resolves to. Both `dataUrl` and `referencesUrl` remain optional overrides — setting either attribute still fetches from that URL, unchanged. The bundled 1.0.0 model is archival: nothing on the default path loads it, it exists so a saved 1.0.0 assessment still has 1.0.0 fixtures to migrate from. `getBundledModelYaml` is internal — it is not re-exported from the UMD entry point (`src/index.tsx`), so this is not a public API addition.
+**Bundled defaults.** The three YAML files above are the single source for two consumers: `src/defaults/bundledData.ts` imports each as a raw string via a webpack `asset/source` rule (jest mirrors this with a `.yaml` raw-transform, `src/test-utils/yamlTransform.js`, plus the ambient `declare module "*.yaml"` in `src/yaml.d.ts`), and the deploy workflows still copy the same files to gh-pages (see CI section below). `getBundledModelYaml(version)` looks up either bundled model version; `DEFAULT_MODEL_VERSION` (`"2.0.0"`) is what a no-`dataUrl` load resolves to, and `BUNDLED_REFERENCES_YAML` is what a no-`referencesUrl` load resolves to. Both `dataUrl` and `referencesUrl` remain optional overrides — setting either attribute still fetches from that URL, unchanged. The bundled 1.0.0 model is archival: nothing on the default path loads it, it exists so a saved 1.0.0 assessment still has 1.0.0 fixtures to migrate from. `getBundledModelYaml` is internal — it is not re-exported from the UMD entry point (`src/index.tsx`), so this is not a public API addition.
 
 ### Schema-aware parser (`src/utils/yamlParser.ts`)
 
@@ -292,13 +300,13 @@ A shared, host-themeable React primitive library is the single source of truth f
 - **Accessibility baseline (§6.9, WCAG 2.1 AA).** `src/components/Category/RequirementCard.a11y.dom.test.tsx` is the jest-axe capstone: it renders the full-view `Category` (a couple of requirements, one Not Applicable) plus the `RequirementFinder` and asserts `expect(await axe(container)).toHaveNoViolations()` — run it whenever touching questionnaire markup. The sticky sub-header level/count (`Category.tsx`) and the right-rail overall/per-module readouts (`Assessment.tsx`) live inside `aria-live="polite"` regions so screen readers announce recalcs without needing to re-poll. Tab switches move focus to the `pkimm-categories-container` panel (`Assessment.tsx`'s `panelRef`) except when a session-resume restore is in flight, which keeps its own focus target (the restored requirement card). Every toggle-switch `<input type="checkbox">` (category/requirement applicability) carries an explicit `aria-label` — axe's `label` rule flags these because the `<span class="pkimm-slider">` sibling has no text.
 - **ESLint uses flat config** (`eslint.config.mjs`) and ignores `dist/`. Custom rules: `semi: error`, `prefer-const: error`, `@typescript-eslint/no-unused-vars` with `argsIgnorePattern: ^_`.
 - **PDF export trick:** `handleExportPDF`/`handleExportExtensionPDF` temporarily override `chartExtensionsOverride` and disable chart animation, wait for a paint, then capture the canvas. Don't remove the `setTimeout(100)` without verifying the chart canvas is fully painted.
-- **Schemas stay build-time only.** The JSON schemas are imported by `yamlParser.ts` and inlined into the bundle. They're not copied into `dist/` — the pkimm repo is the canonical public source.
+- **Schemas stay build-time only.** The JSON schemas are imported by `yamlParser.ts` and inlined into the bundle. They're not copied into `dist/` — the pkimm repo is the canonical public source, and the build fetches them from its release tags (see "Released models, schemas and YAMLs").
 - **Outbound pkic.org links must be absolute and point to canonical, version-agnostic entry points.** The widget is embedded on arbitrary host pages, so a relative `/wg/...` would resolve against the host domain — always use full `https://pkic.org/...` URLs (see `Overview/overviewContent.ts` `RESOURCES` and `pdf/StaticPages.tsx`). Use only roots pkic.org keeps stable across model releases: `/wg/pkimm/model/` (current model — rolling "latest"), `/wg/pkimm/model/categories/`, `/wg/pkimm/model/assessment/`, `/wg/pkimm/extensions/`, and `/wg/pkimm/assessment/` (this widget's own landing). Do **not** hardcode a frozen version path (e.g. `/wg/pkimm/1.0.0/…`) or a non-existent one — `/wg/pkimm/categories/` and `/wg/pkimm/tools/` are **not** real paths. And never point at a mutable branch raw URL (`raw.githubusercontent.com/.../main/…`); bundle any needed data at build time.
 
 ## CI / deployment
 
 - **PRs → main**: `check_build.yml` (build sanity), `check_linting.yml`, `check_formatting.yml`, `test.yml`. Use `NODE_OPTIONS=--max_old_space_size=4096` for `npm run build` to match CI memory budget.
-- **Push to main**: `deploy_gh_pages.yml` builds and copies `index.html` and the three runtime YAMLs (`pkimm-model-1.0.0.yaml`, `pkimm-model-2.0.0.yaml`, `pkimm-references.yaml`) from `src/public/` into `dist/`, then publishes to the `gh-pages` branch under `develop/` — served at `pkic.github.io/self-assessment/develop/`.
+- **Push to main**: `deploy_gh_pages.yml` builds and copies `index.html` and the three runtime YAMLs (`pkimm-model-1.0.0.yaml` from `src/public/`, `pkimm-model-2.0.0.yaml` and `pkimm-references.yaml` from `src/generated/models/`) into `dist/`, then publishes to the `gh-pages` branch under `develop/` — served at `pkic.github.io/self-assessment/develop/`.
 - **Push tag (`*`)**: `release.yml` does the same, publishing under `gh-pages/<tag>/` — served at `pkic.github.io/self-assessment/<tag>/`.
 - **GitHub Release published**: `release-package.yml` publishes the npm package `@pkic/self-assessment` to GitHub Packages (`npm.pkg.github.com`).
 - **All workflows**: install with `npm ci --ignore-scripts` and declare their `permissions` explicitly (read-only, except `contents: write` for the two Pages publishers and `packages: write` for the package publish).
