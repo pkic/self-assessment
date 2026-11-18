@@ -350,6 +350,11 @@ describe("loadImportYaml", () => {
   it("accepts anchors and aliases within the limit", () => {
     expect(loadImportYaml("a: &k [x]\nb: *k")).toEqual({ a: ["x"], b: ["x"] });
   });
+  it("returns undefined for text with no document and rejects several", () => {
+    expect(loadImportYaml("")).toBeUndefined();
+    expect(loadImportYaml("# only a comment\n")).toBeUndefined();
+    expect(() => loadImportYaml("a: 1\n---\nb: 2")).toThrow(yaml.YAMLException);
+  });
 });
 
 describe("readImportFile", () => {

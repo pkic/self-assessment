@@ -1,4 +1,3 @@
-import yaml from "js-yaml";
 import type { ErrorObject } from "ajv";
 import {
   AssessmentData,
@@ -15,6 +14,7 @@ import {
   validateReferences100,
 } from "../generated/validators-draft07";
 import { validateExtension100 } from "../generated/validators-2020";
+import { loadYaml } from "./inputLimits";
 
 const validators = {
   "model:1.0.0": validateModel100,
@@ -32,7 +32,7 @@ const errorsText = (errors: ErrorObject[] | null | undefined): string =>
 export const yamlParser = (
   yamlText: string,
 ): AssessmentData | ExtensionData | ReferencesCatalog => {
-  const data = yaml.load(yamlText);
+  const data = loadYaml(yamlText);
   if (typeof data !== "object" || data === null) {
     throw new Error("Invalid YAML format");
   }
