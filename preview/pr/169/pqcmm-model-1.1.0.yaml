@@ -69,14 +69,14 @@ scoring:
 levels:
 
 # ============================================================================
-# Level 0 · None
+# Level 0 · Baseline
 # ============================================================================
   # title, description, and summary appear on the level page; sourcePage is its address.
   - number: 0
-    name: None
-    title: Level 0 (None) - PQC Maturity Model (PQCMM)
-    description: A product at Level 0 has no post-quantum cryptography integrated into the product. The organization might be in the preparation phase, but nothing has matured to the actual product.
-    summary: Level 0 means no quantum-safe capabilities are available yet. Discovery and preparation may be underway, but this is the baseline entry point for supply-chain questionnaires.
+    name: Baseline
+    title: Level 0 (Baseline) - PQC Maturity Model (PQCMM)
+    description: Level 0 is the baseline every product can establish. It records the product's current quantum-safe status, whatever that status is.
+    summary: Level 0 records where a product stands today. It neither requires nor excludes quantum-safe capabilities, so every product can establish it. It is the baseline entry point for supply-chain questionnaires.
     sourcePage: /wg/pqc/pqcmm/levels/0-none/
 
     # Guidance sections, shown on the level page where "placement" says.
@@ -85,9 +85,9 @@ levels:
         title: What Level 0 Means
         placement: before-criteria
         body: |-
-          A product at **Level 0** has no quantum-safe algorithm available in any release channel. The vendor may be fully aware of PQC requirements and actively planning migration — the level reflects implementation status only, not intent or awareness.
+          **Level 0** is the baseline every product can establish. It identifies the assessed product and records whether any quantum-safe algorithm is available, and in which release channel. It does not require quantum-safe capabilities, and having them does not prevent a product from establishing Level 0.
 
-          This level is not a failure — it is an honest, useful data point. Knowing a product is at Level 0 lets procurement teams:
+          A product that establishes only Level 0 is not failing. It is an honest, useful data point that lets procurement teams:
 
           - Include it in their PQC migration risk register.
           - Set a clear expectation with the vendor for when Level 1 will be reached.
@@ -107,7 +107,7 @@ levels:
         placement: after-criteria
         body: |-
           > [!NOTE]
-          > Level 0 is a **self-declared starting point**, not an assessed state. There is nothing to verify — if a product has no PQC implemented, no evidence collection is needed to establish that fact. A vendor can legitimately self-declare Level 0 without any formal assessment process.
+          > Level 0 is a **self-declared starting point**, not an assessed state. Both criteria are vendor statements, so no evidence collection is needed to establish them. A vendor can legitimately self-declare Level 0 without any formal assessment process.
 
           A formal assessment only begins when a vendor claims to have reached Level 1 or higher. At that point, the questions on the [Level 1 page](/wg/pqc/pqcmm/levels/1-initial/) apply.
 
@@ -122,14 +122,16 @@ levels:
 
     # Criteria. A product reaches this level only when every criterion is met.
     criteria:
-      introduction: "A product is at Level 0 when the following are true:"
+      introduction: "A product establishes Level 0 when the following are true:"
       items:
-        - id: 0.1.1
-          text: The quantum readiness journey has not yet started or is still in a very early phase.
+        # 0.1.1 and 0.1.2 (1.0.x) required the absence of quantum-safe capabilities. They are
+        # retired, not reworded, because their identifiers must keep their original meaning.
+        - id: 0.1.3
+          text: The assessed product, its version, and the deployments covered are identified.
           assessmentQuestionIds: []
 
-        - id: 0.1.2
-          text: No quantum-safe algorithm is available in any release channel available to customers, including beta, preview, or experimental.
+        - id: 0.1.4
+          text: The vendor has stated whether any quantum-safe algorithm is available for the product and, if so, in which release channel (stable, beta, preview, or experimental).
           assessmentQuestionIds: []
 
     # Assessment. The record an assessor keeps, then the questions to ask, by group.
@@ -267,6 +269,30 @@ levels:
                     - application/pdf
                     - text/plain
                   maxFiles: 1
+
+            - id: 0.2.5
+              question: Does the product use any proprietary or custom cryptographic algorithm, mode, or protocol, or its own implementation of a standard algorithm?
+              expectedInput: Yes, no, or unknown, with each instance listed for yes.
+              purpose: Such cryptography cannot be inventoried, migrated, or verified like standard algorithms in a maintained library, so it needs attention early. Answer to the best of your current knowledge; "unknown" is valid here. The Level 3 inventory confirms the answer.
+              # Answer form shown by the assessment tool.
+              response:
+                fields:
+                  - key: customCryptography
+                    label: Proprietary or custom cryptography used
+                    type: select
+                    required: true
+                    options:
+                      - value: "yes"
+                        label: "Yes"
+                      - value: "no"
+                        label: "No"
+                      - value: unknown
+                        label: Unknown
+                  - key: instances
+                    label: Each proprietary or custom algorithm, mode, protocol, or implementation
+                    type: textarea
+                    rows: 3
+                    required: false
 
     # Evidence checklist. A request list for assessors and a reference for vendors.
     evidenceChecklist:

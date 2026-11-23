@@ -94,7 +94,14 @@ runtime:
       component: textarea
       rows: 3
       required: false
-      hint: Editions, deployment models (on-premises, cloud, embedded), and configurations this assessment covers.
+      hint: Editions, deployment models (on-premises, cloud, embedded), and configurations this assessment covers. Name the build when the result depends on it.
+
+    - key: cryptoLibraries
+      label: Crypto library requirements
+      component: textarea
+      rows: 2
+      required: false
+      hint: "Only when the result depends on a crypto library the product does not ship. One line per library with its minimum version, for example: OpenSSL 3.5 or later (system library). The result is claimed for builds that meet these minimums."
 
     - key: assessorName
       label: Person completing the assessment
@@ -131,7 +138,7 @@ runtime:
 
     - id: deployment
       label: Deployment
-      fields: [deploymentScope]
+      fields: [deploymentScope, cryptoLibraries]
 
     - id: assessment
       label: About this assessment
