@@ -26,7 +26,7 @@ describe("EvidenceAssessment", () => {
     );
     await screen.findByRole("heading", { name: "PQCMM Assessment" });
     expect(
-      screen.getByRole("heading", { name: "Level 0 · None" }),
+      screen.getByRole("heading", { name: "Level 0 · Baseline" }),
     ).toBeInTheDocument();
     // Questions that don't decide the level open in a side panel.
     expect(screen.queryByLabelText("Target date for Level 1")).toBeNull();
@@ -57,7 +57,7 @@ describe("EvidenceAssessment", () => {
     expect(
       within(
         screen.getByRole("complementary", { name: "Assessment progress" }),
-      ).getByRole("button", { name: /^Level 0 None: Established/ }),
+      ).getByRole("button", { name: /^Level 0 Baseline: Established/ }),
     ).toHaveAttribute("aria-pressed", "true");
 
     const criteria = container.querySelectorAll(".evidence-criterion");

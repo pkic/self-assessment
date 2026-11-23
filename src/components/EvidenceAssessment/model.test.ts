@@ -39,7 +39,7 @@ describe("PQCMM model data", () => {
           ),
         0,
       ),
-    ).toBe(72);
+    ).toBe(73);
     expect(
       model.levels
         .flatMap((level) => level.assessment.groups)

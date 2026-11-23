@@ -57,20 +57,20 @@
           ]
         },
         {
-          "commit": "a1ceccb0a10f8e5a4a0d911d54c60686449b250e",
+          "commit": "bde43739005d4a98b6f168ecd5447adcb4827bf0",
           "draft": true,
           "files": [
             {
               "path": "model/pqcmm-model.yaml",
               "as": "pqcmm-model-1.1.0.yaml",
               "modelVersion": "1.1.0",
-              "sha256": "6ee7500cbd29d0df4496de50da23e1c36f21437e8f2f7e7df0fcb79cffded9e5"
+              "sha256": "d4a8254a9928a8315b70419e22e7023f45eb57a7f70675bfc743a7987c650c2e"
             },
             {
               "path": "profiles/pqcmm-self-assessment-profile.yaml",
               "as": "pqcmm-self-assessment-profile-1.1.0.yaml",
               "profile": true,
-              "sha256": "cd8ef6f802988059493e83c8f14aedd25cab4e51e0272e150cdf5dbe47e5a2ec"
+              "sha256": "1eac0d9f132cfd7f581fbb60342dc63d76756117f00ee99b1c4eda78f76747ce"
             },
             {
               "path": "schemas/pqcmm-model.schema.json",
