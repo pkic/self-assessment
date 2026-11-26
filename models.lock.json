@@ -57,14 +57,14 @@
           ]
         },
         {
-          "commit": "bde43739005d4a98b6f168ecd5447adcb4827bf0",
+          "commit": "eb293c6666b2395b3ea56d87a43c888e2b7b5986",
           "draft": true,
           "files": [
             {
               "path": "model/pqcmm-model.yaml",
               "as": "pqcmm-model-1.1.0.yaml",
               "modelVersion": "1.1.0",
-              "sha256": "d4a8254a9928a8315b70419e22e7023f45eb57a7f70675bfc743a7987c650c2e"
+              "sha256": "58ef516f025c9f4b6096213475b95eb7e0aa7f9505b88bbea0280a37f30abd5c"
             },
             {
               "path": "profiles/pqcmm-self-assessment-profile.yaml",
