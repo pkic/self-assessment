@@ -28,7 +28,7 @@ describe("PQCMM model data", () => {
         (total, level) => total + level.criteria.items.length,
         0,
       ),
-    ).toBe(22);
+    ).toBe(23);
     expect(
       model.levels.reduce(
         (total, level) =>
@@ -39,7 +39,7 @@ describe("PQCMM model data", () => {
           ),
         0,
       ),
-    ).toBe(73);
+    ).toBe(75);
     expect(
       model.levels
         .flatMap((level) => level.assessment.groups)
