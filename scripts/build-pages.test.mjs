@@ -52,7 +52,7 @@ test("publish writes the bundle, one page per model and an index", () => {
   const dir = join(site, "preview/pr/42");
   assert.equal(read(dir, "self-assessment.js"), "bundle");
   const page = read(dir, "pqcmm/1.0.1/index.html");
-  assert.match(page, /<self-assessment modelVersion="1\.0\.1">/);
+  assert.match(page, /<self-assessment model="pqcmm" modelVersion="1\.0\.1">/);
   assert.match(page, /src="\.\.\/\.\.\/self-assessment\.js"/);
   // The widget lays itself out: no narrow column, no stray text.
   assert.doesNotMatch(page, /max-width|<style>|undefined/);
@@ -62,6 +62,8 @@ test("publish writes the bundle, one page per model and an index", () => {
   assert.match(index, /Commit abcdef1/);
   assert.match(index, /href="\.\.\/\.\.\/\.\.\/"/);
   assert.deepEqual(JSON.parse(read(dir, "pages.json")), manifest);
+  assert.equal(read(dir, "custom.html"), "dev page");
+  assert.match(index, /href="custom\.html"/);
 });
 
 test("publish replaces only its own folder", () => {

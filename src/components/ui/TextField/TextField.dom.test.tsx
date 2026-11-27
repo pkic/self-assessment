@@ -128,4 +128,15 @@ describe("TextField", () => {
       (screen.getByLabelText("Notes") as HTMLInputElement).value,
     ).toHaveLength(MAX_TEXT_LENGTH + 1);
   });
+
+  it("shows a label note without changing the accessible name", async () => {
+    const { container } = render(
+      <TextField label="Release notes URL" labelNote="optional" />,
+    );
+    expect(screen.getByText("(optional)")).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Release notes URL" }),
+    ).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+  });
 });

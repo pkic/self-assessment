@@ -12,7 +12,8 @@ import { calculateEffectiveCategoryLevel } from "./effectiveLevel";
 import {
   calculateModuleMaturityLevels,
   calculateOverallMaturityLevel,
-} from "./maturityCalculations";
+} from "../assessment-engine/methodologies/weightedMaturity";
+import type { AssessmentProfileData } from "../assessment-engine/types";
 
 export interface AlignedBaseline {
   progress: Record<string, ProgressData>;
@@ -94,6 +95,7 @@ export const buildComparison = (input: {
   currentRequirementProgress: Record<string, RequirementProgress> | undefined;
   baselineProgress: Record<string, ProgressData>;
   baselineRequirementProgress: Record<string, RequirementProgress> | undefined;
+  methodology?: AssessmentProfileData["runtime"]["methodology"];
 }): ComparisonResult => {
   const {
     modules,
@@ -101,7 +103,9 @@ export const buildComparison = (input: {
     currentRequirementProgress,
     baselineProgress,
     baselineRequirementProgress,
+    methodology,
   } = input;
+  const parameters = methodology?.parameters;
 
   const overall = mkDelta(
     calculateOverallMaturityLevel(
@@ -110,6 +114,7 @@ export const buildComparison = (input: {
       [],
       [],
       currentRequirementProgress,
+      parameters,
     ),
     calculateOverallMaturityLevel(
       modules,
@@ -117,6 +122,7 @@ export const buildComparison = (input: {
       [],
       [],
       baselineRequirementProgress,
+      parameters,
     ),
   );
 
@@ -126,6 +132,7 @@ export const buildComparison = (input: {
     [],
     [],
     currentRequirementProgress,
+    parameters,
   );
   const baseMod = calculateModuleMaturityLevels(
     modules,
@@ -133,6 +140,7 @@ export const buildComparison = (input: {
     [],
     [],
     baselineRequirementProgress,
+    parameters,
   );
   const moduleDeltas = modules.map((m, i) => ({
     moduleId: m.id,

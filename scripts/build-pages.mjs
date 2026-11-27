@@ -25,6 +25,7 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -111,7 +112,7 @@ const modelName = (model) =>
 const modelPage = (model, label) =>
   htmlDocument(
     [`${modelName(model)} self-assessment`, label].filter(Boolean).join(", "),
-    `    <self-assessment modelVersion="${escapeHtml(model.version)}"></self-assessment>
+    `    <self-assessment model="${escapeHtml(model.assessment)}" modelVersion="${escapeHtml(model.version)}"></self-assessment>
     <script src="../../self-assessment.js"></script>`,
   );
 
@@ -149,9 +150,16 @@ const buildIndex = (manifest) => {
     `    <h1>Self-assessment: ${escapeHtml(manifest.label)}</h1>
     <p class="meta">${escapeHtml(meta)}</p>
 ${sections.join("\n")}
-    <p>${link("../".repeat(manifest.target.split("/").length), "All builds")}</p>`,
+${customLink(manifest)}    <p>${link("../".repeat(manifest.target.split("/").length), "All builds")}</p>`,
   );
 };
+
+const customLink = (manifest) =>
+  manifest.custom
+    ? "    <p>" +
+      link("custom.html", "Load another profile or model") +
+      "</p>\n"
+    : "";
 
 /** Copies a build to site/target and writes its model pages and index. */
 export function publish({ site, target, dist, label, commit, models, now }) {
@@ -166,12 +174,16 @@ export function publish({ site, target, dist, label, commit, models, now }) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
   cpSync(dist, dir, { recursive: true });
-  rmSync(join(dir, "index.html"), { force: true });
+  // The build's own page (profile and model controls) stays as custom.html;
+  // index.html becomes the list of model pages.
+  const custom = existsSync(join(dir, "index.html"));
+  if (custom) renameSync(join(dir, "index.html"), join(dir, "custom.html"));
   const manifest = {
     target,
     label: label ?? target,
     commit: commit ?? null,
     builtAt: now.toISOString(),
+    custom,
     models: models.map((model) => ({
       assessment: model.assessment,
       version: model.version,

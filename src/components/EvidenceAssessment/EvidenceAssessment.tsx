@@ -1,0 +1,822 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Button, Card, Menu, Select } from "../ui";
+import { evidenceCriterionPolicy } from "../../assessment-engine/profile";
+import type { AssessmentProfileData } from "../../assessment-engine/types";
+import { newAssessmentId } from "../../assessment-engine/id";
+import { secureCryptographyAvailable } from "../../assessment-engine/evidence";
+import { assessmentSubjectIssues } from "../../assessment-engine/subject-validation";
+import {
+  deleteEvidenceAssessment,
+  listEvidenceAssessments,
+  saveEvidenceAssessment,
+  selectEvidenceAssessment,
+} from "./storage";
+import {
+  downloadAssessmentPackage,
+  evidenceFromFiles,
+  maxAssessmentPackageFileBytes,
+  newEvidenceAssessment,
+  parseAssessmentPackage,
+} from "./machine";
+import { downloadEvidenceAssessmentPdf } from "./pdf";
+import {
+  calculateGatedMaturityScore,
+  emptyCriterionProgress,
+} from "../../assessment-engine/methodologies/cumulativeGates";
+import type {
+  EvidenceAssessmentRecord,
+  EvidenceCriterionProgress,
+  EvidenceModelData,
+  EvidenceQuestionProgress,
+} from "./types";
+import { ApprovalPolicyCard } from "./ApprovalPolicyCard";
+import {
+  levelStyleVars,
+  MaturityLevelStrip,
+  MaturityProgressPanel,
+} from "./MaturityProgressPanel";
+import { levelColorIndex } from "../../assessment-engine/visualizations/maturityGates";
+import {
+  CriterionCard,
+  LevelNavigation,
+  QuestionCard,
+} from "./AssessmentItemCards";
+import { loadActiveAssessment, loadEvidenceModel } from "./loadAssessment";
+import { modelPageUrl } from "./model";
+import {
+  adjacentLevels,
+  errorMessage,
+  evidenceRequiredFromLevel,
+  exportBlockedReason,
+  levelStatusLabel,
+  passingStatuses,
+  questionFindingsExplicit,
+  scopeSummary,
+  statusOpensQuestions,
+} from "./assessmentView";
+import { ScopeForm } from "./ScopeForm";
+import { ExtraQuestions } from "./ExtraQuestions";
+import { updateSubjectWithDefaults } from "../../assessment-engine/subject-convenience";
+import { emptyQuestionProgress } from "./questionResponse";
+import "./EvidenceAssessment.module.scss";
+
+interface Props {
+  src: string | null;
+  profile: AssessmentProfileData;
+}
+
+type EvidenceOwner = {
+  kind: "criterion" | "question";
+  id: string;
+  acceptedMediaTypes?: string[];
+  maxFiles?: number;
+};
+
+export const EvidenceAssessment: React.FC<Props> = ({ src, profile }) => {
+  const cryptographyAvailable = secureCryptographyAvailable();
+  const [model, setModel] = useState<EvidenceModelData | null>(null);
+  const [record, setRecord] = useState<EvidenceAssessmentRecord | null>(null);
+  const [assessments, setAssessments] = useState<EvidenceAssessmentRecord[]>(
+    [],
+  );
+  const [selectedLevel, setSelectedLevel] = useState(0);
+  const [statusMessage, setStatusMessage] = useState("Loading assessment…");
+  const [error, setError] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [scopeOpen, setScopeOpen] = useState(true);
+  const scopeRecordId = useRef<string | null>(null);
+  const levelPanelRef = useRef<HTMLElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const load = async () => {
+      try {
+        const parsed = await loadEvidenceModel(src, profile, controller.signal);
+        if (cancelled) return;
+        setModel(parsed);
+        const { current, assessments: stored } = await loadActiveAssessment(
+          parsed,
+          profile,
+        );
+        if (cancelled) return;
+        setRecord(current);
+        setAssessments(stored);
+        setStatusMessage("Saved locally in this browser");
+      } catch (error_) {
+        if (!cancelled) setError(errorMessage(error_));
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [profile, src]);
+
+  useEffect(() => {
+    if (!record) return;
+    setStatusMessage("Saving locally…");
+    const timeout = window.setTimeout(() => {
+      void saveEvidenceAssessment(record).then(async () => {
+        setAssessments(
+          (await listEvidenceAssessments()).filter(
+            (item) => item.dataVersion === record.dataVersion,
+          ),
+        );
+        setStatusMessage("Saved locally in this browser");
+      });
+    }, 400);
+    return () => window.clearTimeout(timeout);
+  }, [record]);
+
+  // Open the scope card when an assessment is first shown with scope gaps and
+  // fold it away when the scope is already complete. It is not toggled while
+  // the user edits, so completing the last field never collapses the form.
+  useEffect(() => {
+    if (!record || scopeRecordId.current === record.id) return;
+    scopeRecordId.current = record.id;
+    setScopeOpen(assessmentSubjectIssues(profile, record.subject).length > 0);
+  }, [profile, record]);
+
+  const score = useMemo(
+    () =>
+      model && record
+        ? calculateGatedMaturityScore(
+            model,
+            record,
+            profile.runtime.methodology,
+          )
+        : null,
+    [model, profile, record],
+  );
+  const criterionPolicy = evidenceCriterionPolicy(profile);
+  const level = model?.levels.find((item) => item.number === selectedLevel);
+  const criterionText = useMemo(
+    () =>
+      new Map(
+        (model?.levels ?? []).flatMap((item) =>
+          item.criteria.items.map(
+            (criterion) => [criterion.id, criterion.text] as const,
+          ),
+        ),
+      ),
+    [model],
+  );
+
+  const showLevel = (levelNumber: number) => {
+    setSelectedLevel(levelNumber);
+    // Bring the level heading into view so a choice made in the progress panel
+    // or the level strip lands on the content it selected.
+    window.requestAnimationFrame(() =>
+      levelPanelRef.current?.scrollIntoView?.({
+        behavior: "smooth",
+        block: "start",
+      }),
+    );
+  };
+
+  const mutate = (
+    updater: (current: EvidenceAssessmentRecord) => EvidenceAssessmentRecord,
+  ) =>
+    setRecord((current) =>
+      current
+        ? { ...updater(current), updatedAt: new Date().toISOString() }
+        : current,
+    );
+
+  const updateSubjectField = (field: string, value: string) =>
+    mutate((current) => ({
+      ...current,
+      subject: updateSubjectWithDefaults(
+        profile,
+        current.subject,
+        field,
+        value,
+      ),
+    }));
+
+  const updateCriterion = (
+    id: string,
+    update: Partial<EvidenceCriterionProgress>,
+  ) =>
+    mutate((current) => ({
+      ...current,
+      criterionProgress: {
+        ...current.criterionProgress,
+        [id]: {
+          ...(current.criterionProgress[id] ?? emptyCriterionProgress()),
+          ...update,
+        },
+      },
+    }));
+
+  const updateQuestion = (
+    id: string,
+    update: Partial<EvidenceQuestionProgress>,
+  ) =>
+    mutate((current) => {
+      const progress = current.questionProgress[id] ?? emptyQuestionProgress();
+      return {
+        ...current,
+        questionProgress: {
+          ...current.questionProgress,
+          [id]: {
+            ...progress,
+            ...update,
+            values: update.values
+              ? { ...progress.values, ...update.values }
+              : progress.values,
+          },
+        },
+      };
+    });
+
+  const addEvidence = async (owner: EvidenceOwner, files: FileList) => {
+    if (!record) return;
+    try {
+      const existingOwnerCount =
+        owner.kind === "question"
+          ? (record.questionProgress[owner.id]?.evidenceIds.length ?? 0)
+          : (record.criterionProgress[owner.id]?.evidenceIds.length ?? 0);
+      if (
+        owner.maxFiles !== undefined &&
+        existingOwnerCount + files.length > owner.maxFiles
+      ) {
+        throw new Error(
+          `This evidence request accepts at most ${owner.maxFiles} file${owner.maxFiles === 1 ? "" : "s"}.`,
+        );
+      }
+      const added = await evidenceFromFiles(
+        Array.from(files),
+        record.evidenceFiles,
+        profile,
+        owner.acceptedMediaTypes,
+      );
+      mutate((current) => {
+        // The same file attached in several places is stored once: later
+        // attachments point at the copy already in the assessment.
+        const known = new Map(
+          current.evidenceFiles.map((file) => [file.sha256, file.id]),
+        );
+        const fresh: typeof added = [];
+        const ids: string[] = [];
+        for (const file of added) {
+          const existing = known.get(file.sha256);
+          if (existing) {
+            ids.push(existing);
+          } else {
+            known.set(file.sha256, file.id);
+            fresh.push(file);
+            ids.push(file.id);
+          }
+        }
+        const appendIds = (current_: string[]) => [
+          ...current_,
+          ...ids.filter((id) => !current_.includes(id)),
+        ];
+        if (owner.kind === "criterion") {
+          const progress =
+            current.criterionProgress[owner.id] ?? emptyCriterionProgress();
+          return {
+            ...current,
+            evidenceFiles: [...current.evidenceFiles, ...fresh],
+            criterionProgress: {
+              ...current.criterionProgress,
+              [owner.id]: {
+                ...progress,
+                evidenceIds: appendIds(progress.evidenceIds),
+              },
+            },
+          };
+        }
+        const progress =
+          current.questionProgress[owner.id] ?? emptyQuestionProgress();
+        return {
+          ...current,
+          evidenceFiles: [...current.evidenceFiles, ...fresh],
+          questionProgress: {
+            ...current.questionProgress,
+            [owner.id]: {
+              ...progress,
+              evidenceIds: appendIds(progress.evidenceIds),
+            },
+          },
+        };
+      });
+      setError(null);
+    } catch (error_) {
+      setError(errorMessage(error_));
+    }
+  };
+
+  const removeEvidence = (owner: EvidenceOwner, evidenceId: string) =>
+    mutate((current) => {
+      const criterionProgress = { ...current.criterionProgress };
+      const questionProgress = { ...current.questionProgress };
+      if (owner.kind === "criterion" && criterionProgress[owner.id]) {
+        criterionProgress[owner.id] = {
+          ...criterionProgress[owner.id],
+          evidenceIds: criterionProgress[owner.id].evidenceIds.filter(
+            (id) => id !== evidenceId,
+          ),
+        };
+      }
+      if (owner.kind === "question" && questionProgress[owner.id]) {
+        questionProgress[owner.id] = {
+          ...questionProgress[owner.id],
+          evidenceIds: questionProgress[owner.id].evidenceIds.filter(
+            (id) => id !== evidenceId,
+          ),
+        };
+      }
+      const stillReferenced = [
+        ...Object.values(criterionProgress).flatMap((item) => item.evidenceIds),
+        ...Object.values(questionProgress).flatMap((item) => item.evidenceIds),
+      ].includes(evidenceId);
+      return {
+        ...current,
+        criterionProgress,
+        questionProgress,
+        evidenceFiles: stillReferenced
+          ? current.evidenceFiles
+          : current.evidenceFiles.filter((file) => file.id !== evidenceId),
+      };
+    });
+
+  const createAssessment = async () => {
+    if (!model) return;
+    const created = newEvidenceAssessment(model, profile);
+    await saveEvidenceAssessment(created);
+    setRecord(created);
+    setSelectedLevel(0);
+  };
+
+  const selectAssessment = async (id: string) => {
+    const selected = assessments.find((item) => item.id === id);
+    if (!selected) return;
+    await selectEvidenceAssessment(id);
+    setRecord(selected);
+  };
+
+  const deleteAssessment = async () => {
+    if (!record || !model) return;
+    if (!window.confirm(`Delete “${record.name}” from this browser?`)) return;
+    await deleteEvidenceAssessment(record.id);
+    const next =
+      assessments.find((item) => item.id !== record.id) ??
+      newEvidenceAssessment(model, profile);
+    await saveEvidenceAssessment(next);
+    setRecord(next);
+  };
+
+  const importAssessment = async (file: File) => {
+    if (!model) return;
+    try {
+      if (file.size > maxAssessmentPackageFileBytes(profile)) {
+        throw new Error("The selected assessment package is too large.");
+      }
+      let imported = await parseAssessmentPackage(
+        await file.text(),
+        model,
+        profile,
+      );
+      if (assessments.some((item) => item.id === imported.id)) {
+        const now = new Date().toISOString();
+        imported = {
+          ...imported,
+          id: newAssessmentId(),
+          name: `${imported.name} (imported)`,
+          createdAt: now,
+          updatedAt: now,
+        };
+      }
+      await saveEvidenceAssessment(imported);
+      setRecord(imported);
+      setSelectedLevel(0);
+      setError(null);
+    } catch (error_) {
+      setError(errorMessage(error_));
+    }
+  };
+
+  if (error && (!model || !record)) {
+    return (
+      <div className="evidence-assessment-load-error" role="alert">
+        {error}
+      </div>
+    );
+  }
+  if (!model || !record || !score || !level) {
+    return (
+      <output className="evidence-assessment-loading">{statusMessage}</output>
+    );
+  }
+
+  const subjectIssues = assessmentSubjectIssues(profile, record.subject);
+  const exportAvailable = cryptographyAvailable && subjectIssues.length === 0;
+  const blockedReason = exportBlockedReason(
+    cryptographyAvailable,
+    subjectIssues,
+  );
+  const scopeExpanded = scopeOpen;
+  const scope = scopeSummary(profile, record.subject);
+  const {
+    previous: previousLevelInModel,
+    next: nextLevelInModel,
+    maximumLevel,
+  } = adjacentLevels(model.levels, level.number);
+  const levelResult = score.levelResults.find(
+    (entry) => entry.level === level.number,
+  );
+  const levelStatus = levelStatusLabel(score, level.number);
+  const evidenceFromLevel = evidenceRequiredFromLevel(profile);
+  const questionsById = new Map(
+    level.assessment.groups.flatMap((group) =>
+      group.questions.map(
+        (question) => [question.id, { question, kind: group.kind }] as const,
+      ),
+    ),
+  );
+  const linkedQuestionIds = new Set(
+    level.criteria.items.flatMap(
+      (criterion) => criterion.assessmentQuestionIds ?? [],
+    ),
+  );
+  // Questions no criterion links to (planning and intake questions, or
+  // assessment questions that inform the level as a whole).
+  const otherQuestionGroups = level.assessment.groups
+    .map((group) => {
+      const questions = group.questions.filter(
+        (question) => !linkedQuestionIds.has(question.id),
+      );
+      return {
+        group,
+        questions,
+      };
+    })
+    .filter((entry) => entry.questions.length > 0);
+  const renderQuestion = (
+    question: (typeof level.assessment.groups)[number]["questions"][number],
+    kind: (typeof level.assessment.groups)[number]["kind"],
+    layout: "step" | "panel",
+  ) => (
+    <QuestionCard
+      key={question.id}
+      question={question}
+      kind={kind}
+      profile={profile}
+      layout={layout}
+      progress={record.questionProgress[question.id]}
+      evidenceFiles={record.evidenceFiles}
+      onUpdate={(update) => updateQuestion(question.id, update)}
+      onAddEvidence={(owner, files) =>
+        addEvidence({ kind: "question", id: question.id, ...owner }, files)
+      }
+      onRemoveEvidence={(id) =>
+        removeEvidence({ kind: "question", id: question.id }, id)
+      }
+    />
+  );
+  const findingOptions = questionFindingsExplicit(profile)
+    ? (profile.runtime.questions?.findings.filter(
+        ({ value }) => value !== "not-assessed",
+      ) ?? [])
+    : [];
+
+  const exportJson = () => {
+    if (!exportAvailable) {
+      setError(blockedReason ?? "Export is not available yet.");
+      return;
+    }
+    void downloadAssessmentPackage(model, profile, record).catch((error_) =>
+      setError(errorMessage(error_)),
+    );
+  };
+
+  return (
+    <div className="evidence-assessment-assessment-container">
+      <header className="evidence-assessment-header">
+        <div>
+          <span className="evidence-assessment-header__eyebrow">
+            {model.model.name} {model.model.version}
+          </span>
+          <h2>{profile.profile.title}</h2>
+          <p>{profile.profile.description}</p>
+        </div>
+        <output className="evidence-assessment-header__status">
+          {statusMessage}
+        </output>
+      </header>
+
+      <div className="evidence-assessment-toolbar">
+        <Select
+          label="Saved assessment"
+          value={record.id}
+          onChange={(event) => void selectAssessment(event.target.value)}
+        >
+          {assessments.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </Select>
+        <div className="evidence-assessment-toolbar__actions">
+          <Button onClick={() => void createAssessment()}>New</Button>
+          <Menu
+            label="More assessment actions"
+            align="end"
+            items={[
+              {
+                id: "import",
+                label: "Import JSON",
+                onSelect: () => importRef.current?.click(),
+              },
+              {
+                id: "export",
+                label: "Export JSON",
+                onSelect: exportJson,
+              },
+              {
+                id: "delete",
+                label: "Delete assessment",
+                tone: "danger",
+                onSelect: () => void deleteAssessment(),
+              },
+            ]}
+          />
+          <Button
+            variant="primary"
+            disabled={generatingPdf || !exportAvailable}
+            title={blockedReason}
+            onClick={async () => {
+              setGeneratingPdf(true);
+              try {
+                await downloadEvidenceAssessmentPdf(model, profile, record);
+              } catch (error_) {
+                setError(errorMessage(error_));
+              } finally {
+                setGeneratingPdf(false);
+              }
+            }}
+          >
+            {generatingPdf ? "Generating PDF…" : "Download PDF report"}
+          </Button>
+        </div>
+        <input
+          ref={importRef}
+          className="pkimm-visually-hidden"
+          type="file"
+          accept="application/json,.json"
+          aria-label={`Import ${model.model.abbreviation} assessment JSON`}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void importAssessment(file);
+            event.target.value = "";
+          }}
+        />
+      </div>
+
+      {error ? (
+        <div className="evidence-assessment-inline-error" role="alert">
+          {error}
+        </div>
+      ) : null}
+
+      {!cryptographyAvailable ? (
+        <output className="evidence-assessment-crypto-notice">
+          This page is using an insecure HTTP connection. You can review and
+          complete text fields, but evidence hashing, JSON export, and PDF
+          generation require HTTPS or localhost.
+        </output>
+      ) : null}
+
+      <div className="evidence-assessment-layout">
+        <aside
+          className="evidence-assessment-rail"
+          aria-label="Assessment progress"
+        >
+          <Card as="div" padding="lg">
+            <MaturityProgressPanel
+              levels={model.levels}
+              score={score}
+              criterionText={criterionText}
+              statuses={criterionPolicy?.statuses ?? []}
+              findings={findingOptions}
+              scoringRule={model.scoring.rule}
+              selectedLevel={selectedLevel}
+              onSelectLevel={showLevel}
+            />
+          </Card>
+        </aside>
+
+        <main className="evidence-assessment-main">
+          <Card
+            as="section"
+            padding="none"
+            className="evidence-assessment-scope-card"
+            aria-labelledby="evidence-assessment-scope-heading"
+          >
+            <h3
+              id="evidence-assessment-scope-heading"
+              className="evidence-assessment-disclosure__heading"
+            >
+              <button
+                type="button"
+                className="evidence-assessment-disclosure"
+                aria-expanded={scopeExpanded}
+                aria-controls="evidence-assessment-scope-body"
+                onClick={() => setScopeOpen(!scopeExpanded)}
+              >
+                <span className="evidence-assessment-disclosure__text">
+                  <span className="evidence-assessment-disclosure__title">
+                    Assessment scope
+                  </span>
+                  <span className="evidence-assessment-disclosure__summary">
+                    {scope.summary}
+                  </span>
+                </span>
+                <span
+                  className={`evidence-assessment-disclosure__state evidence-assessment-disclosure__state--${
+                    scope.complete ? "done" : "todo"
+                  }`}
+                >
+                  {scope.complete ? "Complete" : "To do"}
+                </span>
+              </button>
+            </h3>
+            <div
+              id="evidence-assessment-scope-body"
+              className="evidence-assessment-disclosure__body"
+              hidden={!scopeExpanded}
+            >
+              <p className="evidence-assessment-muted">
+                Identify the {model.model.subjectLabel.toLowerCase()} this
+                assessment covers.
+              </p>
+              <ScopeForm
+                profile={profile}
+                subject={record.subject}
+                onChange={updateSubjectField}
+              />
+            </div>
+          </Card>
+
+          <ApprovalPolicyCard
+            profile={profile}
+            assuranceProfileId={record.assuranceProfileId}
+          />
+
+          <MaturityLevelStrip
+            levels={model.levels}
+            score={score}
+            selectedLevel={selectedLevel}
+            onSelectLevel={showLevel}
+          />
+
+          <section
+            ref={levelPanelRef}
+            className="evidence-assessment-level-panel"
+            aria-labelledby={`evidence-assessment-level-${level.number}`}
+            style={levelStyleVars(levelColorIndex(level.number, maximumLevel))}
+          >
+            <div className="evidence-assessment-level-panel__heading">
+              <span
+                className="evidence-assessment-level-panel__badge"
+                aria-hidden="true"
+              >
+                {level.number}
+              </span>
+              <div>
+                <span className="evidence-assessment-level-panel__eyebrow">
+                  Level {level.number}
+                  <span className="evidence-assessment-level-panel__status">
+                    {levelStatus}
+                    {levelResult
+                      ? ` · ${levelResult.criteriaMet} of ${levelResult.criteriaTotal} criteria met`
+                      : ""}
+                  </span>
+                </span>
+                <h3 id={`evidence-assessment-level-${level.number}`}>
+                  {level.name}
+                </h3>
+                <p>{level.summary}</p>
+                {modelPageUrl(model, level.sourcePage) ? (
+                  <a
+                    href={modelPageUrl(model, level.sourcePage)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Read this level in the model
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="evidence-assessment-model-copy">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {level.criteria.introduction}
+              </ReactMarkdown>
+            </div>
+            <div className="evidence-assessment-criterion-list">
+              {level.criteria.items.map((criterion) => {
+                const criterionProgress =
+                  record.criterionProgress[criterion.id] ??
+                  emptyCriterionProgress();
+                const linked = (criterion.assessmentQuestionIds ?? [])
+                  .map((id) => questionsById.get(id))
+                  .filter((entry) => entry !== undefined);
+                return (
+                  <CriterionCard
+                    key={criterion.id}
+                    criterion={criterion}
+                    progress={criterionProgress}
+                    supportOpen={statusOpensQuestions(
+                      profile,
+                      criterionProgress.status,
+                    )}
+                    result={levelResult?.criteria?.find(
+                      (entry) => entry.id === criterion.id,
+                    )}
+                    policy={criterionPolicy}
+                    passingStatuses={passingStatuses(profile)}
+                    evidenceRequired={level.number >= evidenceFromLevel}
+                    evidenceFiles={record.evidenceFiles}
+                    onUpdate={(update) => updateCriterion(criterion.id, update)}
+                    onAddEvidence={(files) =>
+                      addEvidence(
+                        { kind: "criterion", id: criterion.id },
+                        files,
+                      )
+                    }
+                    onRemoveEvidence={(id) =>
+                      removeEvidence(
+                        { kind: "criterion", id: criterion.id },
+                        id,
+                      )
+                    }
+                  >
+                    {linked.length > 0
+                      ? linked.map(({ question, kind }) =>
+                          renderQuestion(question, kind, "step"),
+                        )
+                      : undefined}
+                  </CriterionCard>
+                );
+              })}
+            </div>
+
+            <ExtraQuestions
+              groups={otherQuestionGroups}
+              profile={profile}
+              questionProgress={record.questionProgress}
+              evidenceFiles={record.evidenceFiles}
+              renderQuestion={(question, kind) =>
+                renderQuestion(question, kind, "panel")
+              }
+            />
+
+            {level.assessment.methodology ? (
+              <details className="evidence-assessment-methodology">
+                <summary>Assessment methodology record</summary>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {level.assessment.methodology}
+                </ReactMarkdown>
+              </details>
+            ) : null}
+
+            {level.evidenceChecklist.items.length > 0 ? (
+              <Card
+                as="section"
+                padding="lg"
+                className="evidence-assessment-checklist"
+              >
+                <h4>Evidence checklist</h4>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {level.evidenceChecklist.introduction}
+                </ReactMarkdown>
+                <ul>
+                  {level.evidenceChecklist.items.map((item) => (
+                    <li key={item.id}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {item.text}
+                      </ReactMarkdown>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ) : null}
+            <LevelNavigation
+              previous={previousLevelInModel?.number}
+              next={nextLevelInModel?.number}
+              onSelect={showLevel}
+            />
+          </section>
+        </main>
+      </div>
+    </div>
+  );
+};

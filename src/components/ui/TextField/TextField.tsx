@@ -7,6 +7,8 @@ export interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputEleme
   hideLabel?: boolean;
   fieldClassName?: string;
   hint?: string;
+  /** Short muted marker after the label, e.g. "optional". */
+  labelNote?: string;
 }
 
 export const TextField: React.FC<TextFieldProps> = ({
@@ -14,6 +16,7 @@ export const TextField: React.FC<TextFieldProps> = ({
   hideLabel = false,
   fieldClassName,
   hint,
+  labelNote,
   className,
   maxLength = MAX_TEXT_LENGTH,
   "aria-describedby": ariaDescribedBy,
@@ -29,7 +32,8 @@ export const TextField: React.FC<TextFieldProps> = ({
   // otherwise fold the hint into the accessible name and have it announced
   // twice (once as name, once via aria-describedby). Pin the name explicitly
   // whenever a hint is present so it stays exactly `label`.
-  const effectiveAriaLabel = ariaLabel ?? (hint ? label : undefined);
+  const effectiveAriaLabel =
+    ariaLabel ?? (hint || labelNote ? label : undefined);
   return (
     <label
       className={["pkimm-field", fieldClassName].filter(Boolean).join(" ")}
@@ -40,6 +44,12 @@ export const TextField: React.FC<TextFieldProps> = ({
           .join(" ")}
       >
         {label}
+        {labelNote ? (
+          <span className="pkimm-field__label-note" aria-hidden="true">
+            {" "}
+            ({labelNote})
+          </span>
+        ) : null}
       </span>
       <input
         className={["pkimm-field__control", className]

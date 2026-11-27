@@ -1,0 +1,537 @@
+// Progress panel for cumulative-gate assessments. Every colour comes from the
+// --pkimm-maturity-level-N tokens (set per step as --evidence-step-color), so a
+// host theme restyles the staircase together with the rest of the widget.
+
+.evidence-progress {
+  display: grid;
+  gap: var(--pkimm-space-md);
+}
+
+.evidence-progress__claim {
+  display: flex;
+  gap: var(--pkimm-space-md);
+  align-items: center;
+
+  h3,
+  p {
+    margin: 0;
+  }
+  h3 {
+    font-size: 1.2rem;
+    line-height: 1.25;
+  }
+  p {
+    margin-top: var(--pkimm-space-3xs);
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.evidence-progress__badge {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  color: var(--evidence-step-ink);
+  background: var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-lg);
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.evidence-progress__eyebrow,
+.evidence-progress__subheading {
+  margin: 0;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Staircase: one rising step per level, filled up to its completion. */
+.evidence-progress__stairs {
+  display: flex;
+  gap: var(--pkimm-space-2xs);
+  align-items: flex-end;
+  height: 8rem;
+  margin: var(--pkimm-space-xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evidence-progress__step {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+
+  button {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--pkimm-space-3xs);
+    min-width: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  button:focus-visible .evidence-progress__bar {
+    outline: 2px solid var(--pkimm-primary-color);
+    outline-offset: 2px;
+  }
+}
+
+.evidence-progress__bar {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  // Leaves a fixed row under every bar for the level numbers, so the numbers
+  // share one baseline whatever the bar heights.
+  height: calc(var(--evidence-step-height) - 1.75rem);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--evidence-step-color) 20%, transparent);
+  border: 1px dashed var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-sm) var(--pkimm-border-radius-sm) 0 0;
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform 0.15s ease;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .evidence-progress__step button:hover .evidence-progress__bar {
+    transform: translateY(-2px);
+  }
+}
+
+.evidence-progress__fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--evidence-step-fill);
+  background: var(--evidence-step-color);
+  @media (prefers-reduced-motion: no-preference) {
+    transition: height 0.3s ease;
+  }
+}
+
+.evidence-progress__number {
+  display: block;
+  height: 1.5rem;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.evidence-progress__step--established .evidence-progress__bar {
+  border-style: solid;
+  border-color: var(--evidence-step-color);
+}
+.evidence-progress__step--established .evidence-progress__number,
+.evidence-progress__step--next .evidence-progress__number {
+  color: var(--pkimm-text-color-dark);
+}
+/* Only reached levels are solid; the next gate stays dashed like every
+   other open level and shows its progress through the fill alone. */
+.evidence-progress__step--incomplete .evidence-progress__bar {
+  opacity: 0.75;
+}
+
+/* The level being shown: a bar in its colour under the number, like an
+   active tab, so the marker stays attached to its step. */
+.evidence-progress__step
+  button[aria-pressed="true"]
+  .evidence-progress__number {
+  color: var(--pkimm-text-color-dark);
+  font-weight: 800;
+
+  &::after {
+    content: "";
+    display: block;
+    height: 3px;
+    margin: 2px 15% 0;
+    background: var(--evidence-step-color);
+    border-radius: var(--pkimm-border-radius-pill);
+  }
+}
+
+.evidence-progress__selection {
+  margin: calc(-1 * var(--pkimm-space-xs)) 0 0;
+  font-size: 0.85rem;
+  text-align: center;
+
+  span {
+    color: var(--pkimm-text-color-muted);
+  }
+}
+
+.evidence-progress__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pkimm-space-2xs) var(--pkimm-space-md);
+  margin: 0;
+  padding: 0;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.72rem;
+  list-style: none;
+
+  li {
+    display: flex;
+    gap: var(--pkimm-space-2xs);
+    align-items: center;
+  }
+  li::before {
+    content: "";
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 2px;
+  }
+}
+.evidence-progress__legend--established::before {
+  background: var(--pkimm-text-color-muted);
+}
+.evidence-progress__legend--progress::before {
+  background: linear-gradient(
+    to top,
+    var(--pkimm-text-color-muted) 50%,
+    color-mix(in srgb, var(--pkimm-text-color-muted) 18%, transparent) 50%
+  );
+  border: 1px solid var(--pkimm-text-color-muted);
+}
+.evidence-progress__legend--open::before {
+  background: color-mix(
+    in srgb,
+    var(--pkimm-text-color-muted) 14%,
+    transparent
+  );
+  border: 1px dashed var(--pkimm-text-color-muted);
+}
+
+/* Next gate: what it takes to reach the next level. */
+.evidence-progress__next {
+  display: grid;
+  gap: var(--pkimm-space-xs);
+  padding: var(--pkimm-space-md);
+  background: color-mix(
+    in srgb,
+    var(--evidence-step-color) 7%,
+    var(--pkimm-surface-color)
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--evidence-step-color) 35%, transparent);
+  border-left: 4px solid var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-md);
+
+  > .pkimm-btn {
+    justify-self: start;
+    margin-top: var(--pkimm-space-2xs);
+  }
+}
+
+.evidence-progress__next-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--pkimm-space-2xs) var(--pkimm-space-sm);
+
+  span {
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.evidence-progress__meter {
+  display: block;
+  width: 100%;
+  height: 0.45rem;
+  overflow: hidden;
+  appearance: none;
+  background: color-mix(in srgb, var(--evidence-step-color) 18%, transparent);
+  border: 0;
+  border-radius: var(--pkimm-border-radius-pill);
+}
+.evidence-progress__meter::-webkit-progress-bar {
+  background: transparent;
+}
+.evidence-progress__meter::-webkit-progress-value {
+  background: var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-pill);
+}
+.evidence-progress__meter::-moz-progress-bar {
+  background: var(--evidence-step-color);
+  border-radius: var(--pkimm-border-radius-pill);
+}
+
+.evidence-progress__outstanding {
+  display: grid;
+  gap: var(--pkimm-space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 var(--pkimm-space-xs);
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
+  code {
+    color: var(--pkimm-primary-color);
+    font-weight: 700;
+  }
+  span {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  small {
+    grid-column: 2;
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.75rem;
+  }
+}
+
+.evidence-progress__more,
+.evidence-progress__complete {
+  margin: 0;
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.85rem;
+}
+
+/* Counts, laid out like the PKIMM progress rail. */
+.evidence-progress__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pkimm-space-xs);
+  margin: 0;
+
+  // The figure leads and the label sits under it, so the figures line up
+  // however the labels wrap.
+  div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
+    background: var(--pkimm-surface-color-alt);
+    border-radius: var(--pkimm-border-radius-md);
+  }
+  dt {
+    margin-top: var(--pkimm-space-3xs);
+    color: var(--pkimm-text-color-muted);
+    font-size: 0.75rem;
+    line-height: 1.25;
+  }
+  dd {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+}
+
+.evidence-progress__findings {
+  font-size: 0.85rem;
+
+  > summary {
+    display: flex;
+    gap: var(--pkimm-space-sm);
+    align-items: center;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  > summary .evidence-progress__findings-bar {
+    flex: 1;
+  }
+  > ul {
+    margin-top: var(--pkimm-space-xs);
+  }
+}
+
+.evidence-progress__findings-bar {
+  display: flex;
+  gap: 2px;
+  height: 0.5rem;
+  overflow: hidden;
+  background: var(--pkimm-surface-color-alt);
+  border-radius: var(--pkimm-border-radius-pill);
+}
+
+.evidence-progress__finding-list {
+  display: grid;
+  gap: var(--pkimm-space-3xs);
+  margin: 0;
+  padding: 0;
+  font-size: 0.82rem;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--pkimm-space-xs);
+    align-items: center;
+  }
+}
+
+.evidence-progress__swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+}
+
+/* Findings run from supporting to not supporting to not applicable. */
+.evidence-progress__finding--0 {
+  background: var(--pkimm-success-border);
+}
+.evidence-progress__finding--1 {
+  background: var(--pkimm-timing-warning-border);
+}
+.evidence-progress__finding--2 {
+  background: var(--pkimm-danger-border);
+}
+.evidence-progress__finding--3,
+.evidence-progress__finding--4,
+.evidence-progress__finding--5 {
+  background: var(--pkimm-border-color);
+}
+
+.evidence-progress__rule {
+  color: var(--pkimm-text-color-muted);
+  font-size: 0.85rem;
+
+  summary {
+    color: var(--pkimm-text-color-dark);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  p {
+    margin: var(--pkimm-space-xs) 0 0;
+  }
+}
+
+/* Sticky level switcher, shown only when the progress panel is not beside
+   the content. */
+.evidence-level-strip {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .evidence-level-strip {
+    position: sticky;
+    top: var(--pkimm-sticky-top-offset);
+    z-index: 20;
+    display: flex;
+    gap: var(--pkimm-space-sm);
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
+    border: 1px solid var(--pkimm-border-color);
+    border-radius: var(--pkimm-border-radius-md);
+    background: color-mix(in srgb, var(--pkimm-surface-color) 94%, transparent);
+    box-shadow: var(--pkimm-shadow-sm);
+    backdrop-filter: blur(6px);
+
+    // Shares the row with the level name; long scales shrink the buttons and
+    // then scroll rather than push past the screen edge.
+    ol {
+      display: flex;
+      flex: 0 1 auto;
+      gap: var(--pkimm-space-2xs);
+      min-width: 0;
+      margin: 0;
+      padding: 4px;
+      overflow-x: auto;
+      list-style: none;
+      scrollbar-width: none;
+    }
+
+    li {
+      flex: 0 1 2.1rem;
+      min-width: 1.7rem;
+    }
+
+    button {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 2.1rem;
+      overflow: hidden;
+      padding: 0;
+      color: var(--pkimm-text-color-dark);
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 800;
+      background: color-mix(
+        in srgb,
+        var(--evidence-step-color) 14%,
+        transparent
+      );
+      border: 1px dashed var(--evidence-step-color);
+      border-radius: var(--pkimm-border-radius-sm);
+      cursor: pointer;
+    }
+    button[aria-current="step"] {
+      box-shadow:
+        0 0 0 2px var(--pkimm-surface-color),
+        0 0 0 4px var(--pkimm-text-color-dark);
+    }
+    button:focus-visible {
+      outline: 2px solid var(--pkimm-primary-color);
+      outline-offset: 2px;
+    }
+  }
+
+  // With more than seven levels the buttons need the whole row; the level
+  // heading below the strip already names the selected level.
+  .evidence-level-strip:has(li:nth-child(8)) .evidence-level-strip__label {
+    display: none;
+  }
+  .evidence-level-strip:has(li:nth-child(8)) ol {
+    flex: 1;
+    justify-content: space-between;
+  }
+
+  .evidence-level-strip__label {
+    flex: 1 1 auto;
+    min-width: 4rem;
+    overflow: hidden;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .evidence-level-strip__fill {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: var(--evidence-step-fill);
+    background: var(--evidence-step-color);
+  }
+
+  .evidence-level-strip__number {
+    position: relative;
+  }
+
+  .evidence-level-strip .evidence-progress__step--established button {
+    color: var(--evidence-step-ink);
+    border-style: solid;
+  }
+  .evidence-level-strip .evidence-progress__step--next button {
+    border: 2px solid var(--evidence-step-color);
+  }
+}

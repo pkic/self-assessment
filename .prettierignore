@@ -7,3 +7,7 @@ src/generated/
 # Kept byte-identical to their published sources.
 src/public/pkimm-model-1.0.0.yaml
 src/public/extension.schema-*.json
+
+# The released assessment profile schema with the 1.1.0 size limits; kept in
+# the release's formatting so it diffs cleanly against pkic/pqcmm.
+src/public/assessment-profile.schema-1.0.0.json

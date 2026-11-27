@@ -29,11 +29,69 @@
   border: 1px solid var(--pkimm-border-color);
   border-radius: var(--pkimm-border-radius-md);
   padding: var(--pkimm-space-xs) var(--pkimm-space-sm);
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 
   &:is(textarea) {
     resize: vertical;
     min-height: 2.75rem;
+  }
+
+  // iOS Safari gives date and time inputs an intrinsic width that ignores
+  // width: 100% (so they overflow narrow cards) and centres the value. Drop
+  // the native appearance so they size and align like every other field.
+  &:is([type="date"], [type="datetime-local"], [type="time"], [type="month"]) {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.4rem;
+    text-align: left;
+  }
+  // The inner value box carries its own margin and centring on iOS; reset
+  // both so the control can't grow past the card edge.
+  &::-webkit-date-and-time-value {
+    min-width: 0;
+    margin: 0;
+    text-align: left;
+  }
+
+  // Draw the select arrow ourselves so it sits inside the padding the same
+  // way in every browser, rather than hugging the native control's edge.
+  &:is(select) {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: calc(var(--pkimm-space-sm) * 2 + 0.75rem);
+    // Two short diagonal strokes form a chevron in the text colour.
+    background-image:
+      linear-gradient(
+        45deg,
+        transparent 42%,
+        currentColor 42%,
+        currentColor 58%,
+        transparent 58%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 42%,
+        currentColor 42%,
+        currentColor 58%,
+        transparent 58%
+      );
+    background-position:
+      right calc(var(--pkimm-space-sm) + 0.32rem) center,
+      right var(--pkimm-space-sm) center;
+    background-repeat: no-repeat;
+    background-size: 0.4rem 0.4rem;
+    cursor: pointer;
   }
 
   &:focus-visible {
@@ -45,6 +103,11 @@
     opacity: 0.5;
     cursor: default;
   }
+}
+
+.pkimm-field__label-note {
+  font-weight: 400;
+  color: var(--pkimm-text-color-muted);
 }
 
 .pkimm-field__hint {
